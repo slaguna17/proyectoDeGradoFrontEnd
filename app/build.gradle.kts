@@ -60,8 +60,14 @@ android {
 }
 
 dependencies {
-    implementation(libs.androidx.material)
 
+
+    implementation("androidx.compose.ui:ui:1.3.0")
+    implementation("androidx.compose.material:material:1.3.0")
+    implementation("androidx.activity:activity-compose:1.6.0")
+    implementation("com.google.accompanist:accompanist-permissions:0.28.0")
+
+    implementation(libs.androidx.material)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)

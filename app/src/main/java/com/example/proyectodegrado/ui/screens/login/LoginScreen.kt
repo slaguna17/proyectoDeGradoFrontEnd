@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -35,7 +36,7 @@ import com.example.proyectodegrado.R
 @Preview (showBackground = true)
 @Composable
 fun LoginScreen(){
-    val logo = painterResource(R.drawable.lemon_drink)
+    val logo = painterResource(R.drawable.logonobackground)
     val googleLogo= painterResource(R.drawable.google_logo)
     val facebookLogo = painterResource(id = R.drawable.facebook_logo)
 
@@ -54,15 +55,12 @@ fun LoginScreen(){
         Image(painter = logo, contentDescription = "Main Logo", modifier = Modifier.size(200.dp))
 
         Text(text = "¡Bienvenido!", fontSize = 28.sp, fontWeight = FontWeight.Bold)
-
         Spacer(modifier = Modifier.height(4.dp))
 
         Text(text = "Ingresa a tu cuenta", fontSize = 28.sp, fontWeight = FontWeight.Bold)
-
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(value = email, onValueChange = { email = it}, label = { Text(text = "Correo Electronico") })
-
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
@@ -71,23 +69,25 @@ fun LoginScreen(){
             visualTransformation = PasswordVisualTransformation(),
             label = { Text(text = "Contraseña") }
         )
-
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(onClick = { /*TODO*/ }) {
             Text(text = "Ingresar")
         }
+        Spacer(modifier = Modifier.height(8.dp))
 
+        Row (verticalAlignment = Alignment.CenterVertically){
+            Checkbox(checked = false, onCheckedChange = {/* TODO */})
+            Text(text = "Recuerdame")
+        }
         Spacer(modifier = Modifier.height(8.dp))
 
         TextButton(onClick = { /*TODO*/ }) {
             Text(text = "¿Olvidaste tu contraseña?")
         }
-
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(text = "Ingresar con: ")
-
         Spacer(modifier = Modifier.height(8.dp))
 
         Row (modifier = Modifier
@@ -102,6 +102,7 @@ fun LoginScreen(){
                 .clickable { })
         }
         Spacer(modifier = Modifier.height(16.dp))
+
         Row {
             Text(text = "¿Eres nuevo? ")
             Text(

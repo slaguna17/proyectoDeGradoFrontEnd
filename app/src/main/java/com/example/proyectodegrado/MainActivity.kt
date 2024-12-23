@@ -31,7 +31,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun preview(){
     ProyectoDeGradoTheme {
-        RegisterScreen()
+        LoginScreen()
     }
 }
 
