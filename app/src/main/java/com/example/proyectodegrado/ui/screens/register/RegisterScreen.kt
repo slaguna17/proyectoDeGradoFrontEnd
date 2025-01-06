@@ -139,5 +139,8 @@ fun RegisterScreen(){
                 modifier = Modifier.clickable {  }
             )
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
     }
 }

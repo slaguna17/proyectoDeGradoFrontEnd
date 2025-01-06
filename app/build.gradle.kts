@@ -66,6 +66,9 @@ dependencies {
     implementation("androidx.compose.material:material:1.3.0")
     implementation("androidx.activity:activity-compose:1.6.0")
     implementation("com.google.accompanist:accompanist-permissions:0.28.0")
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.9.0")
 
     implementation(libs.androidx.material)
     implementation(libs.androidx.core.ktx)
@@ -77,6 +80,7 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.appcompat)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

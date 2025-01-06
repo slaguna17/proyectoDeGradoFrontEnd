@@ -112,7 +112,6 @@ fun LoginScreen(){
                 modifier = Modifier.clickable {  }
             )
         }
-
     }
 }
 
