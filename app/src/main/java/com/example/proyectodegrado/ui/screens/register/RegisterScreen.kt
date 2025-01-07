@@ -1,5 +1,6 @@
 package com.example.proyectodegrado.ui.screens.register
 
+import RegisterRequest
 import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -40,45 +41,29 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.proyectodegrado.R
 import com.example.proyectodegrado.ui.components.uploadImage
+import com.example.proyectodegrado.ui.screens.TestAPI.UserViewModel
 
-@Preview(showBackground = true)
+val registerVM = RegisterViewModel()
+//@Preview(showBackground = true)
 @Composable
-fun RegisterScreen(){
+fun RegisterScreen(viewModel: RegisterViewModel = registerVM){
+
+    val viewModel : RegisterViewModel = viewModel()
+    var errorMessage by remember { mutableStateOf("") }
+
     val logo = painterResource(R.drawable.logonobackground)
+    var username by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var repeatPassword by remember { mutableStateOf("") }
+    var fullName by remember { mutableStateOf("") }
+    var dateOfBirth by remember { mutableStateOf("") }
+    var phone by remember { mutableStateOf("") }
+    var avatar by remember { mutableStateOf<Uri?>(null) }
 
-    var username by remember {
-        mutableStateOf("")
-    }
-
-    var email by remember {
-        mutableStateOf("")
-    }
-
-    var password by remember {
-        mutableStateOf("")
-    }
-
-    var repeatPassword by remember {
-        mutableStateOf("")
-    }
-
-    var fullName by remember {
-        mutableStateOf("")
-    }
-
-    var dateOfBirth by remember {
-        mutableStateOf("")
-    }
-
-    var phone by remember {
-        mutableStateOf("")
-    }
-
-    var avatar by remember {
-        mutableStateOf<Uri?>(null)
-    }
     Column (
         modifier = Modifier
             .fillMaxSize()
@@ -87,7 +72,6 @@ fun RegisterScreen(){
         horizontalAlignment = Alignment.CenterHorizontally
     ){
         Image(painter = logo, contentDescription = "Main Logo", modifier = Modifier.size(200.dp))
-
         Text(text = "¡Registrate!", fontSize = 28.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(32.dp))
 
@@ -106,8 +90,8 @@ fun RegisterScreen(){
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
-            value = password,
-            onValueChange = {/* TODO */},
+            value = repeatPassword,
+            onValueChange = {repeatPassword = it},
             visualTransformation = PasswordVisualTransformation(),
             label = { Text(text = "Repetir Contraseña") }
         )
@@ -125,7 +109,25 @@ fun RegisterScreen(){
         uploadImage(buttonText = "Elegir foto de perfil")
         Spacer(modifier = Modifier.height(16.dp))
 
-        Button(onClick = { /*TODO*/ }) {
+        Button(onClick = {
+            if (password != repeatPassword) {
+                errorMessage = "Contraseñas no coinciden"
+                return@Button
+            }
+            val request = RegisterRequest(
+                username = username,
+                email = email,
+                password = password,
+                full_name = fullName, // Replace with input if needed
+                date_of_birth = dateOfBirth, // Replace with input if needed
+                phone = phone,
+                avatar = avatar.toString()
+            )
+            viewModel.registerUser(request,
+                onSuccess = { errorMessage = "Registration successful!" },
+                onError = { errorMessage = it }
+            )
+        }) {
             Text(text = "Registrarme")
         }
         Spacer(modifier = Modifier.height(16.dp))
@@ -141,6 +143,5 @@ fun RegisterScreen(){
         }
 
         Spacer(modifier = Modifier.height(16.dp))
-
     }
 }
