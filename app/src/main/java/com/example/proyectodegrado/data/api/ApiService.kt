@@ -1,4 +1,5 @@
 import com.example.proyectodegrado.data.model.User
+import retrofit2.Call
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.POST
@@ -8,7 +9,10 @@ import java.util.Calendar;
 import java.util.Date;
 
 val currentTime = Calendar.getInstance().getTime();
-data class LoginResponse(val token: String, val userId: Int)
+
+data class LoginRequest(val email: String, val password: String)
+data class LoginResponse(val token: String)
+
 data class RegisterRequest(
     val username: String,
     val email: String,
@@ -25,10 +29,11 @@ data class RegisterResponse(
     val message: String, // Adjust based on your backend response
     val userId: Int? = null // Example of returning created user ID
 )
+
 interface ApiService {
     //Valid auth credentials
     @POST("/login")
-    suspend fun login(@Body email: String, password: String): Response<LoginResponse>
+    suspend fun login(@Body request: LoginRequest): Response<LoginResponse>
 
     //Get all Users, GET
     @GET("/users")
