@@ -1,3 +1,5 @@
+package com.example.proyectodegrado.ui.screens.settings
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,7 +16,7 @@ import androidx.navigation.NavController
 import com.example.proyectodegrado.ui.components.Header
 
 @Composable
-fun HomeScreen(navController: NavController) {
+fun SettingsScreen(navController: NavController){
     Scaffold(
         topBar = { Header(navController = navController)},
         content = { paddingValues ->
@@ -26,9 +28,8 @@ fun HomeScreen(navController: NavController) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                Text(text = "Current Screen: Home", fontSize = 24.sp)
+                Text(text = "Current Screen: Ajustes", fontSize = 24.sp)
             }
         }
     )
 }
-

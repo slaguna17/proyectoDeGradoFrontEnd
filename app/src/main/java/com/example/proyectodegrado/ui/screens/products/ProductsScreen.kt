@@ -1,3 +1,5 @@
+package com.example.proyectodegrado.ui.screens.products
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -6,6 +8,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Text
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -14,7 +20,7 @@ import androidx.navigation.NavController
 import com.example.proyectodegrado.ui.components.Header
 
 @Composable
-fun HomeScreen(navController: NavController) {
+fun ProductsScreen(navController: NavController){
     Scaffold(
         topBar = { Header(navController = navController)},
         content = { paddingValues ->
@@ -26,9 +32,8 @@ fun HomeScreen(navController: NavController) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                Text(text = "Current Screen: Home", fontSize = 24.sp)
+                Text(text = "Current Screen: Productos", fontSize = 24.sp)
             }
         }
     )
 }
-
