@@ -1,5 +1,6 @@
 package com.example.proyectodegrado.ui.screens.TestAPI
 
+import UserService
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.proyectodegrado.data.api.RetrofitClient
@@ -9,13 +10,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class UserViewModel : ViewModel() {
+    private val userService: UserService = RetrofitClient.createService(UserService::class.java)
     private val _users = MutableStateFlow<List<User>>(emptyList())
     val users: StateFlow<List<User>> = _users
 
     fun fetchUsers() {
         viewModelScope.launch {
             try {
-                val userList = RetrofitClient.apiService.getAllUsers()
+                val userList = userService.getAllUsers()
                 _users.value = userList
             } catch (e: Exception) {
                 e.printStackTrace()

@@ -16,7 +16,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -25,11 +24,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -37,13 +34,8 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.proyectodegrado.R
-import com.example.proyectodegrado.data.repository.AuthRepository
-import com.example.proyectodegrado.ui.screens.register.RegisterViewModel
-import kotlinx.coroutines.launch
-
 
 //@Preview (showBackground = true)
 @Composable
@@ -52,7 +44,6 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel){
     //State Variables
     val loginState by viewModel.loginState.observeAsState()
     var isLoading by remember { mutableStateOf(false) }
-
 
     //Images
     val logo = painterResource(R.drawable.logonobackground)
@@ -110,7 +101,7 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel){
             when {
                 result.isSuccess -> {
                     isLoading = false
-                    Text("Login successful! Token: ${result.getOrNull()}")
+                    Text("Login successful!")
                     navController.navigate("home")
                 }
                 result.isFailure -> {

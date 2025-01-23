@@ -1,14 +1,10 @@
 package com.example.proyectodegrado.data.api
 
-import ApiService
-
-import com.google.gson.Gson
-import com.google.gson.GsonBuilder
+import UserService
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import java.util.*
 
 object RetrofitClient {
     private const val BASE_URL = "http://10.0.2.2:3000" // Cambia esto a la IP local si usas un dispositivo físico.
@@ -21,11 +17,16 @@ object RetrofitClient {
         .addInterceptor(loggingInterceptor)
         .build()
 
-    val apiService: ApiService by lazy {
+    private val retrofit: Retrofit by lazy {
         Retrofit.Builder()
             .baseUrl(BASE_URL)
+            .client(client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
-            .create(ApiService::class.java)
     }
+
+    fun <T> createService(serviceClass: Class<T>): T {
+        return retrofit.create(serviceClass)
+    }
+
 }

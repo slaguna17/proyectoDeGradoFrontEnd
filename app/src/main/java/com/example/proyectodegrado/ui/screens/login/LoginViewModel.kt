@@ -2,11 +2,11 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.proyectodegrado.data.repository.AuthRepository
+import com.example.proyectodegrado.data.repository.UserRepository
 import kotlinx.coroutines.launch
 
 
-class LoginViewModel (private val authRepository: AuthRepository) : ViewModel() {
+class LoginViewModel (private val userRepository: UserRepository) : ViewModel() {
 
     private val _loginState = MutableLiveData<Result<String>>()
     val loginState: LiveData<Result<String>> = _loginState
@@ -14,7 +14,7 @@ class LoginViewModel (private val authRepository: AuthRepository) : ViewModel() 
     fun login(email: String, password: String) {
         viewModelScope.launch {
             try {
-                val response = authRepository.login(email, password)
+                val response = userRepository.login(email, password)
                 if (response.isSuccessful) {
                     response.body()?.let {
                         _loginState.postValue(Result.success(it.token))
