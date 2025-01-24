@@ -48,7 +48,6 @@ fun ProductsScreen(navController: NavController, viewModel: ProductViewModel){
     //State variables
     var categories by remember { mutableStateOf<List<Category>>(emptyList()) }
     var errorMessage by remember { mutableStateOf("") }
-    val coroutineScope = rememberCoroutineScope()
 
     //Dialog variables
     var showCreateDialog by remember { mutableStateOf(false) }
@@ -147,6 +146,7 @@ fun ProductsScreen(navController: NavController, viewModel: ProductViewModel){
                     },
                     category = categoryToDelete
                 )
+                //Create Category
                 Button(onClick = {
                     showCreateDialog = true
                 }) {

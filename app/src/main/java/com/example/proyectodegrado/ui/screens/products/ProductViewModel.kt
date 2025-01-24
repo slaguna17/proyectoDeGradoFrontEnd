@@ -177,7 +177,7 @@ class ProductViewModel(private val productRepository: ProductRepository, private
                 val response = productRepository.updateProduct(id,request)
                 if (response.isSuccessful) {
                     productResult = response.body()?.message ?: "Updated Product successfully!"
-                    onSuccess()
+                    fetchProductsByCategory(categoryId = id, onSuccess = onSuccess, onError = onError)
                 } else {
                     onError("Failed: ${response.errorBody()?.string()}")
                 }
@@ -195,7 +195,7 @@ class ProductViewModel(private val productRepository: ProductRepository, private
                 val response = productRepository.deleteProduct(id)
                 if (response.isSuccessful) {
                     productResult = response.body()?.message ?: "Registration successful!"
-                    onSuccess()
+                    fetchProductsByCategory(categoryId = id, onSuccess = onSuccess, onError = onError)
                 } else {
                     onError("Failed: ${response.errorBody()?.string()}")
                 }
