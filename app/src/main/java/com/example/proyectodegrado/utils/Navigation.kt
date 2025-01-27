@@ -26,6 +26,7 @@ fun Navigation() {
     val loginViewModel = DependencyProvider.provideLoginViewModel()
     val registerViewModel = DependencyProvider.provideRegisterViewModel()
     val productViewModel = DependencyProvider.provideProductViewModel()
+    val storeViewModel = DependencyProvider.provideStoreViewModel()
 
     NavHost(navController, startDestination = "home"){
         composable("login"){ LoginScreen(navController = navController, loginViewModel) }
@@ -41,7 +42,7 @@ fun Navigation() {
             val categoryId = backStackEntry.arguments?.getInt("categoryId") ?: -1
             ProductsByCategoryScreen(navController, productViewModel, categoryId)
         }
-        composable("store"){ StoreScreen(navController = navController) }
+        composable("store"){ StoreScreen(navController = navController, storeViewModel) }
         composable("workers"){ WorkersScreen(navController = navController) }
         composable("forecast"){ ForecastScreen(navController = navController) }
         composable("balance"){ BalanceScreen(navController = navController) }

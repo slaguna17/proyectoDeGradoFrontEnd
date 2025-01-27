@@ -130,7 +130,7 @@ fun DrawerContent(onItemSelected: (String) -> Unit) {
                 .padding(bottom = 8.dp)
         ){
             Text(
-                text = "Navigate",
+                text = "Tienda amiga",
                 style = MaterialTheme.typography.h6,
             )
             IconButton(onClick = {  }) {

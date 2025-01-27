@@ -5,11 +5,14 @@ import UserService
 import com.example.proyectodegrado.data.api.CategoryService
 import com.example.proyectodegrado.data.api.ProductService
 import com.example.proyectodegrado.data.api.RetrofitClient
+import com.example.proyectodegrado.data.api.StoreService
 import com.example.proyectodegrado.data.repository.CategoryRepository
 import com.example.proyectodegrado.data.repository.ProductRepository
+import com.example.proyectodegrado.data.repository.StoreRepository
 import com.example.proyectodegrado.data.repository.UserRepository
 import com.example.proyectodegrado.ui.screens.products.ProductViewModel
 import com.example.proyectodegrado.ui.screens.register.RegisterViewModel
+import com.example.proyectodegrado.ui.screens.store.StoreViewModel
 
 object DependencyProvider {
     // Servicio de usuario
@@ -55,6 +58,21 @@ object DependencyProvider {
     // ViewModel para Productos
     fun provideProductViewModel(): ProductViewModel {
         return ProductViewModel(productRepository, categoryRepository)
+    }
+
+    // Servicio de Store
+    val storeService: StoreService by lazy {
+        RetrofitClient.createService(StoreService::class.java)
+    }
+
+    // Repositorio de Store
+    val storeRepository: StoreRepository by lazy {
+        StoreRepository(storeService)
+    }
+
+    // ViewModel para Stores
+    fun provideStoreViewModel(): StoreViewModel {
+        return StoreViewModel(storeRepository)
     }
 
     // Puedes agregar más dependencias aquí:
