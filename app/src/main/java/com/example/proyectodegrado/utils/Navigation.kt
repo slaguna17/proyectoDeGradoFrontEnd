@@ -28,7 +28,7 @@ fun Navigation() {
     val productViewModel = DependencyProvider.provideProductViewModel()
     val storeViewModel = DependencyProvider.provideStoreViewModel()
 
-    NavHost(navController, startDestination = "home"){
+    NavHost(navController, startDestination = "login"){
         composable("login"){ LoginScreen(navController = navController, loginViewModel) }
         composable("home"){ HomeScreen(navController = navController)  }
         composable("register"){ RegisterScreen(navController = navController, registerViewModel) }
@@ -46,6 +46,7 @@ fun Navigation() {
         composable("workers"){ WorkersScreen(navController = navController) }
         composable("forecast"){ ForecastScreen(navController = navController) }
         composable("balance"){ BalanceScreen(navController = navController) }
+        composable("providers"){ ProvidersScreen(navController = navController) }
         composable("barcode"){ BarcodeScreen(navController = navController) }
         composable("settings"){ SettingsScreen(navController = navController) }
 

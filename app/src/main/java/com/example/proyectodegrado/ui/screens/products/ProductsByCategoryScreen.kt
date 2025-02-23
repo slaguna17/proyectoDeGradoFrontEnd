@@ -66,7 +66,7 @@ fun ProductsByCategoryScreen(navController: NavController, viewModel: ProductVie
     }
 
     Scaffold(
-        topBar = { Header(navController = navController) },
+        topBar = { Header(navController = navController, title = "Productos") },
     ) { paddingValues ->
         Column(
             modifier = Modifier

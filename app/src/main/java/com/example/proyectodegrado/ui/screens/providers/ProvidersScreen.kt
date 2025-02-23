@@ -1,5 +1,6 @@
-package com.example.proyectodegrado.ui.screens.store
+package com.example.proyectodegrado.ui.screens.providers
 
+import com.example.proyectodegrado.ui.screens.store.StoreViewModel
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -33,57 +34,52 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
+import com.example.proyectodegrado.data.model.Provider
+import com.example.proyectodegrado.data.model.ProviderRequest
 import com.example.proyectodegrado.data.model.Store
 import com.example.proyectodegrado.data.model.StoreRequest
 import com.example.proyectodegrado.di.AppPreferences
 import com.example.proyectodegrado.ui.components.Header
 import com.example.proyectodegrado.ui.components.uploadImage
 
-
-var storeId = ""
 @Composable
-fun StoreScreen(navController: NavController, viewModel: StoreViewModel){
+fun ProvidersScreen(navController: NavController, viewModel: ProvidersViewModel){
     //State variables
-    var stores by remember { mutableStateOf<List<Store>>(emptyList()) }
+    var providers by remember { mutableStateOf<List<Provider>>(emptyList()) }
     var errorMessage by remember { mutableStateOf("") }
-    val context = LocalContext.current
-    val storePreferences = remember { AppPreferences(context) }
 
     //Dialog variables
     var showCreateDialog by remember { mutableStateOf(false) }
     var showEditDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
 
-    //Create Store variables
-    var newStoreName by remember { mutableStateOf("") }
-    var newStoreAddress by remember { mutableStateOf("") }
-    var newStoreCity by remember { mutableStateOf("") }
-    var newStoreLogo by remember { mutableStateOf("") }
-    var newStoreHistory by remember { mutableStateOf("") }
-    var newStorePhone by remember { mutableStateOf("") }
-//    var newStoreSocials by remember { mutableStateListOf(emptyList()) }
+    //Create Provider variables
+    var newProviderName by remember { mutableStateOf("") }
+    var newProviderAddress by remember { mutableStateOf("") }
+    var newProviderEmail by remember { mutableStateOf("") }
+    var newProviderPhone by remember { mutableStateOf("") }
+    var newProviderContactName by remember { mutableStateOf("") }
+    var newProviderNotes by remember { mutableStateOf("") }
 
     //Edit and delete variables
-    var storeToEdit by remember { mutableStateOf<Store?>(null) }
-    var storeToDelete by remember { mutableStateOf<Store?>(null) }
-
-    // Retrieve Store id at start
-    var storeId by remember { mutableStateOf(storePreferences.getStoreId() ?: "") }
+    var providerToEdit by remember { mutableStateOf<Provider?>(null) }
+    var providerToDelete by remember { mutableStateOf<Provider?>(null) }
 
     // Refresh function
-    val refreshStores: () -> Unit = {
-        viewModel.fetchStores(
-            onSuccess = { stores = viewModel.stores.value },
+    val refreshProviders: () -> Unit = {
+        viewModel.fetchProviders(
+            onSuccess = { providers = viewModel.providers.value },
             onError = { errorMessage = it }
         )
     }
-    // Load stores when initializing screeen
+
+    // Load providers when initializing screeen
     LaunchedEffect(Unit) {
-        refreshStores()
+        refreshProviders()
     }
 
     Scaffold(
-        topBar = { Header(navController = navController, title = "Tiendas")},
+        topBar = { Header(navController = navController, title = "Proveedores")},
         content = { paddingValues ->
             Column(
                 modifier = Modifier
@@ -93,69 +89,68 @@ fun StoreScreen(navController: NavController, viewModel: StoreViewModel){
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 //Dialogs
-                CreateStoreDialog(
+                CreateProviderDialog(
                     show = showCreateDialog,
                     onDismiss = { showCreateDialog = false },
-                    onCreate = { name, address, city, logo, history, phone ->
-                        //    socials ->
-                        viewModel.createStore(
-                            request = StoreRequest( name, address, city, logo, history, phone),
+                    onCreate = { name, address,email, phone, contactName, notes ->
+                        viewModel.createProvider(
+                            request = ProviderRequest( name, address, email, phone, contactName, notes),
 //                            socials)
                             onSuccess = {
-                                refreshStores()
-                                newStoreName = ""
-                                newStoreAddress = ""
-                                newStoreCity = ""
-                                newStoreLogo = ""
-                                newStoreHistory = ""
-                                newStorePhone = ""
-                            //    newStoreSocials = emptyList()
+                                refreshProviders()
+                                newProviderName = ""
+                                newProviderAddress = ""
+                                newProviderEmail = ""
+                                newProviderPhone = ""
+                                newProviderContactName = ""
+                                newProviderNotes = ""
                             },
                             onError = {
                                 errorMessage = it
                             }
                         )
                     },
-                    name = newStoreName,
-                    onNameChange = {newStoreName = it},
-                    address = newStoreAddress,
-                    onAddressChange = {newStoreAddress = it},
-                    city = newStoreCity,
-                    onCityChange = {newStoreCity = it},
-                    logo = newStoreLogo,
-                    onLogoChange = {newStoreLogo = it},
-                    history = newStoreHistory,
-                    onHistoryChange = {newStoreHistory = it},
-                    phone = newStorePhone,
-                    onPhoneChange = {newStorePhone = it}
+                    name = newProviderName,
+                    onNameChange = {newProviderName = it},
+                    address = newProviderAddress,
+                    onAddressChange = {newProviderAddress = it},
+                    email = newProviderEmail,
+                    onEmailChange = {newProviderEmail = it},
+                    phone = newProviderPhone,
+                    onPhoneChange = {newProviderPhone = it},
+                    contactName = newProviderContactName,
+                    onContactNameChange = {newProviderContactName = it},
+                    notes = newProviderNotes,
+                    onNotesChange = {newProviderNotes = it},
                 )
-                EditStoreDialog(
+                EditProviderDialog(
                     show = showEditDialog,
                     onDismiss = { showEditDialog = false },
-                    onEdit = {id, name, address, city, logo, history, phone ->
-                        if (storeToEdit != null) {
-                            viewModel.updateStore(
+                    onEdit = {id, name, address,email, phone, contactName, notes ->
+                        if (providerToEdit != null) {
+                            viewModel.updateProvider(
                                 id = id,
-                                request = StoreRequest(name, address, city, logo, history, phone),
+                                request = ProviderRequest(name, address,email, phone, contactName, notes),
                                 onSuccess = {
-                                    refreshStores()
+                                    refreshProviders()
                                 },
                                 onError = { errorMessage = it }
                             )
 
                         }
                     },
-                    store = storeToEdit
+                    provider = providerToEdit
                 )
-                DeleteStoreDialog(
+
+                DeleteProviderDialog(
                     show = showDeleteDialog,
                     onDismiss = { showDeleteDialog = false },
                     onDelete = {
-                        if (storeToDelete != null) {
-                            viewModel.deleteStore(
-                                id = storeToDelete!!.id,
+                        if (providerToDelete != null) {
+                            viewModel.deleteProvider(
+                                id = providerToDelete!!.id,
                                 onSuccess = {
-                                    refreshStores()
+                                    refreshProviders()
                                 },
                                 onError = {
                                     errorMessage = it
@@ -163,35 +158,34 @@ fun StoreScreen(navController: NavController, viewModel: StoreViewModel){
                             )
                         }
                     },
-                    store = storeToDelete
+                    provider = providerToDelete
                 )
-                Text(text = "Tienda seleccionada = ${storeId}")
-                //Create Store
+
+                //Create Provider
                 Button(onClick = {
                     showCreateDialog = true
                 }) {
-                    Text("Crear Tienda")
+                    Text("Crear Proveedor")
                 }
                 if (errorMessage.isNotEmpty()) {
                     Text(
                         text = errorMessage,
                         modifier = Modifier.padding(16.dp)
                     )
-                } else if (stores.isNotEmpty()) {
+                } else if (providers.isNotEmpty()) {
                     LazyColumn(
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier.fillMaxSize()
                     ) {
-                        items(stores) { store ->
-                            StoreItem(
-                                store = store,
-                                storePreferences = storePreferences,
+                        items(providers) { provider ->
+                            ProviderItem(
+                                provider = provider,
                                 onEdit = {
-                                    storeToEdit = it
+                                    providerToEdit = it
                                     showEditDialog = true
                                 },
                                 onDelete = {
-                                    storeToDelete = it
+                                    providerToDelete = it
                                     showDeleteDialog = true
                                 }
                             )
@@ -207,20 +201,15 @@ fun StoreScreen(navController: NavController, viewModel: StoreViewModel){
 }
 
 @Composable
-fun StoreItem(
-    store: Store,
-    storePreferences: AppPreferences,
-    onEdit: (Store) -> Unit,
-    onDelete: (Store) -> Unit
+fun ProviderItem(
+    provider: Provider,
+    onEdit: (Provider) -> Unit,
+    onDelete: (Provider) -> Unit
 ) {
     Card(
         elevation = 4.dp,
         modifier = Modifier
             .fillMaxWidth()
-            .clickable {
-                storeId = store.id.toString()
-                storePreferences.saveStoreId(storeId)
-            }
     ) {
         Row (
             modifier = Modifier.padding(16.dp),
@@ -230,20 +219,20 @@ fun StoreItem(
             Column(
                 Modifier.weight(1f)
             ) {
-                Text(text = "ID: ${store.id}")
-                Text(text = "Name: ${store.name}")
-                Text(text = "Address: ${store.address}")
-                Text(text = "City: ${store.city}")
-                Text(text = "Logo: ${store.logo}")
-                Text(text = "History: ${store.history}")
-                Text(text = "Phone: ${store.phone}")
+                Text(text = "ID: ${provider.id}")
+                Text(text = "Name: ${provider.name}")
+                Text(text = "Address: ${provider.address}")
+                Text(text = "Email: ${provider.email}")
+                Text(text = "Phone: ${provider.phone}")
+                Text(text = "Contact: ${provider.contactPersonName}")
+                Text(text = "Notes: ${provider.notes}")
             }
             Row {
-                IconButton(onClick = { onEdit(store) }) {
-                    Icon(imageVector = Icons.Default.Edit, contentDescription = "Editar tienda")
+                IconButton(onClick = { onEdit(provider) }) {
+                    Icon(imageVector = Icons.Default.Edit, contentDescription = "Editar Proveedor")
                 }
-                IconButton(onClick = {onDelete(store)}) {
-                    Icon(imageVector = Icons.Default.Delete, contentDescription = "Eliminar tienda")
+                IconButton(onClick = {onDelete(provider)}) {
+                    Icon(imageVector = Icons.Default.Delete, contentDescription = "Eliminar Proveedor")
                 }
             }
         }
@@ -252,39 +241,39 @@ fun StoreItem(
 }
 
 @Composable
-fun CreateStoreDialog(
+fun CreateProviderDialog(
     show: Boolean,
     onDismiss: () -> Unit,
-    //name, address,city,logo,history,phone
     onCreate: (String, String, String, String, String, String) -> Unit,
     name: String,
     onNameChange: (String) -> Unit,
     address:String,
     onAddressChange:(String) -> Unit,
-    city: String,
-    onCityChange : (String) -> Unit,
-    logo : String,
-    onLogoChange :(String) -> Unit,
-    history:String,
-    onHistoryChange:(String) -> Unit,
+    email: String,
+    onEmailChange : (String) -> Unit,
     phone:String,
-    onPhoneChange: (String) -> Unit
+    onPhoneChange: (String) -> Unit,
+    contactName : String,
+    onContactNameChange :(String) -> Unit,
+    notes:String,
+    onNotesChange:(String) -> Unit,
+
 ) {
     if (show) {
         Dialog(onDismissRequest = onDismiss) {
             Surface(shape = MaterialTheme.shapes.medium) {
                 Column(Modifier.padding(16.dp)) {
-                    Text("Crear Tienda", style = MaterialTheme.typography.h6)
-                    OutlinedTextField(value = name, onValueChange = onNameChange, label = { Text("Nombre") })
+                    Text("Crear Proveedor", style = MaterialTheme.typography.h6)
+                    OutlinedTextField(value = name, onValueChange = onNameChange, label = { Text("Nombre (Empresa)") })
                     OutlinedTextField(value = address, onValueChange = onAddressChange, label = { Text("Direccion") })
-                    OutlinedTextField(value = city, onValueChange = onCityChange, label = { Text("Ciudad") })
-                    OutlinedTextField(value = history, onValueChange = onHistoryChange, label = { Text("Historia") })
+                    OutlinedTextField(value = email, onValueChange = onEmailChange, label = { Text("Correo Electronico") })
                     OutlinedTextField(value = phone, onValueChange = onPhoneChange, label = { Text("Telefono") })
-                    uploadImage(buttonText = "Elegir logo de la tienda")
+                    OutlinedTextField(value = contactName, onValueChange = onContactNameChange, label = { Text("Nombre de la persona del contacto") })
+                    OutlinedTextField(value = notes, onValueChange = onNotesChange, label = { Text("Notas") })
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                         TextButton(onClick = onDismiss) {Text("Cancelar") }
                         Spacer(Modifier.width(8.dp))
-                        Button(onClick = { onCreate(name, address,city, logo, history, phone); onDismiss() }) {Text("Crear") }
+                        Button(onClick = { onCreate(name, address,email, phone, contactName, notes); onDismiss() }) {Text("Crear") }
                     }
                 }
             }
@@ -293,35 +282,35 @@ fun CreateStoreDialog(
 }
 
 @Composable
-fun EditStoreDialog(
+fun EditProviderDialog(
     show: Boolean,
     onDismiss: () -> Unit,
     onEdit: (Int, String, String, String, String, String, String) -> Unit,
-    store: Store?
+    provider: Provider?
 ) {
-    if (show && store != null) {
-        var editedName by remember { mutableStateOf(store.name) }
-        var editedAddress by remember { mutableStateOf(store.address) }
-        var editedCity by remember { mutableStateOf(store.city) }
-        var editedLogo by remember { mutableStateOf(store.logo) }
-        var editedHistory by remember { mutableStateOf(store.history) }
-        var editedPhone by remember { mutableStateOf(store.phone) }
+    if (show && provider != null) {
+        var editedName by remember { mutableStateOf(provider.name) }
+        var editedAddress by remember { mutableStateOf(provider.address) }
+        var editedEmail by remember { mutableStateOf(provider.email) }
+        var editedPhone by remember { mutableStateOf(provider.phone) }
+        var editedContactName by remember { mutableStateOf(provider.contactPersonName) }
+        var editedNotes by remember { mutableStateOf(provider.notes) }
 
 
         Dialog(onDismissRequest = onDismiss) {
             Surface(shape = MaterialTheme.shapes.medium) {
                 Column(Modifier.padding(16.dp)) {
-                    Text("Editar Tienda", style = MaterialTheme.typography.h6)
-                    OutlinedTextField(value = editedName, onValueChange = { editedName = it }, label = { Text("Nombre") })
+                    Text("Editar Proveedor", style = MaterialTheme.typography.h6)
+                    OutlinedTextField(value = editedName, onValueChange = { editedName = it }, label = { Text("Nombre (de la empresa)") })
                     OutlinedTextField(value = editedAddress, onValueChange = { editedAddress = it }, label = { Text("Direccion") })
-                    OutlinedTextField(value = editedCity, onValueChange = { editedCity = it }, label = { Text("Ciudad") })
-                    OutlinedTextField(value = editedHistory, onValueChange = { editedHistory = it }, label = { Text("Historia") })
+                    OutlinedTextField(value = editedEmail, onValueChange = { editedEmail = it }, label = { Text("Email") })
                     OutlinedTextField(value = editedPhone, onValueChange = { editedPhone = it }, label = { Text("Telefono") })
+                    OutlinedTextField(value = editedContactName, onValueChange = { editedContactName = it }, label = { Text("Nombre de la persona del contacto") })
                     uploadImage(buttonText = "Elegir logo de la tienda")
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                         TextButton(onClick = onDismiss) {Text("Cancelar") }
                         Spacer(Modifier.width(8.dp))
-                        Button(onClick = { onEdit(store.id, editedName, editedAddress,editedCity,editedLogo,editedHistory,editedPhone); onDismiss() }) {Text("Guardar") }
+                        Button(onClick = { onEdit(provider.id, editedName, editedAddress,editedEmail,editedPhone,editedContactName,editedNotes); onDismiss() }) {Text("Guardar") }
                     }
                 }
             }
@@ -330,17 +319,17 @@ fun EditStoreDialog(
 }
 
 @Composable
-fun DeleteStoreDialog(
+fun DeleteProviderDialog(
     show: Boolean,
     onDismiss: () -> Unit,
     onDelete: () -> Unit,
-    store: Store?
+    provider: Provider?
 ) {
-    if (show && store != null) {
+    if (show && provider != null) {
         Dialog(onDismissRequest = onDismiss) {
             Surface(shape = MaterialTheme.shapes.medium) {
                 Column(Modifier.padding(16.dp)) {
-                    Text("¿Seguro que desea eliminar la tienda: ${store.name}?", style = MaterialTheme.typography.h6)
+                    Text("¿Seguro que desea eliminar al proveedor: ${provider.name}?", style = MaterialTheme.typography.h6)
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                         TextButton(onClick = onDismiss) {Text("Cancelar") }
                         Spacer(Modifier.width(8.dp))

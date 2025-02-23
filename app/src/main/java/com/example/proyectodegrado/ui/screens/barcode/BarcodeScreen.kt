@@ -18,7 +18,7 @@ import com.example.proyectodegrado.ui.components.Header
 @Composable
 fun BarcodeScreen(navController: NavController){
     Scaffold(
-        topBar = { Header(navController = navController)},
+        topBar = { Header(navController = navController, title = "Escaneo de productos")},
         content = { paddingValues ->
             Column(
                 modifier = Modifier

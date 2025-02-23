@@ -18,7 +18,7 @@ import com.example.proyectodegrado.ui.components.Header
 @Composable
 fun SettingsScreen(navController: NavController){
     Scaffold(
-        topBar = { Header(navController = navController)},
+        topBar = { Header(navController = navController, title = "Ajustes")},
         content = { paddingValues ->
             Column(
                 modifier = Modifier

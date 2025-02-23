@@ -26,6 +26,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.internal.StabilityInferred
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -41,11 +42,11 @@ import androidx.navigation.NavController
 import com.example.proyectodegrado.R
 
 @Composable
-fun Header(navController: NavController){
+fun Header(navController: NavController, title: String){
     var isDrawerOpen by remember { mutableStateOf(false) }
     // TopBar
     TopAppBar(
-        title = { Text("Tienda amiga") },
+        title = { Text(title) },
         actions = {
             IconButton(onClick = { isDrawerOpen = true }) {
                 Icon(Icons.Default.Menu, contentDescription = "Open Drawer")
@@ -90,6 +91,8 @@ fun Header(navController: NavController){
                                 navController.navigate("forecast")
                             } else if (screen == "Caja"){
                                 navController.navigate("balance")
+                            } else if (screen == "Proveedores"){
+                                navController.navigate("providers")
                             } else if (screen == "Codigo de barras"){
                                 navController.navigate("barcode")
                             } else if (screen == "Ajustes"){
@@ -115,6 +118,7 @@ fun DrawerContent(onItemSelected: (String) -> Unit) {
     val productsIcon = ImageVector.vectorResource(id = R.drawable.products)
     val storeIcon = ImageVector.vectorResource(id = R.drawable.store)
     val balanceIcon = ImageVector.vectorResource(id = R.drawable.wallet)
+    val providerIcon = ImageVector.vectorResource(id = R.drawable.truck)
     val barcodeIcon = ImageVector.vectorResource(id = R.drawable.barcode_scanner)
 
     Column(
@@ -155,6 +159,7 @@ fun DrawerContent(onItemSelected: (String) -> Unit) {
         DrawerItem("Empleados", workersIcon, onItemSelected)
         DrawerItem("Pronosticos", forecastIcon, onItemSelected)
         DrawerItem("Caja", balanceIcon, onItemSelected)
+        DrawerItem("Proovedores", providerIcon, onItemSelected)
         DrawerItem("Codigo de barras", barcodeIcon , onItemSelected)
         DrawerItem("Ajustes", settingsIcon, onItemSelected)
     }

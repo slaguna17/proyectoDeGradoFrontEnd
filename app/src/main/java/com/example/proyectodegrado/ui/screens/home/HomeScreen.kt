@@ -16,7 +16,7 @@ import com.example.proyectodegrado.ui.components.Header
 @Composable
 fun HomeScreen(navController: NavController) {
     Scaffold(
-        topBar = { Header(navController = navController)},
+        topBar = { Header(navController = navController, title = "Inicio")},
         content = { paddingValues ->
             Column(
                 modifier = Modifier

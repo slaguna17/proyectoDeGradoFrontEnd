@@ -18,7 +18,7 @@ import com.example.proyectodegrado.ui.components.Header
 @Composable
 fun WorkersScreen(navController: NavController){
     Scaffold(
-        topBar = { Header(navController = navController)},
+        topBar = { Header(navController = navController, title = "Empleados")},
         content = { paddingValues ->
             Column(
                 modifier = Modifier

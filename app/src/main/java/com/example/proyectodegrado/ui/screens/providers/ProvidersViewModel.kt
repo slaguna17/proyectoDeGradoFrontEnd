@@ -1,9 +1,12 @@
-package com.example.proyectodegrado.ui.screens.store
+package com.example.proyectodegrado.ui.screens.providers
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.proyectodegrado.data.model.Provider
+import com.example.proyectodegrado.data.model.ProviderRequest
 import com.example.proyectodegrado.data.model.Store
 import com.example.proyectodegrado.data.model.StoreRequest
+import com.example.proyectodegrado.data.repository.ProviderRepository
 import com.example.proyectodegrado.data.repository.StoreRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -11,24 +14,24 @@ import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import java.io.IOException
 
-class StoreViewModel(private val storeRepository: StoreRepository) : ViewModel() {
+class ProvidersViewModel(private val providersRepository: ProviderRepository) : ViewModel() {
     //Result Messages
-    private var storeResult: String = ""
+    private var providerResult: String = ""
 
     //List and state flows
-    private val _stores = MutableStateFlow<List<Store>>(emptyList())
-    var stores: StateFlow<List<Store>> = _stores
+    private val _providers = MutableStateFlow<List<Provider>>(emptyList())
+    var providers: StateFlow<List<Provider>> = _providers
 
     //Single object flow
-    private val emptyStore = Store(-1, "","", "","","","")
-    private val _store = MutableStateFlow<Store>(emptyStore)
+    private val emptyProvider = Provider(-1, "","", "","","", "")
+    private val _provider = MutableStateFlow<Provider>(emptyProvider)
 
-    //Store Functions
-    fun fetchStores(onSuccess: () -> Unit, onError: (String) -> Unit) {
+    //Provider Functions
+    fun fetchProviders(onSuccess: () -> Unit, onError: (String) -> Unit) {
         viewModelScope.launch {
             try {
-                val storeList = storeRepository.getAllStores()
-                _stores.value = storeList
+                val providerList = providersRepository.getAllProviders()
+                _providers.value = providerList
                 onSuccess()
             } catch (e: Exception) {
                 onError("Network error: ${e.message}")
@@ -38,11 +41,11 @@ class StoreViewModel(private val storeRepository: StoreRepository) : ViewModel()
         }
     }
 
-    fun fetchStore(id: Int, onSuccess: () -> Unit, onError: (String) -> Unit) {
+    fun fetchProvider(id: Int, onSuccess: () -> Unit, onError: (String) -> Unit) {
         viewModelScope.launch {
             try {
-                val store = storeRepository.getStore(id)
-                _store.value = store
+                val provider = providersRepository.getProvider(id)
+                _provider.value = provider
                 onSuccess()
             } catch (e: Exception) {
                 onError("Network error: ${e.message}")
@@ -52,13 +55,13 @@ class StoreViewModel(private val storeRepository: StoreRepository) : ViewModel()
         }
     }
 
-    fun createStore(request: StoreRequest, onSuccess: () -> Unit, onError: (String) -> Unit) {
+    fun createProvider(request: ProviderRequest, onSuccess: () -> Unit, onError: (String) -> Unit) {
         viewModelScope.launch {
             try {
-                val response = storeRepository.createStore(request)
+                val response = providersRepository.createProvider(request)
                 if (response.isSuccessful) {
-                    storeResult = response.body()?.message ?: "Created Store successful!"
-                    fetchStores(onSuccess = onSuccess, onError = onError)
+                    providerResult = response.body()?.message ?: "Created Provider successful!"
+                    fetchProviders(onSuccess = onSuccess, onError = onError)
                 } else {
                     onError("Failed: ${response.errorBody()?.string()}")
                 }
@@ -70,13 +73,13 @@ class StoreViewModel(private val storeRepository: StoreRepository) : ViewModel()
         }
     }
 
-    fun updateStore(id:Int, request: StoreRequest, onSuccess: () -> Unit, onError: (String) -> Unit) {
+    fun updateProvider(id:Int, request: ProviderRequest, onSuccess: () -> Unit, onError: (String) -> Unit) {
         viewModelScope.launch {
             try {
-                val response = storeRepository.updateStore(id,request)
+                val response = providersRepository.updateProvider(id,request)
                 if (response.isSuccessful) {
-                    storeResult = response.body()?.message ?: "Updated Store successfully!"
-                    fetchStores(onSuccess = onSuccess, onError = onError)
+                    providerResult = response.body()?.message ?: "Updated Provider successfully!"
+                    fetchProviders(onSuccess = onSuccess, onError = onError)
                 } else {
                     onError("Failed: ${response.errorBody()?.string()}")
                 }
@@ -88,13 +91,13 @@ class StoreViewModel(private val storeRepository: StoreRepository) : ViewModel()
         }
     }
 
-    fun deleteStore(id: Int, onSuccess: () -> Unit, onError: (String) -> Unit) {
+    fun deleteProvider(id: Int, onSuccess: () -> Unit, onError: (String) -> Unit) {
         viewModelScope.launch {
             try {
-                val response = storeRepository.deleteStore(id)
+                val response = providersRepository.deleteProvider(id)
                 if (response.isSuccessful) {
-                    storeResult = response.body()?.message ?: "Deleted store successfully!"
-                    fetchStores(onSuccess = onSuccess, onError = onError)
+                    providerResult = response.body()?.message ?: "Deleted provider successfully!"
+                    fetchProviders(onSuccess = onSuccess, onError = onError)
                 } else {
                     onError("Failed: ${response.errorBody()?.string()}")
                 }
