@@ -25,7 +25,8 @@ data class RegisterRequest(
     val phone: String,
     val status: String = "active", // Default value
     val last_access: String = currentTime.toString(),
-    val avatar: String? = null
+    val avatar: String? = null,
+    val roleId: Int
 )
 
 data class RegisterResponse(

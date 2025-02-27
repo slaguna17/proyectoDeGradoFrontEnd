@@ -6,7 +6,7 @@ data class Provider(
     val address: String,
     val email: String,
     val phone: String,
-    val contactPersonName: String,
+    val contact_person_name: String,
     val notes: String,
 )
 
@@ -15,7 +15,7 @@ data class ProviderRequest(
     val address: String,
     val email: String,
     val phone: String,
-    val contactPersonName: String,
+    val contact_person_name: String,
     val notes: String,
 )
 

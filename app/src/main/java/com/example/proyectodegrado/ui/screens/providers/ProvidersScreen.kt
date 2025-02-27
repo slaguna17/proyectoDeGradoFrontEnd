@@ -224,7 +224,7 @@ fun ProviderItem(
                 Text(text = "Address: ${provider.address}")
                 Text(text = "Email: ${provider.email}")
                 Text(text = "Phone: ${provider.phone}")
-                Text(text = "Contact: ${provider.contactPersonName}")
+                Text(text = "Contact: ${provider.contact_person_name}")
                 Text(text = "Notes: ${provider.notes}")
             }
             Row {
@@ -293,7 +293,7 @@ fun EditProviderDialog(
         var editedAddress by remember { mutableStateOf(provider.address) }
         var editedEmail by remember { mutableStateOf(provider.email) }
         var editedPhone by remember { mutableStateOf(provider.phone) }
-        var editedContactName by remember { mutableStateOf(provider.contactPersonName) }
+        var editedContactName by remember { mutableStateOf(provider.contact_person_name) }
         var editedNotes by remember { mutableStateOf(provider.notes) }
 
 

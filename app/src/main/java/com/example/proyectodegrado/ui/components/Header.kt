@@ -159,7 +159,7 @@ fun DrawerContent(onItemSelected: (String) -> Unit) {
         DrawerItem("Empleados", workersIcon, onItemSelected)
         DrawerItem("Pronosticos", forecastIcon, onItemSelected)
         DrawerItem("Caja", balanceIcon, onItemSelected)
-        DrawerItem("Proovedores", providerIcon, onItemSelected)
+        DrawerItem("Proveedores", providerIcon, onItemSelected)
         DrawerItem("Codigo de barras", barcodeIcon , onItemSelected)
         DrawerItem("Ajustes", settingsIcon, onItemSelected)
     }

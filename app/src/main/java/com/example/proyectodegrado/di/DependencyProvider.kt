@@ -4,13 +4,17 @@ import LoginViewModel
 import UserService
 import com.example.proyectodegrado.data.api.CategoryService
 import com.example.proyectodegrado.data.api.ProductService
+import com.example.proyectodegrado.data.api.ProviderService
 import com.example.proyectodegrado.data.api.RetrofitClient
 import com.example.proyectodegrado.data.api.StoreService
+import com.example.proyectodegrado.data.model.Provider
 import com.example.proyectodegrado.data.repository.CategoryRepository
 import com.example.proyectodegrado.data.repository.ProductRepository
+import com.example.proyectodegrado.data.repository.ProviderRepository
 import com.example.proyectodegrado.data.repository.StoreRepository
 import com.example.proyectodegrado.data.repository.UserRepository
 import com.example.proyectodegrado.ui.screens.products.ProductViewModel
+import com.example.proyectodegrado.ui.screens.providers.ProvidersViewModel
 import com.example.proyectodegrado.ui.screens.register.RegisterViewModel
 import com.example.proyectodegrado.ui.screens.store.StoreViewModel
 
@@ -75,8 +79,19 @@ object DependencyProvider {
         return StoreViewModel(storeRepository)
     }
 
-    // Puedes agregar más dependencias aquí:
-    // val productService: ProductService
-    // val productRepository: ProductRepository
-    // val productViewModel: ProductViewModel
+
+    // Servicio de Provider
+    val providerService: ProviderService by lazy {
+        RetrofitClient.createService(ProviderService::class.java)
+    }
+
+    // Repositorio de Provider
+    val providerRepository: ProviderRepository by lazy {
+        ProviderRepository(providerService)
+    }
+
+    // ViewModel para Stores
+    fun provideProviderViewModel(): ProvidersViewModel {
+        return ProvidersViewModel(providerRepository)
+    }
 }

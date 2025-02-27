@@ -2,6 +2,7 @@ import com.example.proyectodegrado.data.model.LoginRequest
 import com.example.proyectodegrado.data.model.LoginResponse
 import com.example.proyectodegrado.data.model.RegisterRequest
 import com.example.proyectodegrado.data.model.RegisterResponse
+import com.example.proyectodegrado.data.model.Role
 import com.example.proyectodegrado.data.model.User
 import retrofit2.Response
 import retrofit2.http.Body
@@ -25,4 +26,7 @@ interface UserService {
     //Create new User
     @POST("/api/users/register")
     suspend fun registerUser(@Body request: RegisterRequest): Response<RegisterResponse>
+
+    @GET("/api/users/default/roles")
+    suspend fun getRoles(): List<Role>
 }
