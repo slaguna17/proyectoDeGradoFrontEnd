@@ -87,6 +87,8 @@ fun Header(navController: NavController, title: String){
                                 navController.navigate("store")
                             } else if (screen == "Empleados"){
                                 navController.navigate("workers")
+                            } else if (screen == "Horarios"){
+                                navController.navigate("schedule")
                             } else if (screen == "Pronosticos"){
                                 navController.navigate("forecast")
                             } else if (screen == "Caja"){
@@ -114,6 +116,7 @@ fun DrawerContent(onItemSelected: (String) -> Unit) {
     val homeIcon = ImageVector.vectorResource(id = R.drawable.home)
     val settingsIcon = ImageVector.vectorResource(id = R.drawable.settings)
     val workersIcon = ImageVector.vectorResource(id = R.drawable.group)
+    val scheduleIcon = ImageVector.vectorResource(id = R.drawable.schedule)
     val forecastIcon = ImageVector.vectorResource(id = R.drawable.bar_chart)
     val productsIcon = ImageVector.vectorResource(id = R.drawable.products)
     val storeIcon = ImageVector.vectorResource(id = R.drawable.store)
@@ -134,7 +137,7 @@ fun DrawerContent(onItemSelected: (String) -> Unit) {
                 .padding(bottom = 8.dp)
         ){
             Text(
-                text = "Tienda amiga",
+                text = "TuKiosco",
                 style = MaterialTheme.typography.h6,
             )
             IconButton(onClick = {  }) {
@@ -157,6 +160,7 @@ fun DrawerContent(onItemSelected: (String) -> Unit) {
         DrawerItem("Productos", productsIcon, onItemSelected)
         DrawerItem("Tienda", storeIcon, onItemSelected)
         DrawerItem("Empleados", workersIcon, onItemSelected)
+        DrawerItem("Horarios", scheduleIcon, onItemSelected)
         DrawerItem("Pronosticos", forecastIcon, onItemSelected)
         DrawerItem("Caja", balanceIcon, onItemSelected)
         DrawerItem("Proveedores", providerIcon, onItemSelected)

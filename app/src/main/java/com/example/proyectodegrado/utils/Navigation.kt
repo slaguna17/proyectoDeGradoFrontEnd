@@ -20,6 +20,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.navArgument
 import com.example.proyectodegrado.ui.screens.products.ProductsByCategoryScreen
 import com.example.proyectodegrado.ui.screens.providers.ProvidersScreen
+import com.example.proyectodegrado.ui.screens.schedule.ScheduleScreen
 
 @Composable
 fun Navigation() {
@@ -29,6 +30,7 @@ fun Navigation() {
     val productViewModel = DependencyProvider.provideProductViewModel()
     val storeViewModel = DependencyProvider.provideStoreViewModel()
     val providerViewModel = DependencyProvider.provideProviderViewModel()
+    val scheduleViewModel = DependencyProvider.provideScheduleViewModel()
 
     NavHost(navController, startDestination = "login"){
         composable("login"){ LoginScreen(navController = navController, loginViewModel) }
@@ -46,6 +48,7 @@ fun Navigation() {
         }
         composable("store"){ StoreScreen(navController = navController, storeViewModel) }
         composable("workers"){ WorkersScreen(navController = navController) }
+        composable("schedule"){ ScheduleScreen(navController = navController, scheduleViewModel) }
         composable("forecast"){ ForecastScreen(navController = navController) }
         composable("balance"){ BalanceScreen(navController = navController) }
         composable("providers"){ ProvidersScreen(navController = navController, providerViewModel) }

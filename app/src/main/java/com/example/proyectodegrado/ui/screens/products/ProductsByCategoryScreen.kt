@@ -3,6 +3,7 @@ package com.example.proyectodegrado.ui.screens.products
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
@@ -15,19 +16,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
-import com.example.proyectodegrado.R
-import com.example.proyectodegrado.data.model.Category
-import com.example.proyectodegrado.data.model.CategoryRequest
+import coil.compose.AsyncImage
 import com.example.proyectodegrado.data.model.Product
 import com.example.proyectodegrado.data.model.ProductRequest
 import com.example.proyectodegrado.ui.components.Header
 import com.example.proyectodegrado.ui.components.uploadImage
-
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.unit.sp
 
 @Composable
 fun ProductsByCategoryScreen(navController: NavController, viewModel: ProductViewModel, categoryId: Int) {
@@ -75,7 +78,6 @@ fun ProductsByCategoryScreen(navController: NavController, viewModel: ProductVie
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text("Categoria ${currentCategory}")
             //Dialogs
             CreateProductDialog(
                 show = showCreateDialog,
@@ -161,7 +163,9 @@ fun ProductsByCategoryScreen(navController: NavController, viewModel: ProductVie
                 product = productToDelete
             )
             //Create Product in category
-            Button(onClick = {
+            Button(
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+                onClick = {
                 showCreateDialog = true
             }) {
                 Text("Crear Producto en esta categoria")
@@ -205,37 +209,146 @@ fun ProductItem(
     onDelete: (Product) -> Unit
 ) {
     Card(
-        elevation = 4.dp,
-        modifier = Modifier.fillMaxWidth()
-    ){
-        Row (
-            modifier = Modifier.padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-
-        ){
-            Column(
-                Modifier.weight(1f)
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        shape = RoundedCornerShape(12.dp),
+        elevation = 4.dp
+    ) {
+        Column {
+            // Image section
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(180.dp)
             ) {
-                Text(text = "ID: ${product.id}")
-                Text(text = "Name: ${product.name}")
-                Text(text = "Description: ${product.description}")
-                Text(text = "SKU: ${product.SKU}")
-                Text(text = "Image: ${product.image}")
-                Text(text = "Brand: ${product.brand}")
-                Text(text = "Category ID: ${product.category_id}")
-            }
-            Row {
-                IconButton(onClick = { onEdit(product) }) {
-                    Icon(imageVector = Icons.Default.Edit, contentDescription = "Editar producto")
+                AsyncImage(
+                    model = product.image,
+                    contentDescription = "Product Image",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+
+                // Brand badge
+                Surface(
+                    modifier = Modifier
+                        .padding(12.dp)
+                        .align(Alignment.TopEnd),
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colors.primary.copy(alpha = 0.9f)
+                ) {
+                    Text(
+                        text = product.brand,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        color = MaterialTheme.colors.onPrimary
+                    )
                 }
-                IconButton(onClick = { onDelete(product)}) {
-                    Icon(imageVector = Icons.Default.Delete, contentDescription = "Eliminar producto")
+            }
+
+            // Content section
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = "ID: ${product.id}",
+                    style = MaterialTheme.typography.caption,
+                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f)
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text = product.name,
+                    style = MaterialTheme.typography.h6,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Enhanced description section
+                Text(
+                    text = "Description:",
+                    style = MaterialTheme.typography.subtitle2,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.8f)
+                )
+
+                Spacer(modifier = Modifier.height(2.dp))
+
+                Text(
+                    text = product.description,
+                    style = MaterialTheme.typography.body2,
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis,
+                    lineHeight = 20.sp
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Add a "Read more" option if description is long
+                if (product.description.length > 100) {
+                    Text(
+                        text = "Read more",
+                        style = MaterialTheme.typography.caption,
+                        color = MaterialTheme.colors.primary,
+                        modifier = Modifier.clickable { /* Add action here */ }
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "SKU: ${product.SKU}",
+                        style = MaterialTheme.typography.caption,
+                        color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f)
+                    )
+                    Text(
+                        text = "Category: ${product.category_id}",
+                        style = MaterialTheme.typography.caption,
+                        color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Buttons
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    OutlinedButton(
+                        onClick = { onEdit(product) },
+                        modifier = Modifier.padding(end = 8.dp),
+                        border = BorderStroke(1.dp, MaterialTheme.colors.primary)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "Edit",
+                            tint = MaterialTheme.colors.primary
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Edit")
+                    }
+
+                    Button(
+                        onClick = { onDelete(product) },
+                        colors = ButtonDefaults.buttonColors(
+                            backgroundColor = Color.Red,
+                            contentColor = Color.White
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Delete"
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Delete")
+                    }
                 }
             }
         }
     }
-    Spacer(modifier = Modifier.height(2.dp))
 }
 
 @Composable

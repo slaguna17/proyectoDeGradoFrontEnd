@@ -57,7 +57,6 @@ android {
 
 dependencies {
     implementation("androidx.compose.ui:ui:1.5.0")
-    implementation("androidx.compose.material:material:1.5.0")
     implementation("androidx.activity:activity-compose:1.7.2")
     implementation("com.google.accompanist:accompanist-permissions:0.28.0")
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
@@ -65,6 +64,7 @@ dependencies {
     implementation("com.squareup.okhttp3:logging-interceptor:4.9.0")
     implementation("androidx.navigation:navigation-compose:2.7.0")
     implementation("androidx.datastore:datastore-preferences:1.1.2")
+    implementation("io.coil-kt:coil-compose:2.4.0")
 
     implementation(libs.androidx.material)
     implementation(libs.androidx.core.ktx)

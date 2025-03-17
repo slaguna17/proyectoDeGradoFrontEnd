@@ -6,16 +6,19 @@ import com.example.proyectodegrado.data.api.CategoryService
 import com.example.proyectodegrado.data.api.ProductService
 import com.example.proyectodegrado.data.api.ProviderService
 import com.example.proyectodegrado.data.api.RetrofitClient
+import com.example.proyectodegrado.data.api.ScheduleService
 import com.example.proyectodegrado.data.api.StoreService
 import com.example.proyectodegrado.data.model.Provider
 import com.example.proyectodegrado.data.repository.CategoryRepository
 import com.example.proyectodegrado.data.repository.ProductRepository
 import com.example.proyectodegrado.data.repository.ProviderRepository
+import com.example.proyectodegrado.data.repository.ScheduleRepository
 import com.example.proyectodegrado.data.repository.StoreRepository
 import com.example.proyectodegrado.data.repository.UserRepository
 import com.example.proyectodegrado.ui.screens.products.ProductViewModel
 import com.example.proyectodegrado.ui.screens.providers.ProvidersViewModel
 import com.example.proyectodegrado.ui.screens.register.RegisterViewModel
+import com.example.proyectodegrado.ui.screens.schedule.ScheduleViewModel
 import com.example.proyectodegrado.ui.screens.store.StoreViewModel
 
 object DependencyProvider {
@@ -79,7 +82,6 @@ object DependencyProvider {
         return StoreViewModel(storeRepository)
     }
 
-
     // Servicio de Provider
     val providerService: ProviderService by lazy {
         RetrofitClient.createService(ProviderService::class.java)
@@ -90,8 +92,25 @@ object DependencyProvider {
         ProviderRepository(providerService)
     }
 
-    // ViewModel para Stores
+    // ViewModel para Provider
     fun provideProviderViewModel(): ProvidersViewModel {
         return ProvidersViewModel(providerRepository)
     }
+
+    // Servicio de Schedule
+    val scheduleService: ScheduleService by lazy {
+        RetrofitClient.createService(ScheduleService::class.java)
+    }
+
+    // Repositorio de Schedule
+    val scheduleRepository: ScheduleRepository by lazy {
+        ScheduleRepository(scheduleService)
+    }
+
+    // ViewModel para Schedules
+    fun provideScheduleViewModel(): ScheduleViewModel {
+        return ScheduleViewModel(scheduleRepository)
+    }
+
+
 }
