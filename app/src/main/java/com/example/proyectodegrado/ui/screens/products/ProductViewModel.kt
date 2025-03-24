@@ -1,12 +1,20 @@
 package com.example.proyectodegrado.ui.screens.products
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.proyectodegrado.data.model.Category
 import com.example.proyectodegrado.data.model.CategoryRequest
 import com.example.proyectodegrado.data.model.Product
+import com.example.proyectodegrado.data.model.ProductData
 import com.example.proyectodegrado.data.model.ProductRequest
 import com.example.proyectodegrado.data.model.RegisterRequest
+import com.example.proyectodegrado.data.model.StoreData
 import com.example.proyectodegrado.data.model.User
 import com.example.proyectodegrado.data.repository.CategoryRepository
 import com.example.proyectodegrado.data.repository.ProductRepository
@@ -17,7 +25,10 @@ import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import java.io.IOException
 
-class ProductViewModel(private val productRepository: ProductRepository, private val categoryRepository: CategoryRepository) : ViewModel() {
+class ProductViewModel(
+    private val productRepository: ProductRepository,
+    private val categoryRepository: CategoryRepository
+) : ViewModel() {
     //Result Messages
     private var categoryResult: String = ""
     private var productResult: String = ""
@@ -156,7 +167,7 @@ class ProductViewModel(private val productRepository: ProductRepository, private
     fun createProduct(request: ProductRequest, onSuccess: () -> Unit, onError: (String) -> Unit) {
         viewModelScope.launch {
             try {
-                val response = productRepository.createProduct(request)
+                val response = productRepository.createProduct(request.product, request.store)
                 if (response.isSuccessful) {
                     productResult = response.body()?.message ?: "Created Product successfully!"
                     onSuccess()
@@ -194,7 +205,7 @@ class ProductViewModel(private val productRepository: ProductRepository, private
             try {
                 val response = productRepository.deleteProduct(id)
                 if (response.isSuccessful) {
-                    productResult = response.body()?.message ?: "Registration successful!"
+                    productResult = response.body()?.message ?: "Deleted successfully!"
                     fetchProductsByCategory(categoryId = id, onSuccess = onSuccess, onError = onError)
                 } else {
                     onError("Failed: ${response.errorBody()?.string()}")

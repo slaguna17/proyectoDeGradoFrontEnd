@@ -30,7 +30,13 @@ import com.example.proyectodegrado.ui.components.Header
 import com.example.proyectodegrado.ui.components.uploadImage
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.sp
+import com.example.proyectodegrado.data.model.ProductData
+import com.example.proyectodegrado.data.model.ProductRequest2
+import com.example.proyectodegrado.data.model.StoreData
+import com.example.proyectodegrado.di.AppPreferences
 
 @Composable
 fun ProductsByCategoryScreen(navController: NavController, viewModel: ProductViewModel, categoryId: Int) {
@@ -39,7 +45,11 @@ fun ProductsByCategoryScreen(navController: NavController, viewModel: ProductVie
     var errorMessage by remember { mutableStateOf("") }
     var currentCategory = categoryId
 
-
+    //App preferences
+    val context = LocalContext.current
+    val storePreferences = remember { AppPreferences(context) }
+    var storeId by remember { mutableIntStateOf(storePreferences.getStoreId()?.toInt() ?: 0) }
+    
     //Dialog variables
     var showCreateDialog by remember { mutableStateOf(false) }
     var showEditDialog by remember { mutableStateOf(false) }
@@ -51,9 +61,11 @@ fun ProductsByCategoryScreen(navController: NavController, viewModel: ProductVie
     var newProductImage by remember { mutableStateOf("") }
     var newProductSKU by remember { mutableStateOf("") }
     var newProductBrand by remember { mutableStateOf("") }
+    var newStock by remember { mutableStateOf(0) }
+    var newExpirationDate by remember { mutableStateOf("") }
 
     //Edit and delete variables
-    var productToEdit by remember { mutableStateOf<Product?>(null) }
+    var productToEdit by remember { mutableStateOf<ProductRequest2?>(null) }
     var productToDelete by remember { mutableStateOf<Product?>(null) }
 
     // Refresh function
@@ -65,6 +77,7 @@ fun ProductsByCategoryScreen(navController: NavController, viewModel: ProductVie
         )
     }
     LaunchedEffect(categoryId) {
+        storeId = storePreferences.getStoreId()?.toInt() ?: 0
         refreshProducts()
     }
 
@@ -82,15 +95,22 @@ fun ProductsByCategoryScreen(navController: NavController, viewModel: ProductVie
             CreateProductDialog(
                 show = showCreateDialog,
                 onDismiss = { showCreateDialog = false },
-                onCreate = {name, description, image, SKU, brand, category_id ->
+                onCreate = {name, description, image, SKU, brand, category_id, stock, expiration_date ->
                     viewModel.createProduct(
                         request = ProductRequest(
-                            SKU = SKU,
-                            name = name,
-                            description= description,
-                            image = image,
-                            brand = brand,
-                            category_id = category_id
+                            product = ProductData(
+                                SKU = SKU,
+                                name = name,
+                                description= description,
+                                image = image,
+                                brand = brand,
+                                category_id = category_id
+                            ),
+                            store = StoreData(
+                                store_id = storeId,
+                                stock = stock,
+                                expiration_date = expiration_date
+                            )
                         ),
                         onSuccess = {
                             refreshProducts()
@@ -115,22 +135,33 @@ fun ProductsByCategoryScreen(navController: NavController, viewModel: ProductVie
                 onSkuChange = {newProductSKU = it},
                 brand = newProductBrand,
                 onBrandChange = {newProductBrand = it},
-                category_id = currentCategory
+                category_id = currentCategory,
+                stock = newStock,
+                onStockChange = {newStock = it.toInt()},
+                expiration_date = newExpirationDate,
+                onDateChange = {newExpirationDate = it}
             )
             EditProductDialog(
                 show = showEditDialog,
                 onDismiss = { showEditDialog = false },
-                onEdit = {id, name, description, image, SKU, brand, category_id ->
+                onEdit = {id, name, description, image, SKU, brand, category_id, stock, expiration_date ->
                     if (productToEdit != null) {
                         viewModel.updateProduct(
                             id = id,
                             request = ProductRequest(
-                                SKU = SKU,
-                                name = name,
-                                description = description,
-                                image = image,
-                                brand = brand,
-                                category_id = category_id
+                                product = ProductData(
+                                    SKU = SKU,
+                                    name = name,
+                                    description= description,
+                                    image = image,
+                                    brand = brand,
+                                    category_id = category_id
+                                ),
+                                store = StoreData(
+                                    store_id = storeId,
+                                    stock = stock,
+                                    expiration_date = expiration_date
+                                )
                             ),
                             onSuccess = {
                                 refreshProducts()
@@ -142,7 +173,7 @@ fun ProductsByCategoryScreen(navController: NavController, viewModel: ProductVie
 
                     }
                 },
-                product = productToEdit
+                productRequest = productToEdit
             )
             DeleteProductDialog(
                 show = showDeleteDialog,
@@ -162,6 +193,7 @@ fun ProductsByCategoryScreen(navController: NavController, viewModel: ProductVie
                 },
                 product = productToDelete
             )
+            Text(text = "Tienda seleccionada = ${storeId}")
             //Create Product in category
             Button(
                 modifier = Modifier.align(Alignment.CenterHorizontally),
@@ -184,8 +216,14 @@ fun ProductsByCategoryScreen(navController: NavController, viewModel: ProductVie
                         ProductItem(
                             product = product,
                             onEdit = {
-                                productToEdit = it
-                                showEditDialog = true
+//                                productToEdit = ProductRequest2(
+//                                    product = it,
+//                                    store = StoreData(
+//                                        store_id = storeId,
+//                                        stock = ,
+//                                        expiration_date =
+//                                    ))
+//                                showEditDialog = true
                             },
                             onDelete = {
                                 productToDelete = it
@@ -201,251 +239,3 @@ fun ProductsByCategoryScreen(navController: NavController, viewModel: ProductVie
         }
     }
 }
-
-@Composable
-fun ProductItem(
-    product: Product,
-    onEdit: (Product) -> Unit,
-    onDelete: (Product) -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        shape = RoundedCornerShape(12.dp),
-        elevation = 4.dp
-    ) {
-        Column {
-            // Image section
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(180.dp)
-            ) {
-                AsyncImage(
-                    model = product.image,
-                    contentDescription = "Product Image",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
-
-                // Brand badge
-                Surface(
-                    modifier = Modifier
-                        .padding(12.dp)
-                        .align(Alignment.TopEnd),
-                    shape = RoundedCornerShape(16.dp),
-                    color = MaterialTheme.colors.primary.copy(alpha = 0.9f)
-                ) {
-                    Text(
-                        text = product.brand,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                        color = MaterialTheme.colors.onPrimary
-                    )
-                }
-            }
-
-            // Content section
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = "ID: ${product.id}",
-                    style = MaterialTheme.typography.caption,
-                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f)
-                )
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Text(
-                    text = product.name,
-                    style = MaterialTheme.typography.h6,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Enhanced description section
-                Text(
-                    text = "Description:",
-                    style = MaterialTheme.typography.subtitle2,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.8f)
-                )
-
-                Spacer(modifier = Modifier.height(2.dp))
-
-                Text(
-                    text = product.description,
-                    style = MaterialTheme.typography.body2,
-                    maxLines = 3,
-                    overflow = TextOverflow.Ellipsis,
-                    lineHeight = 20.sp
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Add a "Read more" option if description is long
-                if (product.description.length > 100) {
-                    Text(
-                        text = "Read more",
-                        style = MaterialTheme.typography.caption,
-                        color = MaterialTheme.colors.primary,
-                        modifier = Modifier.clickable { /* Add action here */ }
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = "SKU: ${product.SKU}",
-                        style = MaterialTheme.typography.caption,
-                        color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f)
-                    )
-                    Text(
-                        text = "Category: ${product.category_id}",
-                        style = MaterialTheme.typography.caption,
-                        color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Buttons
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    OutlinedButton(
-                        onClick = { onEdit(product) },
-                        modifier = Modifier.padding(end = 8.dp),
-                        border = BorderStroke(1.dp, MaterialTheme.colors.primary)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Edit,
-                            contentDescription = "Edit",
-                            tint = MaterialTheme.colors.primary
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("Edit")
-                    }
-
-                    Button(
-                        onClick = { onDelete(product) },
-                        colors = ButtonDefaults.buttonColors(
-                            backgroundColor = Color.Red,
-                            contentColor = Color.White
-                        )
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Delete,
-                            contentDescription = "Delete"
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("Delete")
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun CreateProductDialog(
-    show: Boolean,
-    onDismiss: () -> Unit,
-    //(name, description, image, SKU, brand, category_id
-    onCreate: (String, String, String, String, String, Int) -> Unit,
-    name: String,
-    onNameChange: (String) -> Unit,
-    description: String,
-    onDescriptionChange: (String) -> Unit,
-    image: String,
-    onImageChange:(String) -> Unit,
-    sku: String,
-    onSkuChange: (String) -> Unit,
-    brand: String,
-    onBrandChange: (String) -> Unit,
-    category_id: Int
-) {
-    if (show) {
-        Dialog(onDismissRequest = onDismiss) {
-            Surface(shape = MaterialTheme.shapes.medium) {
-                Column(Modifier.padding(16.dp)) {
-                    Text("Crear Producto", style = MaterialTheme.typography.h6)
-                    OutlinedTextField(value = name, onValueChange = onNameChange, label = { Text("Nombre del producto") })
-                    OutlinedTextField(value = description, onValueChange = onDescriptionChange, label = { Text("Descripción del producto") })
-                    OutlinedTextField(value = sku, onValueChange = onSkuChange, label = { Text("SKU del producto") })
-                    OutlinedTextField(value = brand, onValueChange = onBrandChange, label = { Text("Marca del producto") })
-                    uploadImage(buttonText = "Elegir foto del producto")
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                        TextButton(onClick = onDismiss) { Text("Cancelar") }
-                        Spacer(Modifier.width(8.dp))
-                        Button(onClick = { onCreate(name, description,image,sku, brand, category_id); onDismiss() }) { Text("Crear") }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun EditProductDialog(
-    show: Boolean,
-    onDismiss: () -> Unit,
-    //(id, name, description, image, SKU, brand, category_id
-    onEdit: (Int, String, String, String, String, String, Int) -> Unit,
-    product: Product?
-) {
-    if (show && product != null) {
-        var editedName by remember { mutableStateOf(product.name) }
-        var editedDescription by remember { mutableStateOf(product.description) }
-        var editedImage by remember { mutableStateOf(product.image) }
-        var editedSku by remember { mutableStateOf(product.SKU) }
-        var editedBrand by remember { mutableStateOf(product.brand) }
-        var editedCategory by remember { mutableStateOf(product.category_id) }
-
-        Dialog(onDismissRequest = onDismiss) {
-            Surface(shape = MaterialTheme.shapes.medium) {
-                Column(Modifier.padding(16.dp)) {
-                    Text("Editar Producto", style = MaterialTheme.typography.h6)
-                    OutlinedTextField(value = editedName, onValueChange = { editedName = it }, label = { Text("Nombre del producto") })
-                    OutlinedTextField(value = editedDescription, onValueChange = { editedDescription = it }, label = { Text("Descripción del producto") })
-                    OutlinedTextField(value = editedSku, onValueChange = { editedSku = it }, label = { Text("SKU del producto") })
-                    OutlinedTextField(value = editedBrand, onValueChange = { editedBrand = it }, label = { Text("Marca del producto") })
-                    uploadImage(buttonText = "Cambiar foto del producto")
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                        TextButton(onClick = onDismiss) { Text("Cancelar") }
-                        Spacer(Modifier.width(8.dp))
-                        Button(onClick = { onEdit(product.id, editedName, editedDescription,editedImage, editedSku, editedBrand, editedCategory); onDismiss() }) {Text("Guardar") }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun DeleteProductDialog(
-    show: Boolean,
-    onDismiss: () -> Unit,
-    onDelete: () -> Unit,
-    product: Product?
-) {
-    if (show && product != null) {
-        Dialog(onDismissRequest = onDismiss) {
-            Surface(shape = MaterialTheme.shapes.medium) {
-                Column(Modifier.padding(16.dp)) {
-                    Text("¿Seguro que desea eliminar el producto: ${product.name}?", style = MaterialTheme.typography.h6)
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                        TextButton(onClick = onDismiss) {Text("Cancelar") }
-                        Spacer(Modifier.width(8.dp))
-                        Button(onClick = { onDelete(); onDismiss() }) { Text("Eliminar") }
-                    }
-                }
-            }
-        }
-    }
-}
-

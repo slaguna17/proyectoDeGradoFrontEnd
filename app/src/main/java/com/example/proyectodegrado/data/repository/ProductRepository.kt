@@ -2,8 +2,11 @@ package com.example.proyectodegrado.data.repository
 
 import com.example.proyectodegrado.data.api.ProductService
 import com.example.proyectodegrado.data.model.Product
+import com.example.proyectodegrado.data.model.ProductData
 import com.example.proyectodegrado.data.model.ProductRequest
 import com.example.proyectodegrado.data.model.ProductResponse
+import com.example.proyectodegrado.data.model.StoreData
+import com.example.proyectodegrado.di.AppPreferences
 import retrofit2.Response
 
 class ProductRepository (private val productService: ProductService) {
@@ -18,10 +21,9 @@ class ProductRepository (private val productService: ProductService) {
     }
 
     //Create new Product
-    suspend fun createProduct(request: ProductRequest):Response<ProductResponse>{
-        return productService.createProduct(request)
+    suspend fun createProduct(product: ProductData, store: StoreData): Response<ProductResponse> {
+        return productService.createProduct(ProductRequest(product, store))
     }
-
     //Update Product
     suspend fun updateProduct(productId: Int, request: ProductRequest): Response<ProductResponse> {
         return productService.updateProduct(productId, request)

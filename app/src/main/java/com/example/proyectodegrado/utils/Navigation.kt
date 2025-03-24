@@ -9,7 +9,6 @@ import com.example.proyectodegrado.ui.screens.balance.BalanceScreen
 import com.example.proyectodegrado.ui.screens.barcode.BarcodeScreen
 import com.example.proyectodegrado.ui.screens.forecast.ForecastScreen
 import com.example.proyectodegrado.ui.screens.login.LoginScreen
-import com.example.proyectodegrado.ui.screens.products.ProductsScreen
 import com.example.proyectodegrado.ui.screens.register.RegisterScreen
 import com.example.proyectodegrado.ui.screens.settings.SettingsScreen
 import com.example.proyectodegrado.ui.screens.store.StoreScreen
@@ -18,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.navArgument
+import com.example.proyectodegrado.ui.screens.products.CategoriesScreen
 import com.example.proyectodegrado.ui.screens.products.ProductsByCategoryScreen
 import com.example.proyectodegrado.ui.screens.providers.ProvidersScreen
 import com.example.proyectodegrado.ui.screens.schedule.ScheduleScreen
@@ -38,7 +38,7 @@ fun Navigation() {
         composable("register"){ RegisterScreen(navController = navController, registerViewModel) }
         composable("testAPI"){ GetAllUsers() }
 
-        composable("products"){ ProductsScreen(navController = navController, productViewModel) }
+        composable("products"){ CategoriesScreen(navController = navController, productViewModel) }
         composable(
             route = "products/{categoryId}",
             arguments = listOf(navArgument("categoryId") { type = NavType.IntType })
