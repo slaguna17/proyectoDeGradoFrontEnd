@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
 import com.example.proyectodegrado.data.model.RegisterRequest
 import com.example.proyectodegrado.data.model.Role
+import com.example.proyectodegrado.data.repository.ImageRepository
 import com.example.proyectodegrado.data.repository.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,7 +14,7 @@ import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import java.io.IOException
 
-class RegisterViewModel(private val userRepository: UserRepository) : ViewModel() {
+class RegisterViewModel(private val userRepository: UserRepository, private val imageRepository: ImageRepository) : ViewModel() {
 
     private var registerResult: String = ""
     private val _roles = MutableStateFlow<List<Role>>(emptyList())

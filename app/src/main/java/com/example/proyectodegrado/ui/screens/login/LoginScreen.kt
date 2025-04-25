@@ -1,6 +1,5 @@
 package com.example.proyectodegrado.ui.screens.login
 
-import LoginViewModel
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement

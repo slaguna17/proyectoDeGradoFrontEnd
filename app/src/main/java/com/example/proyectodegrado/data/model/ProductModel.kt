@@ -40,3 +40,15 @@ data class ProductResponse(
     val productId: Int? = null // Example of returning created user ID
 )
 
+// Puedes ponerla dentro de ProductViewModel.kt o en data/model/
+data class CreateProductFormState(
+    val name: String = "",
+    val description: String = "",
+    val sku: String = "",
+    val brand: String = "",
+    val stock: String = "0", // Usar String para el TextField
+    val expirationDate: String = "",
+    val categoryId: Int = -1, // Asigna un valor inicial o asegúrate que se seleccione
+    val imageUrl: String? = null // URL de la imagen subida
+)
+

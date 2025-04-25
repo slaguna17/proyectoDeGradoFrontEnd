@@ -36,9 +36,6 @@ import androidx.navigation.NavController
 import com.example.proyectodegrado.data.model.Store
 import com.example.proyectodegrado.data.model.StoreRequest
 import com.example.proyectodegrado.di.AppPreferences
-import com.example.proyectodegrado.ui.components.Header
-import com.example.proyectodegrado.ui.components.uploadImage
-
 
 var storeId = ""
 @Composable
@@ -82,128 +79,121 @@ fun StoreScreen(navController: NavController, viewModel: StoreViewModel){
         refreshStores()
     }
 
-    Scaffold(
-        topBar = { Header(navController = navController, title = "Tiendas")},
-        content = { paddingValues ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                //Dialogs
-                CreateStoreDialog(
-                    show = showCreateDialog,
-                    onDismiss = { showCreateDialog = false },
-                    onCreate = { name, address, city, logo, history, phone ->
-                        //    socials ->
-                        viewModel.createStore(
-                            request = StoreRequest( name, address, city, logo, history, phone),
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        //Dialogs
+        CreateStoreDialog(
+            show = showCreateDialog,
+            onDismiss = { showCreateDialog = false },
+            onCreate = { name, address, city, logo, history, phone ->
+                //    socials ->
+                viewModel.createStore(
+                    request = StoreRequest( name, address, city, logo, history, phone),
 //                            socials)
-                            onSuccess = {
-                                refreshStores()
-                                newStoreName = ""
-                                newStoreAddress = ""
-                                newStoreCity = ""
-                                newStoreLogo = ""
-                                newStoreHistory = ""
-                                newStorePhone = ""
-                            //    newStoreSocials = emptyList()
-                            },
-                            onError = {
-                                errorMessage = it
-                            }
-                        )
+                    onSuccess = {
+                        refreshStores()
+                        newStoreName = ""
+                        newStoreAddress = ""
+                        newStoreCity = ""
+                        newStoreLogo = ""
+                        newStoreHistory = ""
+                        newStorePhone = ""
+                    //    newStoreSocials = emptyList()
                     },
-                    name = newStoreName,
-                    onNameChange = {newStoreName = it},
-                    address = newStoreAddress,
-                    onAddressChange = {newStoreAddress = it},
-                    city = newStoreCity,
-                    onCityChange = {newStoreCity = it},
-                    logo = newStoreLogo,
-                    onLogoChange = {newStoreLogo = it},
-                    history = newStoreHistory,
-                    onHistoryChange = {newStoreHistory = it},
-                    phone = newStorePhone,
-                    onPhoneChange = {newStorePhone = it}
-                )
-                EditStoreDialog(
-                    show = showEditDialog,
-                    onDismiss = { showEditDialog = false },
-                    onEdit = {id, name, address, city, logo, history, phone ->
-                        if (storeToEdit != null) {
-                            viewModel.updateStore(
-                                id = id,
-                                request = StoreRequest(name, address, city, logo, history, phone),
-                                onSuccess = {
-                                    refreshStores()
-                                },
-                                onError = { errorMessage = it }
-                            )
-
-                        }
-                    },
-                    store = storeToEdit
-                )
-                DeleteStoreDialog(
-                    show = showDeleteDialog,
-                    onDismiss = { showDeleteDialog = false },
-                    onDelete = {
-                        if (storeToDelete != null) {
-                            viewModel.deleteStore(
-                                id = storeToDelete!!.id,
-                                onSuccess = {
-                                    refreshStores()
-                                },
-                                onError = {
-                                    errorMessage = it
-                                }
-                            )
-                        }
-                    },
-                    store = storeToDelete
-                )
-                Text(text = "Tienda seleccionada = ${storeId}")
-                //Create Store
-                Button(onClick = {
-                    showCreateDialog = true
-                }) {
-                    Text("Crear Tienda")
-                }
-                if (errorMessage.isNotEmpty()) {
-                    Text(
-                        text = errorMessage,
-                        modifier = Modifier.padding(16.dp)
-                    )
-                } else if (stores.isNotEmpty()) {
-                    LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        items(stores) { store ->
-                            StoreItem(
-                                store = store,
-                                storePreferences = storePreferences,
-                                onEdit = {
-                                    storeToEdit = it
-                                    showEditDialog = true
-                                },
-                                onDelete = {
-                                    storeToDelete = it
-                                    showDeleteDialog = true
-                                }
-                            )
-                        }
+                    onError = {
+                        errorMessage = it
                     }
-                } else {
-                    CircularProgressIndicator(Modifier.align(Alignment.CenterHorizontally))
+                )
+            },
+            name = newStoreName,
+            onNameChange = {newStoreName = it},
+            address = newStoreAddress,
+            onAddressChange = {newStoreAddress = it},
+            city = newStoreCity,
+            onCityChange = {newStoreCity = it},
+            logo = newStoreLogo,
+            onLogoChange = {newStoreLogo = it},
+            history = newStoreHistory,
+            onHistoryChange = {newStoreHistory = it},
+            phone = newStorePhone,
+            onPhoneChange = {newStorePhone = it}
+        )
+        EditStoreDialog(
+            show = showEditDialog,
+            onDismiss = { showEditDialog = false },
+            onEdit = {id, name, address, city, logo, history, phone ->
+                if (storeToEdit != null) {
+                    viewModel.updateStore(
+                        id = id,
+                        request = StoreRequest(name, address, city, logo, history, phone),
+                        onSuccess = {
+                            refreshStores()
+                        },
+                        onError = { errorMessage = it }
+                    )
+
+                }
+            },
+            store = storeToEdit
+        )
+        DeleteStoreDialog(
+            show = showDeleteDialog,
+            onDismiss = { showDeleteDialog = false },
+            onDelete = {
+                if (storeToDelete != null) {
+                    viewModel.deleteStore(
+                        id = storeToDelete!!.id,
+                        onSuccess = {
+                            refreshStores()
+                        },
+                        onError = {
+                            errorMessage = it
+                        }
+                    )
+                }
+            },
+            store = storeToDelete
+        )
+        Text(text = "Tienda seleccionada = ${storeId}")
+        //Create Store
+        Button(onClick = {
+            showCreateDialog = true
+        }) {
+            Text("Crear Tienda")
+        }
+        if (errorMessage.isNotEmpty()) {
+            Text(
+                text = errorMessage,
+                modifier = Modifier.padding(16.dp)
+            )
+        } else if (stores.isNotEmpty()) {
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxSize()
+            ) {
+                items(stores) { store ->
+                    StoreItem(
+                        store = store,
+                        storePreferences = storePreferences,
+                        onEdit = {
+                            storeToEdit = it
+                            showEditDialog = true
+                        },
+                        onDelete = {
+                            storeToDelete = it
+                            showDeleteDialog = true
+                        }
+                    )
                 }
             }
-
+        } else {
+            CircularProgressIndicator(Modifier.align(Alignment.CenterHorizontally))
         }
-    )
+    }
 }
 
 @Composable
@@ -280,7 +270,18 @@ fun CreateStoreDialog(
                     OutlinedTextField(value = city, onValueChange = onCityChange, label = { Text("Ciudad") })
                     OutlinedTextField(value = history, onValueChange = onHistoryChange, label = { Text("Historia") })
                     OutlinedTextField(value = phone, onValueChange = onPhoneChange, label = { Text("Telefono") })
-                    uploadImage(buttonText = "Elegir logo de la tienda")
+//                    uploadImage(
+//                        buttonText = "Elegir foto de categoria",
+//                        onUploadResult = { result ->
+//                            result.fold(
+//                                onSuccess = { url -> onImageChange(url) },
+//                                onFailure = { error ->
+//                                    // Aquí puedes mostrar un mensaje de error o registrar la falla.
+//                                    onImageChange("")  // O mantener el campo vacío
+//                                }
+//                            )
+//                        }
+//                    )
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                         TextButton(onClick = onDismiss) {Text("Cancelar") }
                         Spacer(Modifier.width(8.dp))
@@ -317,7 +318,18 @@ fun EditStoreDialog(
                     OutlinedTextField(value = editedCity, onValueChange = { editedCity = it }, label = { Text("Ciudad") })
                     OutlinedTextField(value = editedHistory, onValueChange = { editedHistory = it }, label = { Text("Historia") })
                     OutlinedTextField(value = editedPhone, onValueChange = { editedPhone = it }, label = { Text("Telefono") })
-                    uploadImage(buttonText = "Elegir logo de la tienda")
+//                    uploadImage(
+//                        buttonText = "Elegir foto de categoria",
+//                        onUploadResult = { result ->
+//                            result.fold(
+//                                onSuccess = { url -> onImageChange(url) },
+//                                onFailure = { error ->
+//                                    // Aquí puedes mostrar un mensaje de error o registrar la falla.
+//                                    onImageChange("")  // O mantener el campo vacío
+//                                }
+//                            )
+//                        }
+//                    )
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                         TextButton(onClick = onDismiss) {Text("Cancelar") }
                         Spacer(Modifier.width(8.dp))

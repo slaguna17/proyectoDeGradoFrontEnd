@@ -13,23 +13,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.example.proyectodegrado.ui.components.Header
 
 @Composable
 fun BarcodeScreen(navController: NavController){
-    Scaffold(
-        topBar = { Header(navController = navController, title = "Escaneo de productos")},
-        content = { paddingValues ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Text(text = "Current Screen: Codigo de barras", fontSize = 24.sp)
-            }
-        }
-    )
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(text = "Current Screen: Codigo de barras", fontSize = 24.sp)
+    }
 }

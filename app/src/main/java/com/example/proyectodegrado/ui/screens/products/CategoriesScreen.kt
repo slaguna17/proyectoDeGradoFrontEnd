@@ -1,41 +1,35 @@
 package com.example.proyectodegrado.ui.screens.products
 
+import CategoryItem
+import android.net.Uri // Necesario
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Button
-import androidx.compose.material.ButtonDefaults
-import androidx.compose.material.Card
-import androidx.compose.material.CircularProgressIndicator
-import androidx.compose.material.Icon
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.OutlinedButton
-import androidx.compose.material.OutlinedTextField
-import androidx.compose.material.Surface
-import androidx.compose.material.Text
-import androidx.compose.material.TextButton
+// Importa Material 3
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton // Para botones de icono
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold // Si es necesario
+import androidx.compose.material3.Text
+import androidx.compose.material3.AlertDialog // Para errores
+import androidx.compose.material3.TextButton
+// Importa Icons
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+// Importa Runtime y Lifecycle
+import androidx.compose.runtime.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.saveable.rememberSaveable
+// Otras importaciones
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -44,154 +38,183 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.proyectodegrado.data.model.Category
 import com.example.proyectodegrado.data.model.CategoryRequest
-import com.example.proyectodegrado.ui.components.Header
-import com.example.proyectodegrado.ui.components.uploadImage
+import com.example.proyectodegrado.data.model.CreateCategoryFormState
+// Importa el estado del ViewModel y el diálogo
+import com.example.proyectodegrado.di.DependencyProvider // O como obtengas tu ViewModel
+import com.example.proyectodegrado.ui.components.UploadImageState
 
 @Composable
-fun CategoriesScreen(navController: NavController, viewModel: ProductViewModel){
-    //State variables
-    var categories by remember { mutableStateOf<List<Category>>(emptyList()) }
-    var errorMessage by remember { mutableStateOf("") }
+fun CategoriesScreen(
+    navController: NavController,
+    // Obtén el ViewModel correctamente (ejemplo usando el provider)
+    viewModel: ProductViewModel = remember { DependencyProvider.provideProductViewModel() }
+) {
+    // --- Estados del ViewModel ---
+    val categories by viewModel.categories.collectAsStateWithLifecycle()
+    val categoryFormState by viewModel.createCategoryFormState.collectAsStateWithLifecycle()
+    val imageUploadState by viewModel.imageUploadUiState.collectAsStateWithLifecycle()
 
-    //Dialog variables
-    var showCreateDialog by remember { mutableStateOf(false) }
-    var showEditDialog by remember { mutableStateOf(false) }
-    var showDeleteDialog by remember { mutableStateOf(false) }
+    // --- Estados de la UI ---
+    var errorMessage by rememberSaveable { mutableStateOf<String?>(null) } // Para errores generales o de creación/borrado
+    var showCreateDialog by rememberSaveable { mutableStateOf(false) }
+    var showEditDialog by rememberSaveable { mutableStateOf(false) }
+    var showDeleteDialog by rememberSaveable { mutableStateOf(false) }
 
-    //Create Category variables
-    var newCategoryName by remember { mutableStateOf("") }
-    var newCategoryDescription by remember { mutableStateOf("") }
-    var newCategoryImage by remember { mutableStateOf("") }
-
-    //Edit and delete variables
+    // Estados para Editar/Eliminar (mantener por ahora)
     var categoryToEdit by remember { mutableStateOf<Category?>(null) }
     var categoryToDelete by remember { mutableStateOf<Category?>(null) }
 
-    // Refresh function
+    // --- Lógica de Refresco ---
     val refreshCategories: () -> Unit = {
         viewModel.fetchCategories(
-            onSuccess = { categories = viewModel.categories.value },
-            onError = { errorMessage = it }
+            onSuccess = { errorMessage = null }, // La lista se actualiza sola vía StateFlow
+            onError = { errorMsg -> errorMessage = "Error al cargar categorías: $errorMsg" }
         )
     }
-    // Load categories when initializing screeen
-    LaunchedEffect(Unit) {
+
+    // --- Efecto para Carga Inicial ---
+    LaunchedEffect(key1 = Unit) {
         refreshCategories()
     }
-    Scaffold(
-        topBar = { Header(navController = navController, title = "Categorias")},
-        content = { paddingValues ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                //Dialogs
-                CreateCategoryDialog(
-                    show = showCreateDialog,
-                    onDismiss = { showCreateDialog = false },
-                    onCreate = {name, description, image ->
-                        viewModel.createCategory(
-                            request = CategoryRequest(name, description, image),
-                            onSuccess = {
-                                refreshCategories() // Refresh after creating
-                                newCategoryName = ""
-                                newCategoryDescription = ""
-                                newCategoryImage = ""
-                            },
-                            onError = {
-                                errorMessage = it
-                            }
-                        )
-                    },
-                    name = newCategoryName,
-                    onNameChange = {newCategoryName = it},
-                    description = newCategoryDescription,
-                    onDescriptionChange = {newCategoryDescription = it},
-                    image = newCategoryImage,
-                    onImageChange = {newCategoryImage = it}
-                )
-                EditCategoryDialog(
-                    show = showEditDialog,
-                    onDismiss = { showEditDialog = false },
-                    onEdit = {id, name, description, image ->
-                        if (categoryToEdit != null) {
-                            viewModel.updateCategory(
-                                id = id,
-                                request = CategoryRequest(name, description, image),
-                                onSuccess = {
-                                    refreshCategories()
-                                },
-                                onError = { errorMessage = it }
-                            )
 
+    // --- UI Principal ---
+    // Asumiendo que esta pantalla está dentro del Scaffold de Navigation.kt
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp), // Padding interno
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        // --- Botón Crear Categoría ---
+        Button(
+            modifier = Modifier.align(Alignment.CenterHorizontally),
+            onClick = {
+                viewModel.updateCreateCategoryFormState(CreateCategoryFormState()) // Limpia el formulario en ViewModel
+                errorMessage = null // Limpia errores
+                showCreateDialog = true
+            }
+        ) {
+            Text("Crear Nueva Categoría")
+        }
+
+        // --- Lista de Categorías ---
+        if (categories.isNotEmpty()) {
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.weight(1f) // Ocupa espacio restante
+            ) {
+                items(categories) { category ->
+                    CategoryItem( // Usa tu Composable CategoryItem
+                        category = category,
+                        navController = navController,
+                        onEdit = {
+                            categoryToEdit = it
+                            // TODO: Necesitarás un estado en ViewModel para el formulario de edición de categoría
+                            // viewModel.startEditingCategory(it)
+                            showEditDialog = true
+                        },
+                        onDelete = {
+                            categoryToDelete = it
+                            showDeleteDialog = true
                         }
-                    },
-                    category = categoryToEdit
-                )
-                DeleteCategoryDialog(
-                    show = showDeleteDialog,
-                    onDismiss = { showDeleteDialog = false },
-                    onDelete = {
-                        if (categoryToDelete != null) {
-                            viewModel.deleteCategory(
-                                id = categoryToDelete!!.id,
-                                onSuccess = {
-                                    refreshCategories()
-                                },
-                                onError = {
-                                    errorMessage = it
-                                }
-                            )
-                        }
-                    },
-                    category = categoryToDelete
-                )
-                //Create Category
-                Button(
-                    modifier = Modifier.align(Alignment.CenterHorizontally),
-                    onClick = {
-                    showCreateDialog = true
-                }) {
-                    Text("Crear Categoria")
-                }
-                if (errorMessage.isNotEmpty()) {
-                    Text(
-                        text = errorMessage,
-                        modifier = Modifier.padding(16.dp)
                     )
-                } else if (categories.isNotEmpty()) {
-                    LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        items(categories) { category ->
-                            CategoryItem(
-                                category = category,
-                                navController= navController,
-                                onEdit = {
-                                    categoryToEdit = it
-                                    showEditDialog = true
-                                },
-                                onDelete = {
-                                    categoryToDelete = it
-                                    showDeleteDialog = true
-                                }
-                            )
-                        }
-                    }
-                } else {
-                    CircularProgressIndicator(Modifier.align(Alignment.CenterHorizontally))
                 }
             }
-
+        } else {
+            // Muestra mensaje si no hay categorías (y no hay error)
+            if (errorMessage == null) {
+                Spacer(Modifier.height(16.dp))
+                Text("No hay categorías creadas.", modifier = Modifier.align(Alignment.CenterHorizontally))
+            }
+            // Podrías mostrar un CircularProgressIndicator si quieres indicar carga inicial
+            // else { CircularProgressIndicator(Modifier.align(Alignment.CenterHorizontally)) }
         }
-    )
+
+        // --- Indicador de Error General ---
+        errorMessage?.let { msg ->
+            AlertDialog(
+                onDismissRequest = { errorMessage = null },
+                title = { Text("Error") },
+                text = { Text(msg) },
+                confirmButton = { TextButton(onClick = { errorMessage = null }) { Text("OK") } }
+            )
+        }
+
+    } // Fin Column principal
+
+    // --- Diálogos ---
+    if (showCreateDialog) {
+        CreateCategoryDialog(
+            show = true,
+            onDismiss = { showCreateDialog = false },
+            formState = categoryFormState, // <-- Pasa estado del ViewModel
+            imageUploadState = imageUploadState, // <-- Pasa estado de subida del ViewModel
+            onFormStateChange = { newState -> viewModel.updateCreateCategoryFormState(newState) }, // <-- Llama a ViewModel
+            onImageUriSelected = { uri -> viewModel.handleCategoryImageSelection(uri) }, // <-- Llama a ViewModel
+            onCreateClick = {
+                viewModel.createCategoryFromState(
+                    onSuccess = {
+                        showCreateDialog = false // Cierra en éxito
+                        errorMessage = null
+                        // La lista se refresca automáticamente en el ViewModel
+                    },
+                    onError = { errorMsg ->
+                        errorMessage = errorMsg // Muestra el error en el AlertDialog general
+                        // No cierres el diálogo
+                    }
+                )
+            }
+        )
+    } // Fin showCreateDialog
+
+    if (showEditDialog) {
+        // TODO: Implementar EditCategoryDialog usando un patrón similar
+        // Necesitará su propio estado de formulario en el ViewModel y manejar la subida de imagen si se cambia.
+        EditCategoryDialog(
+            show = showEditDialog,
+            onDismiss = { showEditDialog = false },
+            onEdit = { id, name, description, image ->
+                if (categoryToEdit != null) {
+                    // Idealmente, llama a una función en ViewModel que maneje la subida (si la imagen cambió)
+                    // y luego llame a categoryRepository.updateCategory
+                    viewModel.updateCategory(
+                        id = id,
+                        request = CategoryRequest(name, description, image), // Necesita la URL actualizada si cambió
+                        onSuccess = { showEditDialog = false },
+                        onError = { errorMsg -> errorMessage = errorMsg; showEditDialog = false }
+                    )
+                }
+            },
+            category = categoryToEdit
+        )
+    }
+
+    if (showDeleteDialog) {
+        DeleteCategoryDialog( // Asume que DeleteCategoryDialog existe
+            show = true,
+            onDismiss = { showDeleteDialog = false },
+            onDelete = {
+                categoryToDelete?.let { category ->
+                    viewModel.deleteCategory(
+                        id = category.id,
+                        onSuccess = {
+                            showDeleteDialog = false
+                            errorMessage = null
+                            // La lista se refresca automáticamente
+                        },
+                        onError = { errorMsg ->
+                            errorMessage = "Error al eliminar: $errorMsg"
+                            showDeleteDialog = false
+                        }
+                    )
+                }
+            },
+            category = categoryToDelete
+        )
+    } // Fin showDeleteDialog
 }
+

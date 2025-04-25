@@ -24,7 +24,6 @@ import androidx.navigation.NavController
 import com.example.proyectodegrado.R
 import com.example.proyectodegrado.data.model.RegisterRequest
 import com.example.proyectodegrado.data.model.Role
-import com.example.proyectodegrado.ui.components.uploadImage
 
 @Composable
 fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel) {
@@ -98,7 +97,18 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel) {
         })
         Spacer(modifier = Modifier.height(16.dp))
 
-        uploadImage(buttonText = "Elegir foto de perfil")
+//        uploadImage(
+//            buttonText = "Elegir foto de categoria",
+//            onUploadResult = { result ->
+//                result.fold(
+//                    onSuccess = { url -> onImageChange(url) },
+//                    onFailure = { error ->
+//                        // Aquí puedes mostrar un mensaje de error o registrar la falla.
+//                        onImageChange("")  // O mantener el campo vacío
+//                    }
+//                )
+//            }
+//        )
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(onClick = {

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.proyectodegrado.data.model.Store
 import com.example.proyectodegrado.data.model.StoreRequest
+import com.example.proyectodegrado.data.repository.ImageRepository
 import com.example.proyectodegrado.data.repository.StoreRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -11,7 +12,7 @@ import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import java.io.IOException
 
-class StoreViewModel(private val storeRepository: StoreRepository) : ViewModel() {
+class StoreViewModel(private val storeRepository: StoreRepository, private val imageRepository: ImageRepository) : ViewModel() {
     //Result Messages
     private var storeResult: String = ""
 

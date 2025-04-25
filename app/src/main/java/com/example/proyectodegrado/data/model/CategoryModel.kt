@@ -17,3 +17,9 @@ data class CategoryResponse(
     val message: String, // Adjust based on your backend response
     val categoryId: Int? = null // Example of returning created user ID
 )
+
+data class CreateCategoryFormState(
+    val name: String = "",
+    val description: String = "",
+    val imageUrl: String? = null // URL de la imagen de categoría
+)

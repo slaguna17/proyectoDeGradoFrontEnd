@@ -1,241 +1,206 @@
 package com.example.proyectodegrado.ui.screens.products
 
+import android.net.Uri // Necesario para el callback
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+// Importaciones de Material 3
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator // Si lo necesitas para carga inicial
+import androidx.compose.material3.Text
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold // Si esta pantalla tuviera su propio Scaffold
+import androidx.compose.material3.FloatingActionButton // Ejemplo si usaras FAB
+import androidx.compose.material3.Icon // Ejemplo si usaras FAB
+import androidx.compose.material.icons.Icons // Para iconos base
+import androidx.compose.material.icons.filled.Add // Ejemplo para FAB
+// Importaciones de Runtime y Lifecycle
+import androidx.compose.runtime.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.saveable.rememberSaveable
+// Otras importaciones
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.navigation.NavController
-import coil.compose.AsyncImage
-import com.example.proyectodegrado.data.model.Product
-import com.example.proyectodegrado.data.model.ProductRequest
-import com.example.proyectodegrado.ui.components.Header
-import com.example.proyectodegrado.ui.components.uploadImage
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.sp
-import com.example.proyectodegrado.data.model.ProductData
-import com.example.proyectodegrado.data.model.ProductRequest2
-import com.example.proyectodegrado.data.model.StoreData
+import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import com.example.proyectodegrado.data.model.CreateProductFormState
+import com.example.proyectodegrado.data.model.Product
+import com.example.proyectodegrado.data.model.ProductRequest2 // Usado para Edit
 import com.example.proyectodegrado.di.AppPreferences
+import com.example.proyectodegrado.di.DependencyProvider
+// Importa tus diálogos y el estado del ViewModel
+import com.example.proyectodegrado.ui.components.UploadImageState // Asegúrate de importar esto
 
 @Composable
-fun ProductsByCategoryScreen(navController: NavController, viewModel: ProductViewModel, categoryId: Int) {
-    //State variables
-    var products by remember { mutableStateOf<List<Product>>(emptyList()) }
-    var errorMessage by remember { mutableStateOf("") }
-    var currentCategory = categoryId
+fun ProductsByCategoryScreen(
+    navController: NavController,
+    viewModel: ProductViewModel, // Recibe el ViewModel (o usa provideProductViewModel)
+    categoryId: Int // Recibe el ID de la categoría
+) {
+    // --- Estados de la UI ---
+    val productsByCategory by viewModel.productsByCategory.collectAsStateWithLifecycle() // Observa la lista filtrada
+    var errorMessage by rememberSaveable { mutableStateOf<String?>(null) }
 
-    //App preferences
-    val context = LocalContext.current
-    val storePreferences = remember { AppPreferences(context) }
-    var storeId by remember { mutableIntStateOf(storePreferences.getStoreId()?.toInt() ?: 0) }
-    
-    //Dialog variables
-    var showCreateDialog by remember { mutableStateOf(false) }
-    var showEditDialog by remember { mutableStateOf(false) }
-    var showDeleteDialog by remember { mutableStateOf(false) }
+    // Estados para visibilidad de diálogos
+    var showCreateDialog by rememberSaveable { mutableStateOf(false) }
+    var showEditDialog by rememberSaveable { mutableStateOf(false) }
+    var showDeleteDialog by rememberSaveable { mutableStateOf(false) }
 
-    //Create Product variables
-    var newProductName by remember { mutableStateOf("") }
-    var newProductDescription by remember { mutableStateOf("") }
-    var newProductImage by remember { mutableStateOf("") }
-    var newProductSKU by remember { mutableStateOf("") }
-    var newProductBrand by remember { mutableStateOf("") }
-    var newStock by remember { mutableStateOf(0) }
-    var newExpirationDate by remember { mutableStateOf("") }
-
-    //Edit and delete variables
+    // Estados para Editar/Eliminar (mantener por ahora)
     var productToEdit by remember { mutableStateOf<ProductRequest2?>(null) }
     var productToDelete by remember { mutableStateOf<Product?>(null) }
 
-    // Refresh function
+    // --- Estados del ViewModel para el diálogo de CREACIÓN ---
+    val createFormState by viewModel.createProductFormState.collectAsStateWithLifecycle()
+    val imageUploadState by viewModel.imageUploadUiState.collectAsStateWithLifecycle()
+
+    // --- Preferencias y IDs ---
+    val context = LocalContext.current
+    val storePreferences = remember { AppPreferences(context) }
+    val storeId = remember { storePreferences.getStoreId()?.toIntOrNull() ?: 0 }
+
+    // --- Lógica de Refresco ---
     val refreshProducts: () -> Unit = {
         viewModel.fetchProductsByCategory(
-            onSuccess = { products = viewModel.productsByCategory.value },
-            onError = { errorMessage = it },
-            categoryId = categoryId
+            categoryId = categoryId,
+            onSuccess = {
+                errorMessage = null // Limpia errores
+            },
+            onError = { errorMsg -> errorMessage = "Error al cargar productos: $errorMsg" }
         )
     }
-    LaunchedEffect(categoryId) {
-        storeId = storePreferences.getStoreId()?.toInt() ?: 0
-        refreshProducts()
-    }
 
-    Scaffold(
-        topBar = { Header(navController = navController, title = "Productos") },
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            //Dialogs
-            CreateProductDialog(
-                show = showCreateDialog,
-                onDismiss = { showCreateDialog = false },
-                onCreate = {name, description, image, SKU, brand, category_id, stock, expiration_date ->
-                    viewModel.createProduct(
-                        request = ProductRequest(
-                            product = ProductData(
-                                SKU = SKU,
-                                name = name,
-                                description= description,
-                                image = image,
-                                brand = brand,
-                                category_id = category_id
-                            ),
-                            store = StoreData(
-                                store_id = storeId,
-                                stock = stock,
-                                expiration_date = expiration_date
-                            )
-                        ),
-                        onSuccess = {
-                            refreshProducts()
-                            newProductName = ""
-                            newProductDescription = ""
-                            newProductImage = ""
-                            newProductSKU = ""
-                            newProductBrand = ""
-                        },
-                        onError = {
-                            errorMessage = it
-                        }
-                    )
-                },
-                name = newProductName,
-                onNameChange = {newProductName = it},
-                description = newProductDescription,
-                onDescriptionChange = {newProductDescription = it},
-                image = newProductImage,
-                onImageChange = {newProductImage = it},
-                sku = newProductSKU,
-                onSkuChange = {newProductSKU = it},
-                brand = newProductBrand,
-                onBrandChange = {newProductBrand = it},
-                category_id = currentCategory,
-                stock = newStock,
-                onStockChange = {newStock = it.toInt()},
-                expiration_date = newExpirationDate,
-                onDateChange = {newExpirationDate = it}
-            )
-            EditProductDialog(
-                show = showEditDialog,
-                onDismiss = { showEditDialog = false },
-                onEdit = {id, name, description, image, SKU, brand, category_id, stock, expiration_date ->
-                    if (productToEdit != null) {
-                        viewModel.updateProduct(
-                            id = id,
-                            request = ProductRequest(
-                                product = ProductData(
-                                    SKU = SKU,
-                                    name = name,
-                                    description= description,
-                                    image = image,
-                                    brand = brand,
-                                    category_id = category_id
-                                ),
-                                store = StoreData(
-                                    store_id = storeId,
-                                    stock = stock,
-                                    expiration_date = expiration_date
-                                )
-                            ),
-                            onSuccess = {
-                                refreshProducts()
-                            },
-                            onError = {
-                                errorMessage = it
-                            }
-                        )
-
-                    }
-                },
-                productRequest = productToEdit
-            )
-            DeleteProductDialog(
-                show = showDeleteDialog,
-                onDismiss = { showDeleteDialog = false },
-                onDelete = {
-                    if (productToDelete != null) {
-                        viewModel.deleteProduct(
-                            id = productToDelete!!.id,
-                            onSuccess = {
-                                refreshProducts()
-                            },
-                            onError = {
-                                errorMessage = it
-                            }
-                        )
-                    }
-                },
-                product = productToDelete
-            )
-            Text(text = "Tienda seleccionada = ${storeId}")
-            //Create Product in category
-            Button(
-                modifier = Modifier.align(Alignment.CenterHorizontally),
-                onClick = {
-                showCreateDialog = true
-            }) {
-                Text("Crear Producto en esta categoria")
-            }
-            if (errorMessage.isNotEmpty()) {
-                Text(
-                    text = errorMessage,
-                    modifier = Modifier.padding(16.dp)
-                )
-            } else if (products.isNotEmpty()) {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    items(products) { product ->
-                        ProductItem(
-                            product = product,
-                            onEdit = {
-//                                productToEdit = ProductRequest2(
-//                                    product = it,
-//                                    store = StoreData(
-//                                        store_id = storeId,
-//                                        stock = ,
-//                                        expiration_date =
-//                                    ))
-//                                showEditDialog = true
-                            },
-                            onDelete = {
-                                productToDelete = it
-                                showDeleteDialog = true
-                            }
-                        )
-                    }
-                }
-            } else {
-//                CircularProgressIndicator(Modifier.align(Alignment.CenterHorizontally))
-                Text("No hay productos en esta categoría.")
-            }
+    // --- Efecto para Carga Inicial ---
+    LaunchedEffect(key1 = categoryId, key2 = storeId) { // Se relanza si categoryId o storeId cambian
+        if (storeId == 0) {
+            errorMessage = "Error: ID de tienda no encontrado."
+        } else if (categoryId > 0) { // Asegura que categoryId sea válido
+            refreshProducts()
+        } else {
+            errorMessage = "Error: ID de categoría no válido."
         }
     }
+
+    // --- UI Principal ---
+    // Asumiendo que esta pantalla NO tiene su propio Scaffold y usa el de Navigation.kt
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp), // Padding interno
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        // --- Botón para Crear Producto ---
+        Button(
+            modifier = Modifier.align(Alignment.CenterHorizontally),
+            onClick = {
+                // Prepara el estado del formulario en el ViewModel con el categoryId actual
+                viewModel.updateCreateProductFormState(CreateProductFormState(categoryId = categoryId))
+                errorMessage = null // Limpia errores
+                showCreateDialog = true
+            },
+            enabled = storeId != 0 && categoryId > 0 // Habilita solo si tenemos IDs válidos
+        ) {
+            Text("Crear Producto en esta categoría")
+        }
+        // Muestra errores de inicialización si existen
+        if (storeId == 0) { Text("Error: No se pudo determinar la tienda.", color = MaterialTheme.colorScheme.error) }
+        if (categoryId <= 0) { Text("Error: Categoría no válida.", color = MaterialTheme.colorScheme.error) }
+
+
+        // --- Lista de Productos ---
+        // Muestra indicador de carga o la lista/mensaje
+        if (productsByCategory.isEmpty() && errorMessage == null) {
+            // Podrías mostrar un CircularProgressIndicator mientras carga la primera vez
+            // o simplemente el texto de "No hay productos".
+            Spacer(Modifier.height(16.dp))
+            Text("No hay productos en esta categoría.", modifier = Modifier.align(Alignment.CenterHorizontally))
+        } else if (productsByCategory.isNotEmpty()) {
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.weight(1f) // Ocupa espacio restante
+            ) {
+                items(productsByCategory) { product ->
+                    ProductItem( // Asume que ProductItem existe
+                        product = product,
+                        onEdit = {
+                            // TODO: Implementar lógica de edición
+                        },
+                        onDelete = {
+                            productToDelete = it
+                            showDeleteDialog = true
+                        }
+                    )
+                }
+            }
+        }
+
+        // --- Indicador de Error General ---
+        errorMessage?.let { msg ->
+            Text(msg, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 8.dp))
+        }
+
+    } // Fin Column principal
+
+    // --- Diálogos ---
+    if (showCreateDialog) {
+        CreateProductDialog(
+            show = true,
+            onDismiss = { showCreateDialog = false },
+            formState = createFormState, // Pasa estado del ViewModel
+            imageUploadState = imageUploadState, // Pasa estado de subida del ViewModel
+            onFormStateChange = { newState -> viewModel.updateCreateProductFormState(newState) }, // Llama a ViewModel
+            onImageUriSelected = { uri -> viewModel.handleProductImageSelection(uri) }, // Llama a ViewModel
+            onCreateClick = { categoryIdFromDialog, storeIdFromDialog -> // IDs del diálogo (ignóralos o usa los de la pantalla)
+                viewModel.createProductFromState(
+                    categoryId = categoryId, // Usa el ID de la categoría de la pantalla
+                    storeId = storeId,       // Usa el ID de la tienda de la pantalla
+                    onSuccess = {
+                        showCreateDialog = false // Cierra en éxito
+                        errorMessage = null
+                        // La lista se refresca automáticamente porque createProductFromState llama a fetchProductsByCategory
+                    },
+                    onError = { errorMsg ->
+                        errorMessage = errorMsg // Muestra el error
+                    }
+                )
+            }
+        )
+    } // Fin showCreateDialog
+
+    if (showEditDialog) {
+        // TODO: Implementar EditProductDialog usando patrón similar
+        // EditProductDialog(...)
+    }
+
+    if (showDeleteDialog) {
+        DeleteProductDialog( // Asume que DeleteProductDialog existe
+            show = true,
+            onDismiss = { showDeleteDialog = false },
+            onDelete = {
+                productToDelete?.let { product ->
+                    viewModel.deleteProduct(
+                        id = product.id,
+                        categoryId = categoryId, // Pasa categoryId para refrescar la lista correcta
+                        onSuccess = {
+                            showDeleteDialog = false
+                            errorMessage = null
+                            // La lista se refresca automáticamente
+                        },
+                        onError = { errorMsg ->
+                            errorMessage = "Error al eliminar: $errorMsg"
+                            showDeleteDialog = false
+                        }
+                    )
+                }
+            },
+            product = productToDelete
+        )
+    } // Fin showDeleteDialog
 }
+
+// --- Composable ProductItem (Asegúrate que exista) ---
+// @Composable
+// fun ProductItem(product: Product, onEdit: (Product) -> Unit, onDelete: (Product) -> Unit) { ... }

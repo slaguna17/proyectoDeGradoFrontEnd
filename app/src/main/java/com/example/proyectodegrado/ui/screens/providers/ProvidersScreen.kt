@@ -39,8 +39,7 @@ import com.example.proyectodegrado.data.model.ProviderRequest
 import com.example.proyectodegrado.data.model.Store
 import com.example.proyectodegrado.data.model.StoreRequest
 import com.example.proyectodegrado.di.AppPreferences
-import com.example.proyectodegrado.ui.components.Header
-import com.example.proyectodegrado.ui.components.uploadImage
+
 
 @Composable
 fun ProvidersScreen(navController: NavController, viewModel: ProvidersViewModel){
@@ -78,126 +77,120 @@ fun ProvidersScreen(navController: NavController, viewModel: ProvidersViewModel)
         refreshProviders()
     }
 
-    Scaffold(
-        topBar = { Header(navController = navController, title = "Proveedores")},
-        content = { paddingValues ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                //Dialogs
-                CreateProviderDialog(
-                    show = showCreateDialog,
-                    onDismiss = { showCreateDialog = false },
-                    onCreate = { name, address,email, phone, contactName, notes ->
-                        viewModel.createProvider(
-                            request = ProviderRequest( name, address, email, phone, contactName, notes),
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        //Dialogs
+        CreateProviderDialog(
+            show = showCreateDialog,
+            onDismiss = { showCreateDialog = false },
+            onCreate = { name, address,email, phone, contactName, notes ->
+                viewModel.createProvider(
+                    request = ProviderRequest( name, address, email, phone, contactName, notes),
 //                            socials)
-                            onSuccess = {
-                                refreshProviders()
-                                newProviderName = ""
-                                newProviderAddress = ""
-                                newProviderEmail = ""
-                                newProviderPhone = ""
-                                newProviderContactName = ""
-                                newProviderNotes = ""
-                            },
-                            onError = {
-                                errorMessage = it
-                            }
-                        )
+                    onSuccess = {
+                        refreshProviders()
+                        newProviderName = ""
+                        newProviderAddress = ""
+                        newProviderEmail = ""
+                        newProviderPhone = ""
+                        newProviderContactName = ""
+                        newProviderNotes = ""
                     },
-                    name = newProviderName,
-                    onNameChange = {newProviderName = it},
-                    address = newProviderAddress,
-                    onAddressChange = {newProviderAddress = it},
-                    email = newProviderEmail,
-                    onEmailChange = {newProviderEmail = it},
-                    phone = newProviderPhone,
-                    onPhoneChange = {newProviderPhone = it},
-                    contactName = newProviderContactName,
-                    onContactNameChange = {newProviderContactName = it},
-                    notes = newProviderNotes,
-                    onNotesChange = {newProviderNotes = it},
-                )
-                EditProviderDialog(
-                    show = showEditDialog,
-                    onDismiss = { showEditDialog = false },
-                    onEdit = {id, name, address,email, phone, contactName, notes ->
-                        if (providerToEdit != null) {
-                            viewModel.updateProvider(
-                                id = id,
-                                request = ProviderRequest(name, address,email, phone, contactName, notes),
-                                onSuccess = {
-                                    refreshProviders()
-                                },
-                                onError = { errorMessage = it }
-                            )
-
-                        }
-                    },
-                    provider = providerToEdit
-                )
-
-                DeleteProviderDialog(
-                    show = showDeleteDialog,
-                    onDismiss = { showDeleteDialog = false },
-                    onDelete = {
-                        if (providerToDelete != null) {
-                            viewModel.deleteProvider(
-                                id = providerToDelete!!.id,
-                                onSuccess = {
-                                    refreshProviders()
-                                },
-                                onError = {
-                                    errorMessage = it
-                                }
-                            )
-                        }
-                    },
-                    provider = providerToDelete
-                )
-
-                //Create Provider
-                Button(onClick = {
-                    showCreateDialog = true
-                }) {
-                    Text("Crear Proveedor")
-                }
-                if (errorMessage.isNotEmpty()) {
-                    Text(
-                        text = errorMessage,
-                        modifier = Modifier.padding(16.dp)
-                    )
-                } else if (providers.isNotEmpty()) {
-                    LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        items(providers) { provider ->
-                            ProviderItem(
-                                provider = provider,
-                                onEdit = {
-                                    providerToEdit = it
-                                    showEditDialog = true
-                                },
-                                onDelete = {
-                                    providerToDelete = it
-                                    showDeleteDialog = true
-                                }
-                            )
-                        }
+                    onError = {
+                        errorMessage = it
                     }
-                } else {
-                    CircularProgressIndicator(Modifier.align(Alignment.CenterHorizontally))
+                )
+            },
+            name = newProviderName,
+            onNameChange = {newProviderName = it},
+            address = newProviderAddress,
+            onAddressChange = {newProviderAddress = it},
+            email = newProviderEmail,
+            onEmailChange = {newProviderEmail = it},
+            phone = newProviderPhone,
+            onPhoneChange = {newProviderPhone = it},
+            contactName = newProviderContactName,
+            onContactNameChange = {newProviderContactName = it},
+            notes = newProviderNotes,
+            onNotesChange = {newProviderNotes = it},
+        )
+        EditProviderDialog(
+            show = showEditDialog,
+            onDismiss = { showEditDialog = false },
+            onEdit = {id, name, address,email, phone, contactName, notes ->
+                if (providerToEdit != null) {
+                    viewModel.updateProvider(
+                        id = id,
+                        request = ProviderRequest(name, address,email, phone, contactName, notes),
+                        onSuccess = {
+                            refreshProviders()
+                        },
+                        onError = { errorMessage = it }
+                    )
+
+                }
+            },
+            provider = providerToEdit
+        )
+
+        DeleteProviderDialog(
+            show = showDeleteDialog,
+            onDismiss = { showDeleteDialog = false },
+            onDelete = {
+                if (providerToDelete != null) {
+                    viewModel.deleteProvider(
+                        id = providerToDelete!!.id,
+                        onSuccess = {
+                            refreshProviders()
+                        },
+                        onError = {
+                            errorMessage = it
+                        }
+                    )
+                }
+            },
+            provider = providerToDelete
+        )
+
+        //Create Provider
+        Button(onClick = {
+            showCreateDialog = true
+        }) {
+            Text("Crear Proveedor")
+        }
+        if (errorMessage.isNotEmpty()) {
+            Text(
+                text = errorMessage,
+                modifier = Modifier.padding(16.dp)
+            )
+        } else if (providers.isNotEmpty()) {
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxSize()
+            ) {
+                items(providers) { provider ->
+                    ProviderItem(
+                        provider = provider,
+                        onEdit = {
+                            providerToEdit = it
+                            showEditDialog = true
+                        },
+                        onDelete = {
+                            providerToDelete = it
+                            showDeleteDialog = true
+                        }
+                    )
                 }
             }
-
+        } else {
+            CircularProgressIndicator(Modifier.align(Alignment.CenterHorizontally))
         }
-    )
+    }
 }
 
 @Composable
@@ -306,7 +299,18 @@ fun EditProviderDialog(
                     OutlinedTextField(value = editedEmail, onValueChange = { editedEmail = it }, label = { Text("Email") })
                     OutlinedTextField(value = editedPhone, onValueChange = { editedPhone = it }, label = { Text("Telefono") })
                     OutlinedTextField(value = editedContactName, onValueChange = { editedContactName = it }, label = { Text("Nombre de la persona del contacto") })
-                    uploadImage(buttonText = "Elegir logo de la tienda")
+//                    uploadImage(
+//                        buttonText = "Elegir foto de categoria",
+//                        onUploadResult = { result ->
+//                            result.fold(
+//                                onSuccess = { url -> onImageChange(url) },
+//                                onFailure = { error ->
+//                                    // Aquí puedes mostrar un mensaje de error o registrar la falla.
+//                                    onImageChange("")  // O mantener el campo vacío
+//                                }
+//                            )
+//                        }
+//                    )
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                         TextButton(onClick = onDismiss) {Text("Cancelar") }
                         Spacer(Modifier.width(8.dp))

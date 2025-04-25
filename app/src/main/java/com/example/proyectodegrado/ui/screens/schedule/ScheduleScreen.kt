@@ -38,7 +38,6 @@ import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import com.example.proyectodegrado.data.model.Schedule
 import com.example.proyectodegrado.data.model.ScheduleRequest
-import com.example.proyectodegrado.ui.components.Header
 
 
 @Composable
@@ -75,119 +74,112 @@ fun ScheduleScreen(navController: NavController, viewModel: ScheduleViewModel){
         refreshSchedule()
     }
 
-    Scaffold(
-        topBar = { Header(navController = navController, title = "Horarios")},
-        content = { paddingValues ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                //Dialogs
-                CreateScheduleDialog(
-                    show = showCreateDialog,
-                    onDismiss = { showCreateDialog = false },
-                    onCreate = { name, length,start_time, end_time ->
-                        viewModel.createSchedule(
-                            request = ScheduleRequest( name, length,start_time, end_time),
-                            onSuccess = {
-                                refreshSchedule()
-                                newScheduleName = ""
-                                newScheduleLength = ""
-                                newScheduleStartTime = ""
-                                newScheduleEndTime = ""
-                            },
-                            onError = {
-                                errorMessage = it
-                            }
-                        )
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        //Dialogs
+        CreateScheduleDialog(
+            show = showCreateDialog,
+            onDismiss = { showCreateDialog = false },
+            onCreate = { name, length,start_time, end_time ->
+                viewModel.createSchedule(
+                    request = ScheduleRequest( name, length,start_time, end_time),
+                    onSuccess = {
+                        refreshSchedule()
+                        newScheduleName = ""
+                        newScheduleLength = ""
+                        newScheduleStartTime = ""
+                        newScheduleEndTime = ""
                     },
-                    name = newScheduleName,
-                    onNameChange = {newScheduleName = it},
-                    length = newScheduleLength,
-                    onLengthChange = {newScheduleLength = it},
-                    start_time = newScheduleStartTime,
-                    onStartTimeChange = {newScheduleStartTime = it},
-                    end_time =  newScheduleEndTime,
-                    onEndTimeChange = {newScheduleEndTime = it},
-                )
-                EditScheduleDialog(
-                    show = showEditDialog,
-                    onDismiss = { showEditDialog = false },
-                    onEdit = {id, name, length,start_time, end_time ->
-                        if (scheduleToEdit != null) {
-                            viewModel.updateSchedule(
-                                id = id,
-                                request = ScheduleRequest(name,length,start_time, end_time),
-                                onSuccess = {
-                                    refreshSchedule()
-                                },
-                                onError = { errorMessage = it }
-                            )
-
-                        }
-                    },
-                    schedule = scheduleToEdit
-                )
-
-                DeleteScheduleDialog(
-                    show = showDeleteDialog,
-                    onDismiss = { showDeleteDialog = false },
-                    onDelete = {
-                        if (scheduleToDelete != null) {
-                            viewModel.deleteSchedule(
-                                id = scheduleToDelete!!.id,
-                                onSuccess = {
-                                    refreshSchedule()
-                                },
-                                onError = {
-                                    errorMessage = it
-                                }
-                            )
-                        }
-                    },
-                    schedule = scheduleToDelete
-                )
-
-                //Create Schedule
-                Button(onClick = {
-                    showCreateDialog = true
-                }) {
-                    Text("Crear Horario")
-                }
-                if (errorMessage.isNotEmpty()) {
-                    Text(
-                        text = errorMessage,
-                        modifier = Modifier.padding(16.dp)
-                    )
-                } else if (schedules.isNotEmpty()) {
-                    LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        items(schedules) { schedule ->
-                            ScheduleItem(
-                                schedule = schedule,
-                                onEdit = {
-                                    scheduleToEdit = it
-                                    showEditDialog = true
-                                },
-                                onDelete = {
-                                    scheduleToDelete = it
-                                    showDeleteDialog = true
-                                }
-                            )
-                        }
+                    onError = {
+                        errorMessage = it
                     }
-                } else {
-                    CircularProgressIndicator(Modifier.align(Alignment.CenterHorizontally))
+                )
+            },
+            name = newScheduleName,
+            onNameChange = {newScheduleName = it},
+            length = newScheduleLength,
+            onLengthChange = {newScheduleLength = it},
+            start_time = newScheduleStartTime,
+            onStartTimeChange = {newScheduleStartTime = it},
+            end_time =  newScheduleEndTime,
+            onEndTimeChange = {newScheduleEndTime = it},
+        )
+        EditScheduleDialog(
+            show = showEditDialog,
+            onDismiss = { showEditDialog = false },
+            onEdit = {id, name, length,start_time, end_time ->
+                if (scheduleToEdit != null) {
+                    viewModel.updateSchedule(
+                        id = id,
+                        request = ScheduleRequest(name,length,start_time, end_time),
+                        onSuccess = {
+                            refreshSchedule()
+                        },
+                        onError = { errorMessage = it }
+                    )
+
+                }
+            },
+            schedule = scheduleToEdit
+        )
+
+        DeleteScheduleDialog(
+            show = showDeleteDialog,
+            onDismiss = { showDeleteDialog = false },
+            onDelete = {
+                if (scheduleToDelete != null) {
+                    viewModel.deleteSchedule(
+                        id = scheduleToDelete!!.id,
+                        onSuccess = {
+                            refreshSchedule()
+                        },
+                        onError = {
+                            errorMessage = it
+                        }
+                    )
+                }
+            },
+            schedule = scheduleToDelete
+        )
+
+        //Create Schedule
+        Button(onClick = {
+            showCreateDialog = true
+        }) {
+            Text("Crear Horario")
+        }
+        if (errorMessage.isNotEmpty()) {
+            Text(
+                text = errorMessage,
+                modifier = Modifier.padding(16.dp)
+            )
+        } else if (schedules.isNotEmpty()) {
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxSize()
+            ) {
+                items(schedules) { schedule ->
+                    ScheduleItem(
+                        schedule = schedule,
+                        onEdit = {
+                            scheduleToEdit = it
+                            showEditDialog = true
+                        },
+                        onDelete = {
+                            scheduleToDelete = it
+                            showDeleteDialog = true
+                        }
+                    )
                 }
             }
-
+        } else {
+            CircularProgressIndicator(Modifier.align(Alignment.CenterHorizontally))
         }
-    )
+    }
 }
 
 @Composable
