@@ -1,3 +1,5 @@
+package com.example.proyectodegrado.ui.screens.categories
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -19,7 +21,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -30,7 +31,6 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.proyectodegrado.data.model.Category
 
-// --- Composable CategoryItem (Asegúrate que exista y use M3 si quieres consistencia) ---
 @Composable
 fun CategoryItem(
     category: Category,
@@ -41,25 +41,22 @@ fun CategoryItem(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { navController.navigate("products/${category.id}") }, // Navega a productos de esta categoría
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp), // Elevación M3
+            .clickable { navController.navigate("products/${category.id}") },
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         shape = RoundedCornerShape(8.dp),
-        border = BorderStroke(1.dp, Color.LightGray) // Ejemplo de borde M3
+        border = BorderStroke(1.dp, Color.LightGray)
     ) {
         Row(
             modifier = Modifier.padding(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             AsyncImage(
-                model = category.image, // URL de la imagen de la categoría
+                model = category.image,
                 contentDescription = category.name,
                 modifier = Modifier
                     .size(60.dp)
-                    .clip(RoundedCornerShape(4.dp)),
-                contentScale = ContentScale.Crop,
-                // Puedes añadir placeholders/error handling para Coil aquí
-                // placeholder = painterResource(id = R.drawable.placeholder),
-                // error = painterResource(id = R.drawable.error_image)
+                    .padding(4.dp),
+                contentScale = ContentScale.Crop
             )
             Spacer(Modifier.width(8.dp))
             Column(modifier = Modifier.weight(1f)) {
@@ -80,10 +77,10 @@ fun CategoryItem(
             }
             Spacer(Modifier.width(8.dp))
             IconButton(onClick = { onEdit(category) }) {
-                Icon(Icons.Default.Edit, contentDescription = "Editar Categoría")
+                Icon(Icons.Default.Edit, contentDescription = "Editar")
             }
             IconButton(onClick = { onDelete(category) }) {
-                Icon(Icons.Default.Delete, contentDescription = "Eliminar Categoría", tint = Color.Red)
+                Icon(Icons.Default.Delete, contentDescription = "Eliminar", tint = Color.Red)
             }
         }
     }

@@ -1,4 +1,4 @@
-package com.example.proyectodegrado.ui.screens.products
+package com.example.proyectodegrado.ui.screens.categories
 
 import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
@@ -22,20 +22,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import com.example.proyectodegrado.data.model.CreateProductFormState
-import com.example.proyectodegrado.data.model.ProductRequest2
+import com.example.proyectodegrado.data.model.Category
+import com.example.proyectodegrado.data.model.CategoryRequest
+import com.example.proyectodegrado.data.model.CreateCategoryFormState
 import com.example.proyectodegrado.ui.components.UploadImage
 import com.example.proyectodegrado.ui.components.UploadImageState
 
 @Composable
-fun CreateProductDialog(
+fun CreateCategoryDialog(
     show: Boolean,
     onDismiss: () -> Unit,
-    formState: CreateProductFormState,
+    formState: CreateCategoryFormState,
     imageUploadState: UploadImageState,
-    onFormStateChange: (CreateProductFormState) -> Unit,
+    onFormStateChange: (CreateCategoryFormState) -> Unit,
     onImageUriSelected: (Uri?) -> Unit,
-    onCreateClick: (categoryId: Int, storeId: Int) -> Unit
+    onCreateClick: () -> Unit
 ) {
     if (!show) return
     Dialog(onDismissRequest = onDismiss) {
@@ -45,12 +46,12 @@ fun CreateProductDialog(
                     .padding(16.dp)
                     .verticalScroll(rememberScrollState())
             ) {
-                Text("Crear Producto", style = MaterialTheme.typography.titleLarge)
+                Text("Crear Categoría", style = MaterialTheme.typography.titleLarge)
                 Spacer(Modifier.height(16.dp))
                 OutlinedTextField(
                     value = formState.name,
                     onValueChange = { onFormStateChange(formState.copy(name = it)) },
-                    label = { Text("Nombre del producto") },
+                    label = { Text("Nombre") },
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(Modifier.height(8.dp))
@@ -58,36 +59,6 @@ fun CreateProductDialog(
                     value = formState.description,
                     onValueChange = { onFormStateChange(formState.copy(description = it)) },
                     label = { Text("Descripción") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = formState.sku,
-                    onValueChange = { onFormStateChange(formState.copy(sku = it)) },
-                    label = { Text("SKU") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = formState.brand,
-                    onValueChange = { onFormStateChange(formState.copy(brand = it)) },
-                    label = { Text("Marca") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = formState.stock,
-                    onValueChange = { new ->
-                        if (new.all { it.isDigit() }) onFormStateChange(formState.copy(stock = new))
-                    },
-                    label = { Text("Stock inicial") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = formState.expirationDate,
-                    onValueChange = { onFormStateChange(formState.copy(expirationDate = it)) },
-                    label = { Text("Fecha expiración (YYYY-MM-DD)") },
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(Modifier.height(16.dp))
@@ -113,10 +84,7 @@ fun CreateProductDialog(
                 ) {
                     TextButton(onClick = onDismiss) { Text("Cancelar") }
                     Spacer(Modifier.width(8.dp))
-                    Button(
-                        onClick = { onCreateClick(formState.categoryId, /* storeId */ 0) },
-                        enabled = imageUploadState is UploadImageState.Idle || imageUploadState is UploadImageState.Error
-                    ) {
+                    Button(onClick = onCreateClick) {
                         Text("Crear")
                     }
                 }
@@ -126,21 +94,21 @@ fun CreateProductDialog(
 }
 
 @Composable
-fun EditProductDialog(
+fun EditCategoryDialog(
     show: Boolean,
     onDismiss: () -> Unit,
-    onEdit: (ProductRequest2) -> Unit,
-    productRequest: ProductRequest2?
+    onEdit: (CategoryRequest) -> Unit,
+    category: Category?
 ) {
-    // ... idéntico a tu implementación, con paquete ajustado ...
+    // ... idem, con paquete ajustado ...
 }
 
 @Composable
-fun DeleteProductDialog(
+fun DeleteCategoryDialog(
     show: Boolean,
     onDismiss: () -> Unit,
     onDelete: () -> Unit,
-    product: com.example.proyectodegrado.data.model.Product?
+    category: Category?
 ) {
-    // ... idéntico a tu implementación, con paquete ajustado ...
+    // ... idem, con paquete ajustado ...
 }

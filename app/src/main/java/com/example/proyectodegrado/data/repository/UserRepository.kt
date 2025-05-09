@@ -1,6 +1,6 @@
 package com.example.proyectodegrado.data.repository
 
-import UserService
+import com.example.proyectodegrado.data.api.UserService
 import com.example.proyectodegrado.data.model.LoginRequest
 import com.example.proyectodegrado.data.model.LoginResponse
 import com.example.proyectodegrado.data.model.RegisterRequest

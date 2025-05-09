@@ -1,7 +1,6 @@
 package com.example.proyectodegrado.di
 
 import com.example.proyectodegrado.ui.screens.login.LoginViewModel
-import UserService
 import android.content.Context
 import com.example.proyectodegrado.data.api.CategoryService
 import com.example.proyectodegrado.data.api.ImageApiService
@@ -10,6 +9,7 @@ import com.example.proyectodegrado.data.api.ProviderService
 import com.example.proyectodegrado.data.api.RetrofitClient
 import com.example.proyectodegrado.data.api.ScheduleService
 import com.example.proyectodegrado.data.api.StoreService
+import com.example.proyectodegrado.data.api.UserService
 import com.example.proyectodegrado.data.repository.CategoryRepository
 import com.example.proyectodegrado.data.repository.ProductRepository
 import com.example.proyectodegrado.data.repository.ProviderRepository
@@ -22,6 +22,7 @@ import com.example.proyectodegrado.ui.screens.register.RegisterViewModel
 import com.example.proyectodegrado.ui.screens.schedule.ScheduleViewModel
 import com.example.proyectodegrado.ui.screens.store.StoreViewModel
 import com.example.proyectodegrado.data.repository.* // Importa todos tus repositorios
+import com.example.proyectodegrado.ui.screens.categories.CategoryViewModel
 
 // Importa otros ViewModels o Factories que necesites modificar
 
@@ -35,26 +36,26 @@ object DependencyProvider {
 
     // --- Servicios API ---
     // (Tu código existente para userService, productService, etc. aquí...)
-    val userService: UserService by lazy { RetrofitClient.createService(UserService::class.java) }
-    val productService: ProductService by lazy { RetrofitClient.createService(ProductService::class.java) }
-    val categoryService: CategoryService by lazy { RetrofitClient.createService(CategoryService::class.java) }
-    val storeService: StoreService by lazy { RetrofitClient.createService(StoreService::class.java) }
-    val providerService: ProviderService by lazy { RetrofitClient.createService(ProviderService::class.java) }
-    val scheduleService: ScheduleService by lazy { RetrofitClient.createService(ScheduleService::class.java) }
+    private val userService: UserService by lazy { RetrofitClient.createService(UserService::class.java) }
+    private val productService: ProductService by lazy { RetrofitClient.createService(ProductService::class.java) }
+    private val categoryService: CategoryService by lazy { RetrofitClient.createService(CategoryService::class.java) }
+    private val storeService: StoreService by lazy { RetrofitClient.createService(StoreService::class.java) }
+    private val providerService: ProviderService by lazy { RetrofitClient.createService(ProviderService::class.java) }
+    private val scheduleService: ScheduleService by lazy { RetrofitClient.createService(ScheduleService::class.java) }
     // Asegúrate que ImageApiService esté aquí
-    val imageApiService: ImageApiService by lazy { RetrofitClient.createService(ImageApiService::class.java) }
+    private val imageApiService: ImageApiService by lazy { RetrofitClient.createService(ImageApiService::class.java) }
 
     // --- Repositorios ---
     // (Tu código existente para userRepository, productRepository, etc. aquí...)
-    val userRepository: UserRepository by lazy { UserRepository(userService) }
-    val productRepository: ProductRepository by lazy { ProductRepository(productService) }
-    val categoryRepository: CategoryRepository by lazy { CategoryRepository(categoryService) }
-    val storeRepository: StoreRepository by lazy { StoreRepository(storeService) }
-    val providerRepository: ProviderRepository by lazy { ProviderRepository(providerService) }
-    val scheduleRepository: ScheduleRepository by lazy { ScheduleRepository(scheduleService) }
+    private val userRepository: UserRepository by lazy { UserRepository(userService) }
+    private val productRepository: ProductRepository by lazy { ProductRepository(productService) }
+    private val categoryRepository: CategoryRepository by lazy { CategoryRepository(categoryService) }
+    private val storeRepository: StoreRepository by lazy { StoreRepository(storeService) }
+    private val providerRepository: ProviderRepository by lazy { ProviderRepository(providerService) }
+    private val scheduleRepository: ScheduleRepository by lazy { ScheduleRepository(scheduleService) }
 
     // --- NUEVO: Repositorio de Imágenes ---
-    val imageRepository: ImageRepository by lazy {
+    private val imageRepository: ImageRepository by lazy {
         if (!::applicationContext.isInitialized) {
             throw IllegalStateException("DependencyProvider debe ser inicializado con Context antes de acceder a imageRepository.")
         }
@@ -78,6 +79,11 @@ object DependencyProvider {
         // Ejemplo: Si productos necesita subir imagen
         return ProductViewModel(productRepository, categoryRepository, imageRepository) // <--- INYECTADO
     }
+    fun provideCategoryViewModel(): CategoryViewModel {
+        // Ejemplo: Si productos necesita subir imagen
+        return CategoryViewModel(categoryRepository, imageRepository) // <--- INYECTADO
+    }
+
 
     fun provideStoreViewModel(): StoreViewModel {
         // Ejemplo: Si tienda necesita subir logo

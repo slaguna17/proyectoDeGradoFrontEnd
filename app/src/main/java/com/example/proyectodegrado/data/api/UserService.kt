@@ -1,3 +1,5 @@
+package com.example.proyectodegrado.data.api
+
 import com.example.proyectodegrado.data.model.LoginRequest
 import com.example.proyectodegrado.data.model.LoginResponse
 import com.example.proyectodegrado.data.model.RegisterRequest

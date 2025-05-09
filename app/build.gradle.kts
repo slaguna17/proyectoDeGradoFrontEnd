@@ -105,7 +105,8 @@ dependencies {
 
     // 10) Material Components Android (Necesita su propia versión - OJO: diferente a Compose Material)
     implementation("com.google.android.material:material:1.11.0")
-    implementation(libs.androidx.lifecycle.runtime.compose.android) // Verifica si realmente la necesitas si usas Compose Material3
+    implementation(libs.androidx.lifecycle.runtime.compose.android)
+    implementation(libs.protolite.well.known.types) // Verifica si realmente la necesitas si usas Compose Material3
 
     // --- Testing ---
     testImplementation("junit:junit:4.13.2")

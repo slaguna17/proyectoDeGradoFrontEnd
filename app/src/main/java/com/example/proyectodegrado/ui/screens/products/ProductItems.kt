@@ -50,7 +50,6 @@ fun ProductItem(
         elevation = 4.dp
     ) {
         Column {
-            // Image section
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -58,12 +57,10 @@ fun ProductItem(
             ) {
                 AsyncImage(
                     model = product.image,
-                    contentDescription = "Product Image",
+                    contentDescription = product.name,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize()
                 )
-
-                // Brand badge
                 Surface(
                     modifier = Modifier
                         .padding(12.dp)
@@ -78,35 +75,19 @@ fun ProductItem(
                     )
                 }
             }
-
-            // Content section
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
                     text = "ID: ${product.id}",
                     style = MaterialTheme.typography.caption,
                     color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f)
                 )
-
-                Spacer(modifier = Modifier.height(4.dp))
-
+                Spacer(Modifier.height(4.dp))
                 Text(
                     text = product.name,
                     style = MaterialTheme.typography.h6,
                     fontWeight = FontWeight.Bold
                 )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Enhanced description section
-                Text(
-                    text = "Description:",
-                    style = MaterialTheme.typography.subtitle2,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.8f)
-                )
-
-                Spacer(modifier = Modifier.height(2.dp))
-
+                Spacer(Modifier.height(8.dp))
                 Text(
                     text = product.description,
                     style = MaterialTheme.typography.body2,
@@ -114,39 +95,30 @@ fun ProductItem(
                     overflow = TextOverflow.Ellipsis,
                     lineHeight = 20.sp
                 )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Add a "Read more" option if description is long
                 if (product.description.length > 100) {
+                    Spacer(Modifier.height(4.dp))
                     Text(
                         text = "Read more",
                         style = MaterialTheme.typography.caption,
                         color = MaterialTheme.colors.primary,
-                        modifier = Modifier.clickable { /* Add action here */ }
+                        modifier = Modifier.clickable { /* TODO: expand */ }
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
                 }
-
+                Spacer(Modifier.height(8.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
                         text = "SKU: ${product.SKU}",
-                        style = MaterialTheme.typography.caption,
-                        color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f)
+                        style = MaterialTheme.typography.caption
                     )
                     Text(
                         text = "Category: ${product.category_id}",
-                        style = MaterialTheme.typography.caption,
-                        color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f)
+                        style = MaterialTheme.typography.caption
                     )
                 }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Buttons
+                Spacer(Modifier.height(16.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
@@ -156,15 +128,10 @@ fun ProductItem(
                         modifier = Modifier.padding(end = 8.dp),
                         border = BorderStroke(1.dp, MaterialTheme.colors.primary)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Edit,
-                            contentDescription = "Edit",
-                            tint = MaterialTheme.colors.primary
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
+                        Icon(Icons.Default.Edit, contentDescription = "Edit")
+                        Spacer(Modifier.width(4.dp))
                         Text("Edit")
                     }
-
                     Button(
                         onClick = { onDelete(product) },
                         colors = ButtonDefaults.buttonColors(
@@ -172,11 +139,8 @@ fun ProductItem(
                             contentColor = Color.White
                         )
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Delete,
-                            contentDescription = "Delete"
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
+                        Icon(Icons.Default.Delete, contentDescription = "Delete")
+                        Spacer(Modifier.width(4.dp))
                         Text("Delete")
                     }
                 }

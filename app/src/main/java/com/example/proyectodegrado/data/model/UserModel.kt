@@ -1,8 +1,9 @@
 package com.example.proyectodegrado.data.model
 
 import java.util.Calendar
+import java.util.Date
 
-val currentTime = Calendar.getInstance().getTime();
+val currentTime: Date = Calendar.getInstance().time;
 
 data class User(
     val id: Int,

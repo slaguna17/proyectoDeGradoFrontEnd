@@ -1,6 +1,5 @@
 package com.example.proyectodegrado.data.api
 
-import UserService
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit

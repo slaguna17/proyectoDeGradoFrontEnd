@@ -1,6 +1,6 @@
 package com.example.proyectodegrado.ui.screens.TestAPI
 
-import UserService
+import com.example.proyectodegrado.data.api.UserService
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.proyectodegrado.data.api.RetrofitClient

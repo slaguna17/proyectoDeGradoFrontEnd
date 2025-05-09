@@ -36,7 +36,6 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.proyectodegrado.R
 
-//@Preview (showBackground = true)
 @Composable
 fun LoginScreen(navController: NavController, viewModel: LoginViewModel){
 
