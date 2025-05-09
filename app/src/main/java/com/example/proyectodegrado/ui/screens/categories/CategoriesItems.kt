@@ -1,22 +1,33 @@
 package com.example.proyectodegrado.ui.screens.categories
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.Surface
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CardElevation
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -41,46 +52,89 @@ fun CategoryItem(
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
             .clickable { navController.navigate("products/${category.id}") },
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        shape = RoundedCornerShape(8.dp),
-        border = BorderStroke(1.dp, Color.LightGray)
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(4.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
-        Row(
-            modifier = Modifier.padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            AsyncImage(
-                model = category.image,
-                contentDescription = category.name,
+        Column {
+            Box(
                 modifier = Modifier
-                    .size(60.dp)
-                    .padding(4.dp),
-                contentScale = ContentScale.Crop
-            )
-            Spacer(Modifier.width(8.dp))
-            Column(modifier = Modifier.weight(1f)) {
+                    .fillMaxWidth()
+                    .height(180.dp)
+            ) {
+                AsyncImage(
+                    model = category.image,
+                    contentDescription = category.name,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+
+                Surface(
+                    modifier = Modifier
+                        .padding(12.dp)
+                        .align(Alignment.TopEnd),
+                    shape = RoundedCornerShape(16.dp),
+                    color = androidx.compose.material.MaterialTheme.colors.primary.copy(alpha = 0.9f)
+                ) {
+                    Text(
+                        text = category.name,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
+            }
+            Column(modifier = Modifier
+                    .padding(16.dp)
+
+            ) {
                 Text(
                     text = category.name,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold
                 )
+                Spacer(Modifier.height(8.dp))
                 Text(
                     text = category.description,
-                    fontSize = 14.sp,
-                    color = Color.Gray,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis,
+                    lineHeight = 20.sp
                 )
-            }
-            Spacer(Modifier.width(8.dp))
-            IconButton(onClick = { onEdit(category) }) {
-                Icon(Icons.Default.Edit, contentDescription = "Editar")
-            }
-            IconButton(onClick = { onDelete(category) }) {
-                Icon(Icons.Default.Delete, contentDescription = "Eliminar", tint = Color.Red)
+                if (category.description.length > 100) {
+                    Spacer(Modifier.height(4.dp))
+                    androidx.compose.material.Text(
+                        text = "Read more",
+                        style = androidx.compose.material.MaterialTheme.typography.caption,
+                        color = androidx.compose.material.MaterialTheme.colors.primary,
+                        modifier = Modifier.clickable { /* TODO: expand */ }
+                    )
+                }
+                Spacer(Modifier.height(16.dp))
+
+                Row(
+                    modifier= Modifier.fillMaxWidth(),
+                    horizontalArrangement= Arrangement.End
+                ) {
+                    OutlinedButton(
+                        onClick = { onEdit(category) },
+                        modifier= Modifier.padding(end = 8.dp),
+                        border  = BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
+                    ) {
+                        Icon(Icons.Default.Edit, contentDescription = "Editar")
+                        Spacer(Modifier.width(4.dp))
+                        Text("Editar")
+                    }
+                    Button(
+                        onClick = { onDelete(category) },
+                        colors  = ButtonDefaults.buttonColors(containerColor = Color.Red, contentColor = Color.White)
+                    ) {
+                        Icon(Icons.Default.Delete, contentDescription = "Eliminar")
+                        Spacer(Modifier.width(4.dp))
+                        Text("Eliminar")
+                    }
+                }
             }
         }
     }

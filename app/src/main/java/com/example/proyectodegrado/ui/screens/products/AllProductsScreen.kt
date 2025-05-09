@@ -1,5 +1,6 @@
 package com.example.proyectodegrado.ui.screens.products
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,19 +18,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.example.proyectodegrado.data.model.CreateProductFormState
 import com.example.proyectodegrado.data.model.Product
+import com.example.proyectodegrado.data.model.Store
 import com.example.proyectodegrado.di.AppPreferences
 
 @Composable
 fun AllProductsScreen(
     navController: NavController,
-    viewModel: ProductViewModel,
-    categoryId: Int
+    viewModel: ProductViewModel
 ) {
-    val products by viewModel.productsByCategory.collectAsStateWithLifecycle()
+    var products by remember { mutableStateOf<List<Product>>(emptyList()) }
+
     var errorMessage by rememberSaveable { mutableStateOf<String?>(null) }
 
     var showCreateDialog by rememberSaveable { mutableStateOf(false) }
@@ -42,19 +45,28 @@ fun AllProductsScreen(
     val context = LocalContext.current
     val storeId = remember { AppPreferences(context).getStoreId()?.toIntOrNull() ?: 0 }
 
-    LaunchedEffect(categoryId) {
-        viewModel.fetchProductsByCategory(
-            categoryId = categoryId,
+    val categoryId = 1
+
+    val refreshAllProducts: () -> Unit = {
+        viewModel.fetchAllProducts(
+            onSuccess = { products = viewModel.products.value },
             onError = { errorMessage = it }
         )
+    }
+
+    LaunchedEffect(Unit) {
+        refreshAllProducts()
     }
 
     Column(
         Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        Text(text = "Todos los productos", fontSize = 24.sp)
         Button(
+            modifier = Modifier.padding(vertical = 8.dp),
             onClick = {
                 viewModel.updateCreateProductFormState(CreateProductFormState(categoryId = categoryId))
                 showCreateDialog = true

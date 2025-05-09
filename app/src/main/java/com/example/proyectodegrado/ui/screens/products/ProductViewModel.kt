@@ -20,6 +20,9 @@ class ProductViewModel(
     private val imageRepository: ImageRepository
 ) : ViewModel() {
 
+    private val _products = MutableStateFlow<List<Product>>(emptyList())
+    val products: StateFlow<List<Product>> = _products.asStateFlow()
+
     private val _productsByCategory = MutableStateFlow<List<Product>>(emptyList())
     val productsByCategory: StateFlow<List<Product>> = _productsByCategory.asStateFlow()
 
@@ -28,6 +31,21 @@ class ProductViewModel(
 
     private val _imageUploadUiState = MutableStateFlow<UploadImageState>(UploadImageState.Idle)
     val imageUploadUiState: StateFlow<UploadImageState> = _imageUploadUiState.asStateFlow()
+
+    fun fetchAllProducts(
+        onSuccess: () -> Unit = {},
+        onError: (String) -> Unit = {}
+    ){
+        viewModelScope.launch {
+            try {
+                val list = productRepository.getAllProducts()
+                _products.value = list
+                onSuccess()
+            } catch (e: IOException) { onError("Red: ${e.message}") }
+            catch (e: HttpException) { onError("HTTP: ${e.message}") }
+            catch (e: Exception) { onError("Desconocido: ${e.message}") }
+        }
+    }
 
     fun fetchProductsByCategory(
         categoryId: Int,
@@ -103,7 +121,4 @@ class ProductViewModel(
         }
     }
 
-    fun updateCategory(id: Int, request: CategoryRequest, onSuccess: () -> Unit, onError: Any) {
-
-    }
 }

@@ -33,6 +33,7 @@ import com.example.proyectodegrado.ui.screens.categories.CategoriesScreen
 import com.example.proyectodegrado.ui.screens.forecast.ForecastScreen
 import com.example.proyectodegrado.ui.screens.home.HomeScreen
 import com.example.proyectodegrado.ui.screens.login.LoginScreen
+import com.example.proyectodegrado.ui.screens.products.AllProductsScreen
 import com.example.proyectodegrado.ui.screens.products.ProductsByCategoryScreen
 import com.example.proyectodegrado.ui.screens.providers.ProvidersScreen
 import com.example.proyectodegrado.ui.screens.register.RegisterScreen
@@ -215,6 +216,9 @@ fun AppNavigation() {
                 }
                 composable("settings") {
                     SettingsScreen(navController = navController)
+                }
+                composable("all_products") {
+                    AllProductsScreen(navController = navController, viewModel = productViewModel)
                 }
             }
         }

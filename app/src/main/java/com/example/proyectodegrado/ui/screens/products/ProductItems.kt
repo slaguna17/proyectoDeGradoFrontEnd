@@ -1,6 +1,7 @@
 package com.example.proyectodegrado.ui.screens.products
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -44,12 +45,16 @@ fun ProductItem(
 ) {
     Card(
         modifier = Modifier
+            .background(Color.White)
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
         shape = RoundedCornerShape(12.dp),
         elevation = 4.dp
     ) {
-        Column {
+        Column (modifier = Modifier
+
+            .padding(16.dp)
+        ) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -105,6 +110,7 @@ fun ProductItem(
                     )
                 }
                 Spacer(Modifier.height(8.dp))
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
