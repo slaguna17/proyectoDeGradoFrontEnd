@@ -81,6 +81,7 @@ fun AppNavigation() {
     val storeViewModel = DependencyProvider.provideStoreViewModel()
     val providerViewModel = DependencyProvider.provideProviderViewModel()
     val scheduleViewModel = DependencyProvider.provideScheduleViewModel()
+    val workersViewModel = DependencyProvider.provideWorkersViewModel()
 
     // Estado para el Drawer y CoroutineScope (de la versión antigua)
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -197,7 +198,13 @@ fun AppNavigation() {
                     StoreScreen(navController = navController, viewModel = storeViewModel)
                 }
                 composable("workers") {
-                    WorkersScreen(navController = navController)
+                    WorkersScreen(
+                        workersViewModel = workersViewModel,
+                        // storeViewModel = storeViewModel, // Descomentar si se usa
+                        // scheduleViewModel = scheduleViewModel, // Descomentar si se usa
+                        onNavigateToCreateWorker = { /* Lógica para mostrar diálogo o navegar */ },
+                        onNavigateToEditWorker = { employeeId -> /* Lógica para mostrar diálogo o navegar con employeeId */ }
+                    )
                 }
                 composable("schedule") {
                     ScheduleScreen(navController = navController, viewModel = scheduleViewModel)

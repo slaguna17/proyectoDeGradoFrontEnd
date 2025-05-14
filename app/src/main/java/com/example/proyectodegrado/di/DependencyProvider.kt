@@ -10,6 +10,7 @@ import com.example.proyectodegrado.data.api.RetrofitClient
 import com.example.proyectodegrado.data.api.ScheduleService
 import com.example.proyectodegrado.data.api.StoreService
 import com.example.proyectodegrado.data.api.UserService
+import com.example.proyectodegrado.data.api.WorkerService
 import com.example.proyectodegrado.data.repository.CategoryRepository
 import com.example.proyectodegrado.data.repository.ProductRepository
 import com.example.proyectodegrado.data.repository.ProviderRepository
@@ -23,8 +24,7 @@ import com.example.proyectodegrado.ui.screens.schedule.ScheduleViewModel
 import com.example.proyectodegrado.ui.screens.store.StoreViewModel
 import com.example.proyectodegrado.data.repository.* // Importa todos tus repositorios
 import com.example.proyectodegrado.ui.screens.categories.CategoryViewModel
-
-// Importa otros ViewModels o Factories que necesites modificar
+import com.example.proyectodegrado.ui.screens.workers.WorkersViewModel
 
 object DependencyProvider {
 
@@ -35,26 +35,24 @@ object DependencyProvider {
     }
 
     // --- Servicios API ---
-    // (Tu código existente para userService, productService, etc. aquí...)
     private val userService: UserService by lazy { RetrofitClient.createService(UserService::class.java) }
     private val productService: ProductService by lazy { RetrofitClient.createService(ProductService::class.java) }
     private val categoryService: CategoryService by lazy { RetrofitClient.createService(CategoryService::class.java) }
     private val storeService: StoreService by lazy { RetrofitClient.createService(StoreService::class.java) }
     private val providerService: ProviderService by lazy { RetrofitClient.createService(ProviderService::class.java) }
     private val scheduleService: ScheduleService by lazy { RetrofitClient.createService(ScheduleService::class.java) }
-    // Asegúrate que ImageApiService esté aquí
+    private val workerService: WorkerService by lazy { RetrofitClient.createService(WorkerService::class.java) }
     private val imageApiService: ImageApiService by lazy { RetrofitClient.createService(ImageApiService::class.java) }
 
     // --- Repositorios ---
-    // (Tu código existente para userRepository, productRepository, etc. aquí...)
     private val userRepository: UserRepository by lazy { UserRepository(userService) }
     private val productRepository: ProductRepository by lazy { ProductRepository(productService) }
     private val categoryRepository: CategoryRepository by lazy { CategoryRepository(categoryService) }
     private val storeRepository: StoreRepository by lazy { StoreRepository(storeService) }
     private val providerRepository: ProviderRepository by lazy { ProviderRepository(providerService) }
     private val scheduleRepository: ScheduleRepository by lazy { ScheduleRepository(scheduleService) }
+    private val workerRepository: WorkerRepository by lazy { WorkerRepository(workerService) }
 
-    // --- NUEVO: Repositorio de Imágenes ---
     private val imageRepository: ImageRepository by lazy {
         if (!::applicationContext.isInitialized) {
             throw IllegalStateException("DependencyProvider debe ser inicializado con Context antes de acceder a imageRepository.")
@@ -64,8 +62,6 @@ object DependencyProvider {
     // ------------------------------------
 
     // --- ViewModels ---
-    // Modifica estos métodos para inyectar 'imageRepository' donde sea necesario
-
     fun provideLoginViewModel(): LoginViewModel {
         return LoginViewModel(userRepository)
     }
@@ -96,6 +92,21 @@ object DependencyProvider {
 
     fun provideScheduleViewModel(): ScheduleViewModel {
         return ScheduleViewModel(scheduleRepository)
+    }
+
+    fun provideWorkersViewModel(): WorkersViewModel {
+        // El WorkersViewModel necesitará el WorkerRepository.
+        // También podría necesitar StoreRepository y ScheduleRepository si los diálogos
+        // de creación/edición de empleados permiten seleccionar tiendas y horarios existentes.
+        // También podría necesitar UserRepository para buscar usuarios existentes a los que asignar como empleados.
+        // Y ImageRepository si los empleados tienen avatar.
+        return WorkersViewModel(
+            workerRepository = workerRepository,
+            userRepository = userRepository,     // Para buscar/listar usuarios
+            storeRepository = storeRepository,   // Para listar tiendas
+            scheduleRepository = scheduleRepository, // Para listar horarios/turnos
+            imageRepository = imageRepository    // Si los empleados pueden tener avatar
+        )
     }
 
 }
