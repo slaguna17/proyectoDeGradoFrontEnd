@@ -1,31 +1,18 @@
 package com.example.proyectodegrado.data.repository
 
 import com.example.proyectodegrado.data.api.WorkerService
-import com.example.proyectodegrado.data.model.CreateEmployeeAssignmentRequest
-import com.example.proyectodegrado.data.model.EmployeeAssignmentResponse
-import com.example.proyectodegrado.data.model.EmployeeDetailResponse
-import com.example.proyectodegrado.data.model.UpdateEmployeeAssignmentRequest
+import com.example.proyectodegrado.data.model.AssignScheduleRequest
+import com.example.proyectodegrado.data.model.Worker
 import retrofit2.Response
 
 class WorkerRepository(private val workerService: WorkerService) {
 
-    suspend fun getAllEmployees(): List<EmployeeDetailResponse> {
-        return workerService.getAllEmployees()
+    suspend fun searchEmployees(query: String): List<Worker> {
+        return workerService.searchEmployees(query)
     }
 
-    suspend fun getEmployeeByUserId(userId: Int): Response<EmployeeDetailResponse> {
-        return workerService.getEmployeeByUserId(userId)
-    }
-
-    suspend fun createEmployeeAssignment(request: CreateEmployeeAssignmentRequest): Response<EmployeeAssignmentResponse> {
-        return workerService.createEmployeeAssignment(request)
-    }
-
-    suspend fun updateEmployeeAssignment(userId: Int, request: UpdateEmployeeAssignmentRequest): Response<EmployeeAssignmentResponse> {
-        return workerService.updateEmployeeAssignment(userId, request)
-    }
-
-    suspend fun deleteEmployeeAssignment(userId: Int): Response<EmployeeAssignmentResponse> {
-        return workerService.deleteEmployeeAssignment(userId)
+    suspend fun assignSchedule(userId: Int, storeId: Int, shiftId: Int): Boolean {
+        val response: Response<Unit> = workerService.assignSchedule(userId, AssignScheduleRequest(storeId, shiftId))
+        return response.isSuccessful
     }
 }

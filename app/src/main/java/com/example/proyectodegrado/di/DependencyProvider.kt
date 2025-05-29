@@ -95,18 +95,7 @@ object DependencyProvider {
     }
 
     fun provideWorkersViewModel(): WorkersViewModel {
-        // El WorkersViewModel necesitará el WorkerRepository.
-        // También podría necesitar StoreRepository y ScheduleRepository si los diálogos
-        // de creación/edición de empleados permiten seleccionar tiendas y horarios existentes.
-        // También podría necesitar UserRepository para buscar usuarios existentes a los que asignar como empleados.
-        // Y ImageRepository si los empleados tienen avatar.
-        return WorkersViewModel(
-            workerRepository = workerRepository,
-            userRepository = userRepository,     // Para buscar/listar usuarios
-            storeRepository = storeRepository,   // Para listar tiendas
-            scheduleRepository = scheduleRepository, // Para listar horarios/turnos
-            imageRepository = imageRepository    // Si los empleados pueden tener avatar
-        )
+        return WorkersViewModel(workerRepository)
     }
 
 }

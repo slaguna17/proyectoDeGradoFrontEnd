@@ -40,6 +40,7 @@ import com.example.proyectodegrado.ui.screens.register.RegisterScreen
 import com.example.proyectodegrado.ui.screens.schedule.ScheduleScreen
 import com.example.proyectodegrado.ui.screens.settings.SettingsScreen
 import com.example.proyectodegrado.ui.screens.store.StoreScreen
+import com.example.proyectodegrado.ui.screens.workers.CreateWorkerScreen
 import com.example.proyectodegrado.ui.screens.workers.WorkersScreen
 import kotlinx.coroutines.launch
 
@@ -198,13 +199,10 @@ fun AppNavigation() {
                     StoreScreen(navController = navController, viewModel = storeViewModel)
                 }
                 composable("workers") {
-                    WorkersScreen(
-                        workersViewModel = workersViewModel,
-                        // storeViewModel = storeViewModel, // Descomentar si se usa
-                        // scheduleViewModel = scheduleViewModel, // Descomentar si se usa
-                        onNavigateToCreateWorker = { /* Lógica para mostrar diálogo o navegar */ },
-                        onNavigateToEditWorker = { employeeId -> /* Lógica para mostrar diálogo o navegar con employeeId */ }
-                    )
+                    WorkersScreen(navController = navController, viewModel = workersViewModel)
+                }
+                composable("registerEmployee") {
+                    CreateWorkerScreen(navController = navController, viewModel = registerViewModel)
                 }
                 composable("schedule") {
                     ScheduleScreen(navController = navController, viewModel = scheduleViewModel)
