@@ -13,6 +13,7 @@ import retrofit2.http.PUT
 import retrofit2.http.Path
 
 interface CategoryService {
+
     //Get all Categories
     @GET("/api/categories")
     suspend fun getAllCategories():List<Category>
@@ -34,7 +35,7 @@ interface CategoryService {
     suspend fun deleteCategory(@Path("id")categoryId: Int): Response<CategoryResponse>
 
     //Get products of a category
-    @GET("/api/products/categories/{id}") // Obtener productos de una categoría
+    @GET("/api/products/categories/{id}")
     suspend fun getProductsForCategory(@Path("id") categoryId: Int): List<Product>
 
 }

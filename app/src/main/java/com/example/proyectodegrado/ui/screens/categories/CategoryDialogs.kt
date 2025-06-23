@@ -1,32 +1,21 @@
 package com.example.proyectodegrado.ui.screens.categories
 
 import android.net.Uri
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import com.example.proyectodegrado.data.model.Category
-import com.example.proyectodegrado.data.model.CategoryRequest
-import com.example.proyectodegrado.data.model.CreateCategoryFormState
-import com.example.proyectodegrado.ui.components.UploadImage
-import com.example.proyectodegrado.ui.components.UploadImageState
+import com.example.proyectodegrado.data.model.*
+import com.example.proyectodegrado.ui.components.*
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 
 @Composable
 fun CreateCategoryDialog(
@@ -48,26 +37,32 @@ fun CreateCategoryDialog(
             ) {
                 Text("Crear Categoría", style = MaterialTheme.typography.titleLarge)
                 Spacer(Modifier.height(16.dp))
+
                 OutlinedTextField(
                     value = formState.name,
                     onValueChange = { onFormStateChange(formState.copy(name = it)) },
                     label = { Text("Nombre") },
                     modifier = Modifier.fillMaxWidth()
                 )
+
                 Spacer(Modifier.height(8.dp))
+
                 OutlinedTextField(
                     value = formState.description,
                     onValueChange = { onFormStateChange(formState.copy(description = it)) },
                     label = { Text("Descripción") },
                     modifier = Modifier.fillMaxWidth()
                 )
+
                 Spacer(Modifier.height(16.dp))
+
                 UploadImage(
                     modifier = Modifier.align(Alignment.CenterHorizontally),
                     currentImageUrl = formState.imageUrl,
                     uploadState = imageUploadState,
                     onImageSelected = onImageUriSelected
                 )
+
                 if (imageUploadState is UploadImageState.Error) {
                     Spacer(Modifier.height(8.dp))
                     Text(
@@ -77,16 +72,16 @@ fun CreateCategoryDialog(
                         modifier = Modifier.align(Alignment.CenterHorizontally)
                     )
                 }
+
                 Spacer(Modifier.height(16.dp))
+
                 Row(
                     Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
                     TextButton(onClick = onDismiss) { Text("Cancelar") }
                     Spacer(Modifier.width(8.dp))
-                    Button(onClick = onCreateClick) {
-                        Text("Crear")
-                    }
+                    Button(onClick = onCreateClick) { Text("Crear") }
                 }
             }
         }
@@ -97,18 +92,96 @@ fun CreateCategoryDialog(
 fun EditCategoryDialog(
     show: Boolean,
     onDismiss: () -> Unit,
-    onEdit: (CategoryRequest) -> Unit,
-    category: Category?
+    category: Category,
+    onEdit: (CategoryRequest) -> Unit
 ) {
-    // ... idem, con paquete ajustado ...
+    if (!show) return
+
+    var name by remember { mutableStateOf(category.name) }
+    var description by remember { mutableStateOf(category.description) }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(shape = MaterialTheme.shapes.medium) {
+            Column(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .verticalScroll(rememberScrollState())
+            ) {
+                Text("Editar Categoría", style = MaterialTheme.typography.titleLarge)
+                Spacer(Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Nombre") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(Modifier.height(8.dp))
+
+                OutlinedTextField(
+                    value = description,
+                    onValueChange = { description = it },
+                    label = { Text("Descripción") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(Modifier.height(16.dp))
+
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(onClick = onDismiss) { Text("Cancelar") }
+                    Spacer(Modifier.width(8.dp))
+                    Button(onClick = {
+                        val request = CategoryRequest(name, description, category.image)
+                        onEdit(request)
+                    }) {
+                        Text("Guardar")
+                    }
+                }
+            }
+        }
+    }
 }
 
 @Composable
 fun DeleteCategoryDialog(
     show: Boolean,
     onDismiss: () -> Unit,
-    onDelete: () -> Unit,
-    category: Category?
+    category: Category,
+    onDelete: () -> Unit
 ) {
-    // ... idem, con paquete ajustado ...
+    if (!show) return
+
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(shape = MaterialTheme.shapes.medium) {
+            Column(
+                modifier = Modifier.padding(20.dp)
+            ) {
+                Text(
+                    "¿Estás seguro de que deseas eliminar la categoría \"${category.name}\"?",
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                Spacer(Modifier.height(20.dp))
+                Row(
+                    horizontalArrangement = Arrangement.End,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    TextButton(onClick = onDismiss) { Text("Cancelar") }
+                    Spacer(Modifier.width(8.dp))
+                    Button(
+                        onClick = onDelete,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error,
+                            contentColor = MaterialTheme.colorScheme.onError
+                        )
+                    ) {
+                        Text("Eliminar")
+                    }
+                }
+            }
+        }
+    }
 }

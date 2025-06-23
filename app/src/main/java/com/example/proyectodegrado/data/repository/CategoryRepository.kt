@@ -8,6 +8,7 @@ import com.example.proyectodegrado.data.model.Product
 import retrofit2.Response
 
 class CategoryRepository (private val categoryService: CategoryService){
+
     //Get all Categories
     suspend fun getAllCategories(): List<Category>{
         return categoryService.getAllCategories()
