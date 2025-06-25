@@ -12,99 +12,109 @@ import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import java.io.IOException
 
-class StoreViewModel(private val storeRepository: StoreRepository, private val imageRepository: ImageRepository) : ViewModel() {
-    //Result Messages
-    private var storeResult: String = ""
+class StoreViewModel(
+    private val storeRepository: StoreRepository,
+    private val imageRepository: ImageRepository // Si quieres manejo de logos subidos, como en categorías
+) : ViewModel() {
 
-    //List and state flows
     private val _stores = MutableStateFlow<List<Store>>(emptyList())
-    var stores: StateFlow<List<Store>> = _stores
+    val stores: StateFlow<List<Store>> = _stores
 
-    //Single object flow
-    private val emptyStore = Store(-1, "","", "","","","")
-    private val _store = MutableStateFlow<Store>(emptyStore)
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error
 
-    //Store Functions
-    fun fetchStores(onSuccess: () -> Unit, onError: (String) -> Unit) {
+    // Cargar todas las tiendas
+    fun fetchStores(onSuccess: () -> Unit = {}, onError: (String) -> Unit = {}) {
         viewModelScope.launch {
             try {
                 val storeList = storeRepository.getAllStores()
                 _stores.value = storeList
+                _error.value = null
                 onSuccess()
-            } catch (e: Exception) {
-                onError("Network error: ${e.message}")
+            } catch (e: IOException) {
+                _error.value = "Network error: ${e.message}"
+                onError(_error.value ?: "")
             } catch (e: HttpException) {
-                onError("Unexpected error: ${e.message}")
+                _error.value = "Unexpected error: ${e.message}"
+                onError(_error.value ?: "")
+            } catch (e: Exception) {
+                _error.value = "Unknown error: ${e.message}"
+                onError(_error.value ?: "")
             }
         }
     }
 
-    fun fetchStore(id: Int, onSuccess: () -> Unit, onError: (String) -> Unit) {
-        viewModelScope.launch {
-            try {
-                val store = storeRepository.getStore(id)
-                _store.value = store
-                onSuccess()
-            } catch (e: Exception) {
-                onError("Network error: ${e.message}")
-            } catch (e: HttpException) {
-                onError("Unexpected error: ${e.message}")
-            }
-        }
-    }
-
-    fun createStore(request: StoreRequest, onSuccess: () -> Unit, onError: (String) -> Unit) {
+    fun createStore(
+        request: StoreRequest,
+        onSuccess: () -> Unit = {},
+        onError: (String) -> Unit = {}
+    ) {
         viewModelScope.launch {
             try {
                 val response = storeRepository.createStore(request)
                 if (response.isSuccessful) {
-                    storeResult = response.body()?.message ?: "Created Store successful!"
-                    fetchStores(onSuccess = onSuccess, onError = onError)
+                    fetchStores(onSuccess, onError)
                 } else {
-                    onError("Failed: ${response.errorBody()?.string()}")
+                    val msg = response.errorBody()?.string() ?: "Failed to create store"
+                    _error.value = msg
+                    onError(msg)
                 }
-            } catch (e: IOException) {
-                onError("Network error: ${e.message}")
-            } catch (e: HttpException) {
-                onError("Unexpected error: ${e.message}")
+            } catch (e: Exception) {
+                val msg = "Error: ${e.message}"
+                _error.value = msg
+                onError(msg)
             }
         }
     }
 
-    fun updateStore(id:Int, request: StoreRequest, onSuccess: () -> Unit, onError: (String) -> Unit) {
+    fun updateStore(
+        id: Int,
+        request: StoreRequest,
+        onSuccess: () -> Unit = {},
+        onError: (String) -> Unit = {}
+    ) {
         viewModelScope.launch {
             try {
-                val response = storeRepository.updateStore(id,request)
+                val response = storeRepository.updateStore(id, request)
                 if (response.isSuccessful) {
-                    storeResult = response.body()?.message ?: "Updated Store successfully!"
-                    fetchStores(onSuccess = onSuccess, onError = onError)
+                    fetchStores(onSuccess, onError)
                 } else {
-                    onError("Failed: ${response.errorBody()?.string()}")
+                    val msg = response.errorBody()?.string() ?: "Failed to update store"
+                    _error.value = msg
+                    onError(msg)
                 }
-            } catch (e: IOException) {
-                onError("Network error: ${e.message}")
-            } catch (e: HttpException) {
-                onError("Unexpected error: ${e.message}")
+            } catch (e: Exception) {
+                val msg = "Error: ${e.message}"
+                _error.value = msg
+                onError(msg)
             }
         }
     }
 
-    fun deleteStore(id: Int, onSuccess: () -> Unit, onError: (String) -> Unit) {
+    fun deleteStore(
+        id: Int,
+        onSuccess: () -> Unit = {},
+        onError: (String) -> Unit = {}
+    ) {
         viewModelScope.launch {
             try {
                 val response = storeRepository.deleteStore(id)
                 if (response.isSuccessful) {
-                    storeResult = response.body()?.message ?: "Deleted store successfully!"
-                    fetchStores(onSuccess = onSuccess, onError = onError)
+                    fetchStores(onSuccess, onError)
                 } else {
-                    onError("Failed: ${response.errorBody()?.string()}")
+                    val msg = response.errorBody()?.string() ?: "Failed to delete store"
+                    _error.value = msg
+                    onError(msg)
                 }
-            } catch (e: IOException) {
-                onError("Network error: ${e.message}")
-            } catch (e: HttpException) {
-                onError("Unexpected error: ${e.message}")
+            } catch (e: Exception) {
+                val msg = "Error: ${e.message}"
+                _error.value = msg
+                onError(msg)
             }
         }
     }
+
+
+    // fun handleStoreLogoSelection(uri: Uri?) { ... }
 
 }

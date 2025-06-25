@@ -1,10 +1,6 @@
 package com.example.proyectodegrado.ui.screens.categories
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
@@ -19,6 +15,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.example.proyectodegrado.data.model.Category
 import com.example.proyectodegrado.data.model.CreateCategoryFormState
+import com.example.proyectodegrado.ui.components.RefreshableContainer
 
 @Composable
 fun CategoriesScreen(
@@ -37,9 +34,24 @@ fun CategoriesScreen(
     var toEdit   by remember { mutableStateOf<Category?>(null) }
     var toDelete by remember { mutableStateOf<Category?>(null) }
 
+    // Para Swipe Refresh
+    var isRefreshing by remember { mutableStateOf(false) }
+
     // Carga inicial
     LaunchedEffect(Unit) {
         viewModel.fetchCategories(onError = { errorMessage = it })
+    }
+
+    // Función para refrescar (swipe)
+    fun refreshCategories() {
+        isRefreshing = true
+        viewModel.fetchCategories(
+            onSuccess = { isRefreshing = false },
+            onError   = { error ->
+                errorMessage = error
+                isRefreshing = false
+            }
+        )
     }
 
     Column(
@@ -56,21 +68,33 @@ fun CategoriesScreen(
         }
         Spacer(Modifier.height(8.dp))
 
-        if (categories.isEmpty()) {
-            if (errorMessage != null) {
-                Text(errorMessage!!, color = MaterialTheme.colorScheme.error)
+        // REFRESCO (Swipe down)
+        RefreshableContainer(
+            refreshing = isRefreshing,
+            onRefresh = { refreshCategories() },
+            modifier = Modifier.weight(1f)
+        ) {
+            if (categories.isEmpty()) {
+                Box(
+                    Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (errorMessage != null) {
+                        Text(errorMessage!!, color = MaterialTheme.colorScheme.error)
+                    } else {
+                        Text("Cargando categorías...", color = MaterialTheme.colorScheme.onBackground)
+                    }
+                }
             } else {
-                Text("Cargando categorías...", color = MaterialTheme.colorScheme.onBackground)
-            }
-        } else {
-            LazyColumn {
-                items(categories) { cat ->
-                    CategoryItem(
-                        category      = cat,
-                        navController = navController,
-                        onEdit        = { toEdit = it; showEdit = true },
-                        onDelete      = { toDelete = it; showDelete = true }
-                    )
+                LazyColumn {
+                    items(categories) { cat ->
+                        CategoryItem(
+                            category      = cat,
+                            navController = navController,
+                            onEdit        = { toEdit = it; showEdit = true },
+                            onDelete      = { toDelete = it; showDelete = true }
+                        )
+                    }
                 }
             }
         }

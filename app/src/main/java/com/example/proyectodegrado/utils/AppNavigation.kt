@@ -1,7 +1,10 @@
+package com.example.proyectodegrado.utils
+
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -44,6 +47,7 @@ import com.example.proyectodegrado.ui.screens.workers.CreateWorkerScreen
 import com.example.proyectodegrado.ui.screens.workers.WorkersScreen
 import kotlinx.coroutines.launch
 
+// ---------------------
 // Función auxiliar para determinar el título basado en la ruta (adaptada)
 fun determineTitle(route: String?, categoryName: String? = null): String {
     return when (route) {
@@ -60,14 +64,24 @@ fun determineTitle(route: String?, categoryName: String? = null): String {
         "settings" -> "Ajustes"
         "testAPI" -> "Test API"
         "login", "register" -> "" // Sin título en TopAppBar para estas
+        "registerEmployee" -> "Nuevo Empleado"
         else -> "TuKiosco" // Título por defecto
     }
 }
 
-// Función auxiliar para decidir si mostrar la TopAppBar estándar
+// Función para decidir si mostrar el TopAppBar
 fun shouldShowTopBar(route: String?): Boolean {
     return route != "login" && route != "register"
 }
+
+// ----------- NUEVO: Lógica para mostrar retroceso en pantallas profundas ----------
+fun shouldShowBack(route: String?): Boolean {
+    // Añade aquí las rutas que NECESITAN botón de retroceso
+    return route == "products/{categoryId}" // ProductsByCategoryScreen
+            || route == "registerEmployee"      // CreateWorkerScreen
+}
+
+// ---------------------------------------------------------------------
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -84,26 +98,26 @@ fun AppNavigation() {
     val scheduleViewModel = DependencyProvider.provideScheduleViewModel()
     val workersViewModel = DependencyProvider.provideWorkersViewModel()
 
-    // Estado para el Drawer y CoroutineScope (de la versión antigua)
+    // Estado para el Drawer y CoroutineScope
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
-    // Estado para guardar el título actual (de la versión antigua)
+    // Estado para guardar el título actual
     var currentTitle by rememberSaveable { mutableStateOf("Inicio") }
     var categoryNameForTitle by rememberSaveable { mutableStateOf<String?>(null) }
 
-
-    // Escuchar cambios de navegación para actualizar el título (de la versión antigua)
+    // Escuchar cambios de navegación para actualizar el título
     LaunchedEffect(navController) {
         navController.currentBackStackEntryFlow.collect { backStackEntry ->
             val route = backStackEntry?.destination?.route
-            // Si estás en la pantalla de productos por categoría, podrías querer pasar el nombre de la categoría
-            // Esto es un ejemplo, necesitarías obtener el nombre de la categoría desde el ViewModel o argumentos
+            // Ejemplo para custom titles: si quieres el nombre real de la categoría,
+            // puedes obtenerlo desde un viewModel o argumento extra
             if (route == "products/{categoryId}") {
-                // Aquí deberías obtener el nombre de la categoría basado en categoryId
-                // Por ahora, usaremos un placeholder o lo dejaremos como "Productos" si no se puede obtener.
+                // Si quieres, pon el nombre de la categoría usando el id
                 // categoryNameForTitle = productViewModel.getCategoryNameById(backStackEntry.arguments?.getInt("categoryId"))
-                currentTitle = determineTitle(route, "Nombre Categoría") // Ejemplo
+                currentTitle = determineTitle(route, "Productos") // Aquí puedes personalizarlo
+            } else if (route == "registerEmployee") {
+                currentTitle = determineTitle(route)
             } else {
                 currentTitle = determineTitle(route)
             }
@@ -112,13 +126,13 @@ fun AppNavigation() {
 
     ModalNavigationDrawer(
         drawerState = drawerState,
-        gesturesEnabled = drawerState.isOpen, // Opcional
+        gesturesEnabled = drawerState.isOpen,
         drawerContent = {
             DrawerContent(
                 onItemSelected = { screenLabel ->
                     val route = when (screenLabel) {
                         "Inicio" -> "home"
-                        "Categorías" -> "products" // "Productos" en el drawer ahora lleva a la ruta "products" (CategoriesScreen)
+                        "Categorías" -> "products"
                         "Tienda" -> "store"
                         "Empleados" -> "workers"
                         "Horarios" -> "schedule"
@@ -143,32 +157,35 @@ fun AppNavigation() {
             )
         }
     ) {
+        val navBackStackEntry by navController.currentBackStackEntryAsState()
+        val currentRoute = navBackStackEntry?.destination?.route
+
         Scaffold(
             topBar = {
-                val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
                 if (shouldShowTopBar(currentRoute)) {
                     TopAppBar(
                         title = { Text(currentTitle) },
                         navigationIcon = {
-                            IconButton(onClick = {
-                                scope.launch {
-                                    drawerState.open()
+                            if (shouldShowBack(currentRoute)) {
+                                IconButton(onClick = { navController.popBackStack() }) {
+                                    Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
                                 }
-                            }) {
-                                Icon(Icons.Default.Menu, contentDescription = "Abrir Menú")
+                            } else {
+                                IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                                    Icon(Icons.Default.Menu, contentDescription = "Abrir Menú")
+                                }
                             }
                         }
-                        // Puedes añadir actions aquí si son globales
                     )
                 }
             }
         ) { innerPadding ->
             NavHost(
                 navController = navController,
-                startDestination = "login", // O la pantalla de inicio que prefieras post-login
+                startDestination = "login",
                 modifier = Modifier
-                    .padding(innerPadding) // Aplicar padding del Scaffold
-                    .fillMaxSize() // Asegura que el NavHost ocupe el espacio
+                    .padding(innerPadding)
+                    .fillMaxSize()
             ) {
                 composable("login") {
                     LoginScreen(navController = navController, viewModel = loginViewModel)
@@ -179,16 +196,14 @@ fun AppNavigation() {
                 composable("home") {
                     HomeScreen(navController = navController)
                 }
-                // Ruta "products" ahora es para CategoriesScreen
                 composable("products") {
                     CategoriesScreen(navController = navController, viewModel = categoryViewModel)
                 }
                 composable(
-                    route = "products/{categoryId}", // Para productos específicos de una categoría
+                    route = "products/{categoryId}",
                     arguments = listOf(navArgument("categoryId") { type = NavType.IntType })
                 ) { backStackEntry ->
                     val categoryId = backStackEntry.arguments?.getInt("categoryId") ?: -1
-                    // Aquí es donde el productViewModel se usa para la pantalla de productos por categoría
                     ProductsByCategoryScreen(
                         navController = navController,
                         viewModel = productViewModel,
