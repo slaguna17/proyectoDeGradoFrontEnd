@@ -34,9 +34,9 @@ fun AssignScheduleDialog(
                 Spacer(Modifier.height(8.dp))
 
                 OutlinedTextField(
-                    value = workerContext.formState.shiftId?.toString() ?: "",
+                    value = workerContext.formState.scheduleId?.toString() ?: "",
                     onValueChange = {
-                        onFormStateChange(workerContext.formState.copy(shiftId = it.toIntOrNull()))
+                        onFormStateChange(workerContext.formState.copy(scheduleId = it.toIntOrNull()))
                     },
                     label = { Text("ID Turno") },
                     modifier = Modifier.fillMaxWidth()

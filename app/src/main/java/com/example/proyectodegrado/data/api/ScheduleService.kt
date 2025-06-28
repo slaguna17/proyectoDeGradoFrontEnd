@@ -13,22 +13,22 @@ import retrofit2.http.Path
 
 interface ScheduleService {
     //Get all Schedules, GET
-    @GET("/api/shifts")
+    @GET("/api/schedules")
     suspend fun getAllSchedules():List<Schedule>
 
     //Get specific Schedule
-    @GET("/api/shifts/{id}")
+    @GET("/api/schedules/{id}")
     suspend fun getSchedule(@Path("id") scheduleId: Int): Schedule
 
     //Create new Schedule
-    @POST("/api/shifts/createShift")
+    @POST("/api/schedules/createSchedule")
     suspend fun createSchedule(@Body request: ScheduleRequest): Response<ScheduleResponse>
 
     //Update Schedule
-    @PUT("/api/shifts/updateShift/{id}")
+    @PUT("/api/schedules/updateSchedule/{id}")
     suspend fun updateSchedule(@Path("id")scheduleId: Int, @Body request: ScheduleRequest): Response<ScheduleResponse>
 
     //Delete Schedule
-    @DELETE("/api/shifts/deleteShift/{id}")
+    @DELETE("/api/schedules/deleteSchedule/{id}")
     suspend fun deleteSchedule(@Path("id")scheduleId: Int): Response<ScheduleResponse>
 }

@@ -11,8 +11,8 @@ class WorkerRepository(private val workerService: WorkerService) {
         return workerService.searchEmployees(query)
     }
 
-    suspend fun assignSchedule(userId: Int, storeId: Int, shiftId: Int): Boolean {
-        val response: Response<Unit> = workerService.assignSchedule(userId, AssignScheduleRequest(storeId, shiftId))
+    suspend fun assignSchedule(userId: Int, storeId: Int, scheduleId: Int): Boolean {
+        val response: Response<Unit> = workerService.assignSchedule(userId, AssignScheduleRequest(storeId, scheduleId))
         return response.isSuccessful
     }
 }

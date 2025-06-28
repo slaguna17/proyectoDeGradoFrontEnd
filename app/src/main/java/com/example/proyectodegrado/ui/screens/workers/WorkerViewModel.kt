@@ -55,14 +55,14 @@ class WorkersViewModel(
     fun confirmScheduleAssignment(onSuccess: () -> Unit, onError: (String) -> Unit) {
         val context = _selectedWorkerContext.value ?: return
         val storeId = context.formState.storeId
-        val shiftId = context.formState.shiftId
-        if (storeId == null || shiftId == null) {
+        val scheduleId = context.formState.scheduleId
+        if (storeId == null || scheduleId == null) {
             onError("Tienda y turno requeridos")
             return
         }
 
         viewModelScope.launch {
-            val success = workerRepository.assignSchedule(context.worker.id, storeId, shiftId)
+            val success = workerRepository.assignSchedule(context.worker.id, storeId, scheduleId)
             if (success) {
                 closeDialog()
                 onSuccess()

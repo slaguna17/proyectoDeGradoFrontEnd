@@ -13,12 +13,12 @@ data class Worker(
 
 data class AssignScheduleRequest(
     val storeId: Int,
-    val shiftId: Int
+    val scheduleId: Int
 )
 
 data class AssignScheduleFormState(
     val storeId: Int? = null,
-    val shiftId: Int? = null
+    val scheduleId: Int? = null
 )
 
 // Para mostrar diálogos con ID de usuario preseleccionado

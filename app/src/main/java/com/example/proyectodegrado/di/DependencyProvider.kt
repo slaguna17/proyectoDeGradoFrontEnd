@@ -34,7 +34,7 @@ object DependencyProvider {
         applicationContext = context.applicationContext
     }
 
-    // --- Servicios API ---
+    // --- API Services ---
     private val userService: UserService by lazy { RetrofitClient.createService(UserService::class.java) }
     private val productService: ProductService by lazy { RetrofitClient.createService(ProductService::class.java) }
     private val categoryService: CategoryService by lazy { RetrofitClient.createService(CategoryService::class.java) }
@@ -44,7 +44,7 @@ object DependencyProvider {
     private val workerService: WorkerService by lazy { RetrofitClient.createService(WorkerService::class.java) }
     private val imageApiService: ImageApiService by lazy { RetrofitClient.createService(ImageApiService::class.java) }
 
-    // --- Repositorios ---
+    // --- Repositories ---
     private val userRepository: UserRepository by lazy { UserRepository(userService) }
     private val productRepository: ProductRepository by lazy { ProductRepository(productService) }
     private val categoryRepository: CategoryRepository by lazy { CategoryRepository(categoryService) }
@@ -79,7 +79,6 @@ object DependencyProvider {
         // Ejemplo: Si productos necesita subir imagen
         return CategoryViewModel(categoryRepository, imageRepository) // <--- INYECTADO
     }
-
 
     fun provideStoreViewModel(): StoreViewModel {
         // Ejemplo: Si tienda necesita subir logo
