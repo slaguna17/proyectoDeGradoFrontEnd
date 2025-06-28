@@ -12,6 +12,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.example.proyectodegrado.data.model.Schedule
 import com.example.proyectodegrado.ui.components.RefreshableContainer
+import kotlinx.coroutines.launch
 
 @Composable
 fun ScheduleScreen(
@@ -25,17 +26,17 @@ fun ScheduleScreen(
     var isRefreshing by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(true) }
 
-    // Estados para controlar la visibilidad de los diálogos
     var showCreateDialog by remember { mutableStateOf(false) }
     var showEditDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
 
-    // Estados para guardar el turno a editar o eliminar
     var scheduleToEdit by remember { mutableStateOf<Schedule?>(null) }
     var scheduleToDelete by remember { mutableStateOf<Schedule?>(null) }
 
     fun showSnackbar(message: String) {
-        // Implementa tu lógica de snackbar si lo deseas
+        scope.launch {
+            snackbarHostState.showSnackbar(message)
+        }
     }
 
     fun refreshData() {
@@ -63,13 +64,14 @@ fun ScheduleScreen(
                 .fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Spacer(Modifier.height(16.dp)) // <-- Pequeño espacio superior para que no esté pegado a la barra
             Button(
-                onClick = { showCreateDialog = true }, // Abre el diálogo de creación
-                modifier = Modifier.padding(top = 16.dp)
+                onClick = { showCreateDialog = true }
+                // --- CORRECCIÓN: Se eliminó el Modifier.padding(top = 16.dp) ---
             ) {
                 Text("+ Crear Turno")
             }
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(16.dp)) // <-- Espacio consistente antes de la lista
 
             RefreshableContainer(
                 refreshing = isRefreshing,
@@ -84,9 +86,9 @@ fun ScheduleScreen(
                         Text("No hay turnos creados.")
                     }
                 } else {
-                    LazyColumn(contentPadding = PaddingValues(vertical = 8.dp)) {
+                    LazyColumn(contentPadding = PaddingValues(bottom = 8.dp)) { // Padding inferior para el último item
                         items(schedules, key = { it.id }) { schedule ->
-                            ScheduleItem (
+                            ScheduleItem(
                                 schedule = schedule,
                                 onEdit = {
                                     scheduleToEdit = it
@@ -109,21 +111,21 @@ fun ScheduleScreen(
         onDismiss = { showCreateDialog = false },
         onConfirm = { request ->
             viewModel.createSchedule(request,
-                onSuccess = { refreshData(); showSnackbar("Turno creado") },
+                onSuccess = { showSnackbar("Turno creado") },
                 onError = { error -> showSnackbar(error) }
             )
             showCreateDialog = false
         }
     )
 
-    EditScheduleDialog (
+    EditScheduleDialog(
         show = showEditDialog,
         schedule = scheduleToEdit,
         onDismiss = { showEditDialog = false },
         onConfirm = { request ->
             scheduleToEdit?.let {
                 viewModel.updateSchedule(it.id, request,
-                    onSuccess = { refreshData(); showSnackbar("Turno actualizado") },
+                    onSuccess = { showSnackbar("Turno actualizado") },
                     onError = { error -> showSnackbar(error) }
                 )
             }
@@ -138,7 +140,7 @@ fun ScheduleScreen(
         onConfirm = {
             scheduleToDelete?.let {
                 viewModel.deleteSchedule(it.id,
-                    onSuccess = { refreshData(); showSnackbar("Turno eliminado") },
+                    onSuccess = { showSnackbar("Turno eliminado") },
                     onError = { error -> showSnackbar(error) }
                 )
             }
