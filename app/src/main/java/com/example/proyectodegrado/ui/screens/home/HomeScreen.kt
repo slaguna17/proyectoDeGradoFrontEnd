@@ -1,35 +1,27 @@
 package com.example.proyectodegrado.ui.screens.home
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.example.proyectodegrado.di.DependencyProvider
 import com.example.proyectodegrado.ui.screens.products.AllProductsScreen
 import com.example.proyectodegrado.ui.screens.products.ProductViewModel
 
 @Composable
-fun HomeScreen(navController: NavController) {
+fun HomeScreen(
+    navController: NavController,
+    viewModel: ProductViewModel // <-- CAMBIO 1: Recibimos el ViewModel como parámetro
+) {
+    // Ya no necesitamos obtener el ViewModel desde DependencyProvider aquí.
+
     Column(
-        modifier = Modifier
-            .fillMaxSize(),
-//            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        modifier = Modifier.fillMaxSize()
     ) {
-        val productViewModel: ProductViewModel = DependencyProvider.provideProductViewModel()
+        // CAMBIO 2: Usamos el viewModel que recibimos.
         AllProductsScreen(
             navController = navController,
-            viewModel = productViewModel
+            viewModel = viewModel
         )
     }
 }
-
-

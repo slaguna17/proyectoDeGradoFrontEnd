@@ -4,109 +4,110 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.proyectodegrado.data.model.Provider
 import com.example.proyectodegrado.data.model.ProviderRequest
-import com.example.proyectodegrado.data.model.Store
-import com.example.proyectodegrado.data.model.StoreRequest
 import com.example.proyectodegrado.data.repository.ProviderRepository
-import com.example.proyectodegrado.data.repository.StoreRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import java.io.IOException
 
-class ProvidersViewModel(private val providersRepository: ProviderRepository) : ViewModel() {
-    //Result Messages
-    private var providerResult: String = ""
+class ProvidersViewModel(
+    private val providerRepository: ProviderRepository
+) : ViewModel() {
 
-    //List and state flows
     private val _providers = MutableStateFlow<List<Provider>>(emptyList())
-    var providers: StateFlow<List<Provider>> = _providers
+    val providers: StateFlow<List<Provider>> = _providers
 
-    //Single object flow
-    private val emptyProvider = Provider(-1, "","", "","","", "")
-    private val _provider = MutableStateFlow<Provider>(emptyProvider)
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error
 
-    //Provider Functions
-    fun fetchProviders(onSuccess: () -> Unit, onError: (String) -> Unit) {
+    fun fetchProviders(onSuccess: () -> Unit = {}, onError: (String) -> Unit = {}) {
         viewModelScope.launch {
             try {
-                val providerList = providersRepository.getAllProviders()
+                val providerList = providerRepository.getAllProviders()
                 _providers.value = providerList
+                _error.value = null
                 onSuccess()
+            } catch (e: IOException) {
+                _error.value = "Network error: ${e.message}"
+                onError(_error.value ?: "")
+            } catch (e: HttpException) {
+                _error.value = "Unexpected error: ${e.message}"
+                onError(_error.value ?: "")
             } catch (e: Exception) {
-                onError("Network error: ${e.message}")
-            } catch (e: HttpException) {
-                onError("Unexpected error: ${e.message}")
+                _error.value = "Unknown error: ${e.message}"
+                onError(_error.value ?: "")
             }
         }
     }
 
-    fun fetchProvider(id: Int, onSuccess: () -> Unit, onError: (String) -> Unit) {
+    fun createProvider(
+        request: ProviderRequest,
+        onSuccess: () -> Unit = {},
+        onError: (String) -> Unit = {}
+    ) {
         viewModelScope.launch {
             try {
-                val provider = providersRepository.getProvider(id)
-                _provider.value = provider
-                onSuccess()
+                val response = providerRepository.createProvider(request)
+                if (response.isSuccessful) {
+                    fetchProviders(onSuccess, onError)
+                } else {
+                    val msg = response.errorBody()?.string() ?: "Failed to create provider"
+                    _error.value = msg
+                    onError(msg)
+                }
             } catch (e: Exception) {
-                onError("Network error: ${e.message}")
-            } catch (e: HttpException) {
-                onError("Unexpected error: ${e.message}")
+                val msg = "Error: ${e.message}"
+                _error.value = msg
+                onError(msg)
             }
         }
     }
 
-    fun createProvider(request: ProviderRequest, onSuccess: () -> Unit, onError: (String) -> Unit) {
+    fun updateProvider(
+        id: Int,
+        request: ProviderRequest,
+        onSuccess: () -> Unit = {},
+        onError: (String) -> Unit = {}
+    ) {
         viewModelScope.launch {
             try {
-                val response = providersRepository.createProvider(request)
+                val response = providerRepository.updateProvider(id, request)
                 if (response.isSuccessful) {
-                    providerResult = response.body()?.message ?: "Created Provider successful!"
-                    fetchProviders(onSuccess = onSuccess, onError = onError)
+                    fetchProviders(onSuccess, onError)
                 } else {
-                    onError("Failed: ${response.errorBody()?.string()}")
+                    val msg = response.errorBody()?.string() ?: "Failed to update provider"
+                    _error.value = msg
+                    onError(msg)
                 }
-            } catch (e: IOException) {
-                onError("Network error: ${e.message}")
-            } catch (e: HttpException) {
-                onError("Unexpected error: ${e.message}")
+            } catch (e: Exception) {
+                val msg = "Error: ${e.message}"
+                _error.value = msg
+                onError(msg)
             }
         }
     }
 
-    fun updateProvider(id:Int, request: ProviderRequest, onSuccess: () -> Unit, onError: (String) -> Unit) {
+    fun deleteProvider(
+        id: Int,
+        onSuccess: () -> Unit = {},
+        onError: (String) -> Unit = {}
+    ) {
         viewModelScope.launch {
             try {
-                val response = providersRepository.updateProvider(id,request)
+                val response = providerRepository.deleteProvider(id)
                 if (response.isSuccessful) {
-                    providerResult = response.body()?.message ?: "Updated Provider successfully!"
-                    fetchProviders(onSuccess = onSuccess, onError = onError)
+                    fetchProviders(onSuccess, onError)
                 } else {
-                    onError("Failed: ${response.errorBody()?.string()}")
+                    val msg = response.errorBody()?.string() ?: "Failed to delete provider"
+                    _error.value = msg
+                    onError(msg)
                 }
-            } catch (e: IOException) {
-                onError("Network error: ${e.message}")
-            } catch (e: HttpException) {
-                onError("Unexpected error: ${e.message}")
+            } catch (e: Exception) {
+                val msg = "Error: ${e.message}"
+                _error.value = msg
+                onError(msg)
             }
         }
     }
-
-    fun deleteProvider(id: Int, onSuccess: () -> Unit, onError: (String) -> Unit) {
-        viewModelScope.launch {
-            try {
-                val response = providersRepository.deleteProvider(id)
-                if (response.isSuccessful) {
-                    providerResult = response.body()?.message ?: "Deleted provider successfully!"
-                    fetchProviders(onSuccess = onSuccess, onError = onError)
-                } else {
-                    onError("Failed: ${response.errorBody()?.string()}")
-                }
-            } catch (e: IOException) {
-                onError("Network error: ${e.message}")
-            } catch (e: HttpException) {
-                onError("Unexpected error: ${e.message}")
-            }
-        }
-    }
-
 }

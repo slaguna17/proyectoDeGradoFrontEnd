@@ -1,346 +1,194 @@
 package com.example.proyectodegrado.ui.screens.providers
 
-import com.example.proyectodegrado.ui.screens.store.StoreViewModel
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.Card
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.OutlinedTextField
-import androidx.compose.material.Surface
-import androidx.compose.material.Text
-import androidx.compose.material.TextButton
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.example.proyectodegrado.data.model.Provider
 import com.example.proyectodegrado.data.model.ProviderRequest
-import com.example.proyectodegrado.data.model.Store
-import com.example.proyectodegrado.data.model.StoreRequest
-import com.example.proyectodegrado.di.AppPreferences
-
+import com.example.proyectodegrado.ui.components.RefreshableContainer
 
 @Composable
-fun ProvidersScreen(navController: NavController, viewModel: ProvidersViewModel){
-    //State variables
-    var providers by remember { mutableStateOf<List<Provider>>(emptyList()) }
-    var errorMessage by remember { mutableStateOf("") }
+fun ProvidersScreen(
+    navController: NavController,
+    viewModel: ProvidersViewModel
+) {
+    val providers by viewModel.providers.collectAsStateWithLifecycle()
+    var errorMessage by rememberSaveable { mutableStateOf<String?>(null) }
 
-    //Dialog variables
-    var showCreateDialog by remember { mutableStateOf(false) }
-    var showEditDialog by remember { mutableStateOf(false) }
+    var showCreateDialog by rememberSaveable { mutableStateOf(false) }
+    var showEditDialog   by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
-
-    //Create Provider variables
-    var newProviderName by remember { mutableStateOf("") }
-    var newProviderAddress by remember { mutableStateOf("") }
-    var newProviderEmail by remember { mutableStateOf("") }
-    var newProviderPhone by remember { mutableStateOf("") }
-    var newProviderContactName by remember { mutableStateOf("") }
-    var newProviderNotes by remember { mutableStateOf("") }
-
-    //Edit and delete variables
-    var providerToEdit by remember { mutableStateOf<Provider?>(null) }
+    var providerToEdit   by remember { mutableStateOf<Provider?>(null) }
     var providerToDelete by remember { mutableStateOf<Provider?>(null) }
 
-    // Refresh function
-    val refreshProviders: () -> Unit = {
+    // Formulario para crear proveedor
+    var formName    by remember { mutableStateOf("") }
+    var formAddress by remember { mutableStateOf("") }
+    var formEmail   by remember { mutableStateOf("") }
+    var formPhone   by remember { mutableStateOf("") }
+    var formContact by remember { mutableStateOf("") }
+    var formNotes   by remember { mutableStateOf("") }
+
+    // Para Swipe Refresh
+    var isRefreshing by remember { mutableStateOf(false) }
+
+    // Carga inicial y refresh
+    fun refreshProviders() {
+        isRefreshing = true
         viewModel.fetchProviders(
-            onSuccess = { providers = viewModel.providers.value },
-            onError = { errorMessage = it }
+            onSuccess = { isRefreshing = false },
+            onError = { err -> errorMessage = err; isRefreshing = false }
         )
     }
 
-    // Load providers when initializing screeen
     LaunchedEffect(Unit) {
         refreshProviders()
     }
 
-
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+            .padding(12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        //Dialogs
+        Button(
+            onClick = {
+                formName = ""
+                formAddress = ""
+                formEmail = ""
+                formPhone = ""
+                formContact = ""
+                formNotes = ""
+                showCreateDialog = true
+            },
+            modifier = Modifier
+                .padding(vertical = 8.dp)
+                .align(Alignment.CenterHorizontally)
+        ) {
+            Text("+ Crear Proveedor")
+        }
+
+        Spacer(Modifier.height(4.dp))
+
+        RefreshableContainer(
+            refreshing = isRefreshing,
+            onRefresh = { refreshProviders() },
+            modifier = Modifier.weight(1f)
+        ) {
+            if (providers.isEmpty()) {
+                Box(
+                    Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (errorMessage != null) {
+                        Text(errorMessage!!, color = MaterialTheme.colorScheme.error)
+                    } else {
+                        Text("Cargando proveedores...", color = MaterialTheme.colorScheme.onBackground)
+                    }
+                }
+            } else {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    items(providers) { provider ->
+                        ProviderItem(
+                            provider = provider,
+                            onEdit = {
+                                providerToEdit = it
+                                showEditDialog = true
+                            },
+                            onDelete = {
+                                providerToDelete = it
+                                showDeleteDialog = true
+                            }
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    // Diálogo crear proveedor
+    if (showCreateDialog) {
         CreateProviderDialog(
-            show = showCreateDialog,
+            show = true,
+            name = formName,
+            onNameChange = { formName = it },
+            address = formAddress,
+            onAddressChange = { formAddress = it },
+            email = formEmail,
+            onEmailChange = { formEmail = it },
+            phone = formPhone,
+            onPhoneChange = { formPhone = it },
+            contactPerson = formContact,
+            onContactPersonChange = { formContact = it },
+            notes = formNotes,
+            onNotesChange = { formNotes = it },
             onDismiss = { showCreateDialog = false },
-            onCreate = { name, address,email, phone, contactName, notes ->
+            onSubmit = {
                 viewModel.createProvider(
-                    request = ProviderRequest( name, address, email, phone, contactName, notes),
-//                            socials)
-                    onSuccess = {
-                        refreshProviders()
-                        newProviderName = ""
-                        newProviderAddress = ""
-                        newProviderEmail = ""
-                        newProviderPhone = ""
-                        newProviderContactName = ""
-                        newProviderNotes = ""
-                    },
-                    onError = {
-                        errorMessage = it
-                    }
+                    ProviderRequest(formName, formAddress, formEmail, formPhone, formContact, formNotes),
+                    onSuccess = { refreshProviders() },
+                    onError = { errorMessage = it }
                 )
-            },
-            name = newProviderName,
-            onNameChange = {newProviderName = it},
-            address = newProviderAddress,
-            onAddressChange = {newProviderAddress = it},
-            email = newProviderEmail,
-            onEmailChange = {newProviderEmail = it},
-            phone = newProviderPhone,
-            onPhoneChange = {newProviderPhone = it},
-            contactName = newProviderContactName,
-            onContactNameChange = {newProviderContactName = it},
-            notes = newProviderNotes,
-            onNotesChange = {newProviderNotes = it},
+                showCreateDialog = false
+            }
         )
+    }
+
+    // Diálogo editar proveedor
+    if (showEditDialog && providerToEdit != null) {
+        val p = providerToEdit!!
         EditProviderDialog(
-            show = showEditDialog,
+            show = true,
+            name = p.name,
+            onNameChange = { providerToEdit = p.copy(name = it) },
+            address = p.address,
+            onAddressChange = { providerToEdit = p.copy(address = it) },
+            email = p.email,
+            onEmailChange = { providerToEdit = p.copy(email = it) },
+            phone = p.phone,
+            onPhoneChange = { providerToEdit = p.copy(phone = it) },
+            contactPerson = p.contact_person_name,
+            onContactPersonChange = { providerToEdit = p.copy(contact_person_name = it) },
+            notes = p.notes,
+            onNotesChange = { providerToEdit = p.copy(notes = it) },
             onDismiss = { showEditDialog = false },
-            onEdit = {id, name, address,email, phone, contactName, notes ->
-                if (providerToEdit != null) {
-                    viewModel.updateProvider(
-                        id = id,
-                        request = ProviderRequest(name, address,email, phone, contactName, notes),
-                        onSuccess = {
-                            refreshProviders()
-                        },
-                        onError = { errorMessage = it }
-                    )
-
-                }
-            },
-            provider = providerToEdit
+            onSubmit = {
+                viewModel.updateProvider(
+                    id = p.id,
+                    ProviderRequest(p.name, p.address, p.email, p.phone, p.contact_person_name, p.notes),
+                    onSuccess = { refreshProviders() },
+                    onError = { errorMessage = it }
+                )
+                showEditDialog = false
+            }
         )
+    }
 
+    // Diálogo eliminar proveedor
+    if (showDeleteDialog && providerToDelete != null) {
         DeleteProviderDialog(
-            show = showDeleteDialog,
+            show = true,
+            message = "¿Seguro que deseas eliminar el proveedor \"${providerToDelete!!.name}\"?",
             onDismiss = { showDeleteDialog = false },
-            onDelete = {
-                if (providerToDelete != null) {
-                    viewModel.deleteProvider(
-                        id = providerToDelete!!.id,
-                        onSuccess = {
-                            refreshProviders()
-                        },
-                        onError = {
-                            errorMessage = it
-                        }
-                    )
-                }
-            },
-            provider = providerToDelete
+            onConfirm = {
+                viewModel.deleteProvider(
+                    id = providerToDelete!!.id,
+                    onSuccess = { refreshProviders() },
+                    onError = { errorMessage = it }
+                )
+                showDeleteDialog = false
+            }
         )
-
-        //Create Provider
-        Button(onClick = {
-            showCreateDialog = true
-        }) {
-            Text("Crear Proveedor")
-        }
-        if (errorMessage.isNotEmpty()) {
-            Text(
-                text = errorMessage,
-                modifier = Modifier.padding(16.dp)
-            )
-        } else if (providers.isNotEmpty()) {
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxSize()
-            ) {
-                items(providers) { provider ->
-                    ProviderItem(
-                        provider = provider,
-                        onEdit = {
-                            providerToEdit = it
-                            showEditDialog = true
-                        },
-                        onDelete = {
-                            providerToDelete = it
-                            showDeleteDialog = true
-                        }
-                    )
-                }
-            }
-        } else {
-            CircularProgressIndicator(Modifier.align(Alignment.CenterHorizontally))
-        }
-    }
-}
-
-@Composable
-fun ProviderItem(
-    provider: Provider,
-    onEdit: (Provider) -> Unit,
-    onDelete: (Provider) -> Unit
-) {
-    Card(
-        elevation = 4.dp,
-        modifier = Modifier
-            .fillMaxWidth()
-    ) {
-        Row (
-            modifier = Modifier.padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ){
-            Column(
-                Modifier.weight(1f)
-            ) {
-                Text(text = "ID: ${provider.id}")
-                Text(text = "Name: ${provider.name}")
-                Text(text = "Address: ${provider.address}")
-                Text(text = "Email: ${provider.email}")
-                Text(text = "Phone: ${provider.phone}")
-                Text(text = "Contact: ${provider.contact_person_name}")
-                Text(text = "Notes: ${provider.notes}")
-            }
-            Row {
-                IconButton(onClick = { onEdit(provider) }) {
-                    Icon(imageVector = Icons.Default.Edit, contentDescription = "Editar Proveedor")
-                }
-                IconButton(onClick = {onDelete(provider)}) {
-                    Icon(imageVector = Icons.Default.Delete, contentDescription = "Eliminar Proveedor")
-                }
-            }
-        }
-    }
-    Spacer(modifier = Modifier.height(2.dp))
-}
-
-@Composable
-fun CreateProviderDialog(
-    show: Boolean,
-    onDismiss: () -> Unit,
-    onCreate: (String, String, String, String, String, String) -> Unit,
-    name: String,
-    onNameChange: (String) -> Unit,
-    address:String,
-    onAddressChange:(String) -> Unit,
-    email: String,
-    onEmailChange : (String) -> Unit,
-    phone:String,
-    onPhoneChange: (String) -> Unit,
-    contactName : String,
-    onContactNameChange :(String) -> Unit,
-    notes:String,
-    onNotesChange:(String) -> Unit,
-
-) {
-    if (show) {
-        Dialog(onDismissRequest = onDismiss) {
-            Surface(shape = MaterialTheme.shapes.medium) {
-                Column(Modifier.padding(16.dp)) {
-                    Text("Crear Proveedor", style = MaterialTheme.typography.h6)
-                    OutlinedTextField(value = name, onValueChange = onNameChange, label = { Text("Nombre (Empresa)") })
-                    OutlinedTextField(value = address, onValueChange = onAddressChange, label = { Text("Direccion") })
-                    OutlinedTextField(value = email, onValueChange = onEmailChange, label = { Text("Correo Electronico") })
-                    OutlinedTextField(value = phone, onValueChange = onPhoneChange, label = { Text("Telefono") })
-                    OutlinedTextField(value = contactName, onValueChange = onContactNameChange, label = { Text("Nombre de la persona del contacto") })
-                    OutlinedTextField(value = notes, onValueChange = onNotesChange, label = { Text("Notas") })
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                        TextButton(onClick = onDismiss) {Text("Cancelar") }
-                        Spacer(Modifier.width(8.dp))
-                        Button(onClick = { onCreate(name, address,email, phone, contactName, notes); onDismiss() }) {Text("Crear") }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun EditProviderDialog(
-    show: Boolean,
-    onDismiss: () -> Unit,
-    onEdit: (Int, String, String, String, String, String, String) -> Unit,
-    provider: Provider?
-) {
-    if (show && provider != null) {
-        var editedName by remember { mutableStateOf(provider.name) }
-        var editedAddress by remember { mutableStateOf(provider.address) }
-        var editedEmail by remember { mutableStateOf(provider.email) }
-        var editedPhone by remember { mutableStateOf(provider.phone) }
-        var editedContactName by remember { mutableStateOf(provider.contact_person_name) }
-        var editedNotes by remember { mutableStateOf(provider.notes) }
-
-
-        Dialog(onDismissRequest = onDismiss) {
-            Surface(shape = MaterialTheme.shapes.medium) {
-                Column(Modifier.padding(16.dp)) {
-                    Text("Editar Proveedor", style = MaterialTheme.typography.h6)
-                    OutlinedTextField(value = editedName, onValueChange = { editedName = it }, label = { Text("Nombre (de la empresa)") })
-                    OutlinedTextField(value = editedAddress, onValueChange = { editedAddress = it }, label = { Text("Direccion") })
-                    OutlinedTextField(value = editedEmail, onValueChange = { editedEmail = it }, label = { Text("Email") })
-                    OutlinedTextField(value = editedPhone, onValueChange = { editedPhone = it }, label = { Text("Telefono") })
-                    OutlinedTextField(value = editedContactName, onValueChange = { editedContactName = it }, label = { Text("Nombre de la persona del contacto") })
-//                    uploadImage(
-//                        buttonText = "Elegir foto de categoria",
-//                        onUploadResult = { result ->
-//                            result.fold(
-//                                onSuccess = { url -> onImageChange(url) },
-//                                onFailure = { error ->
-//                                    // Aquí puedes mostrar un mensaje de error o registrar la falla.
-//                                    onImageChange("")  // O mantener el campo vacío
-//                                }
-//                            )
-//                        }
-//                    )
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                        TextButton(onClick = onDismiss) {Text("Cancelar") }
-                        Spacer(Modifier.width(8.dp))
-                        Button(onClick = { onEdit(provider.id, editedName, editedAddress,editedEmail,editedPhone,editedContactName,editedNotes); onDismiss() }) {Text("Guardar") }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun DeleteProviderDialog(
-    show: Boolean,
-    onDismiss: () -> Unit,
-    onDelete: () -> Unit,
-    provider: Provider?
-) {
-    if (show && provider != null) {
-        Dialog(onDismissRequest = onDismiss) {
-            Surface(shape = MaterialTheme.shapes.medium) {
-                Column(Modifier.padding(16.dp)) {
-                    Text("¿Seguro que desea eliminar al proveedor: ${provider.name}?", style = MaterialTheme.typography.h6)
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                        TextButton(onClick = onDismiss) {Text("Cancelar") }
-                        Spacer(Modifier.width(8.dp))
-                        Button(onClick = { onDelete(); onDismiss() }) {Text("Eliminar") }
-                    }
-                }
-            }
-        }
     }
 }

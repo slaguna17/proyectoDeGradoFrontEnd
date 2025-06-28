@@ -1,36 +1,32 @@
 package com.example.proyectodegrado.data.api
 
-import com.example.proyectodegrado.data.model.Category
 import com.example.proyectodegrado.data.model.Product
 import com.example.proyectodegrado.data.model.ProductRequest
 import com.example.proyectodegrado.data.model.ProductResponse
 import retrofit2.Response
-import retrofit2.http.Body
-import retrofit2.http.DELETE
-import retrofit2.http.GET
-import retrofit2.http.POST
-import retrofit2.http.PUT
-import retrofit2.http.Path
+import retrofit2.http.*
 
 interface ProductService {
-    //Get all Products, GET
     @GET("/api/products")
-    suspend fun getAllProducts():List<Product>
+    suspend fun getAllProducts(): List<Product>
 
-    //Get specific Product
     @GET("/api/products/{id}")
-    suspend fun getProduct(@Path("id") productId: Int): Product
+    suspend fun getProductById(@Path("id") id: Int): Product
 
-    //Create new Product
     @POST("/api/products/createProduct")
     suspend fun createProduct(@Body request: ProductRequest): Response<ProductResponse>
 
-    //Update Product
+    // Endpoint corregido según Postman
     @PUT("/api/products/updateProduct/{id}")
-    suspend fun updateProduct(@Path("id")productId: Int, @Body request: ProductRequest):Response<ProductResponse>
+    suspend fun updateProduct(@Path("id") id: Int, @Body request: ProductRequest): Response<ProductResponse>
 
-    //Delete Product
+    // Endpoint corregido según Postman
     @DELETE("/api/products/deleteProduct/{id}")
-    suspend fun deleteProduct(@Path("id")productId: Int):Response<ProductResponse>
+    suspend fun deleteProduct(@Path("id") id: Int): Response<ProductResponse>
 
+    @GET("/api/products/categories/{categoryId}")
+    suspend fun getProductsByCategory(@Path("categoryId") categoryId: Int): List<Product>
+
+    @GET("/api/products/stores/{storeId}")
+    suspend fun getProductsByStore(@Path("storeId") storeId: Int): List<Product>
 }

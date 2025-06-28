@@ -71,18 +71,9 @@ fun StoreScreen(
             .padding(12.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Mostrar tienda seleccionada (opcional)
-        if (selectedStoreId.isNotBlank()) {
-            Text(
-                text = "Tienda seleccionada: $selectedStoreId",
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.align(Alignment.Start)
-            )
-        }
-
         Button(
             onClick = {
-                // Limpiar campos al abrir diálogo de crear
+                //Clean Form
                 formName = ""
                 formAddress = ""
                 formCity = ""
@@ -131,7 +122,6 @@ fun StoreScreen(
                             },
                             onEdit = {
                                 storeToEdit = it
-                                // Al editar, cargar datos del store seleccionado
                                 editName = it.name
                                 editAddress = it.address
                                 editCity = it.city
@@ -176,7 +166,7 @@ fun StoreScreen(
         )
     }
 
-    // Diálogo editar tienda
+    // Edit Store Dialog
     if (showEditDialog && storeToEdit != null) {
         EditStoreDialog(
             show = true,
@@ -205,7 +195,7 @@ fun StoreScreen(
         )
     }
 
-    // Diálogo eliminar tienda
+    // Delete Store Dialog
     if (showDeleteDialog && storeToDelete != null) {
         DeleteStoreDialog(
             show = true,

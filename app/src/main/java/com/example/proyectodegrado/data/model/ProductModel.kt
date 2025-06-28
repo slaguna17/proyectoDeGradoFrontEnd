@@ -1,54 +1,94 @@
 package com.example.proyectodegrado.data.model
 
+import com.google.gson.annotations.SerializedName
+
 data class Product(
+    @SerializedName("id")
     val id: Int,
-    val SKU: String,
+    @SerializedName("SKU")
+    val sku: String?,
+    @SerializedName("name")
     val name: String,
+    @SerializedName("description")
     val description: String,
-    val image: String,
+    @SerializedName("image")
+    val image: String?,
+    @SerializedName("brand")
     val brand: String,
-    val category_id: Int
+    @SerializedName("category_id")
+    val categoryId: Int,
+    @SerializedName("created_at")
+    val createdAt: String?,
+    @SerializedName("updated_at")
+    val updatedAt: String?,
+
+    // --- CORRECCIÓN 1: AÑADIR CAMPOS NULABLES ---
+    // Estos campos pueden venir o no, dependiendo del endpoint
+    @SerializedName("stock")
+    val stock: Int?,
+    @SerializedName("expiration_date")
+    val expirationDate: String?,
+    // --- FIN CORRECCIÓN 1 ---
+
+    @SerializedName("stores")
+    val stores: List<StoreInfoFromProduct>?,
+    @SerializedName("providers")
+    val providers: List<ProviderInfoFromProduct>?
+)
+
+// --- CORRECCIÓN 2: AÑADIR LA CLASE 'PIVOT' QUE USA EL MODELO DE TIENDA ---
+// El modelo StoreInfoFromProduct ahora puede contener la información de la tabla pivote
+data class StoreInfoFromProduct(
+    @SerializedName("id") val id: Int,
+    @SerializedName("name") val name: String,
+    @SerializedName("pivot") val pivot: StoreProductPivot // <-- Añadido para el stock
+)
+
+data class StoreProductPivot(
+    @SerializedName("stock") val stock: Int,
+    @SerializedName("expiration_date") val expirationDate: String?
+)
+// --- FIN CORRECCIÓN 2 ---
+
+
+data class ProviderInfoFromProduct(
+    @SerializedName("id") val id: Int,
+    @SerializedName("name") val name: String
 )
 
 data class ProductRequest(
-    val product: ProductData,
-    val store: StoreData
-)
-
-data class ProductRequest2(
-    val product: Product,
-    val store: StoreData
-)
-
-data class ProductData(
-    val SKU: String,
+    @SerializedName("SKU")
+    val sku: String,
+    @SerializedName("name")
     val name: String,
+    @SerializedName("description")
     val description: String,
+    @SerializedName("image")
     val image: String,
-    val category_id: Int,
-    val brand: String
-)
-
-data class StoreData(
-    val store_id: Int,
+    @SerializedName("brand")
+    val brand: String,
+    @SerializedName("category_id")
+    val categoryId: Int,
+    @SerializedName("store_id")
+    val storeId: Int,
+    @SerializedName("stock")
     val stock: Int,
-    val expiration_date: String
+    @SerializedName("expiration_date")
+    val expirationDate: String
 )
 
 data class ProductResponse(
-    val message: String, // Adjust based on your backend response
-    val productId: Int? = null // Example of returning created user ID
+    val message: String,
+    val product: Product? = null
 )
 
-// Puedes ponerla dentro de ProductViewModel.kt o en data/model/
 data class CreateProductFormState(
     val name: String = "",
     val description: String = "",
     val sku: String = "",
     val brand: String = "",
-    val stock: String = "0", // Usar String para el TextField
+    val stock: String = "0",
     val expirationDate: String = "",
-    val categoryId: Int = -1, // Asigna un valor inicial o asegúrate que se seleccione
-    val imageUrl: String? = null // URL de la imagen subida
+    val categoryId: Int = -1,
+    val imageUrl: String? = null
 )
-

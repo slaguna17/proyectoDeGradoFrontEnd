@@ -36,7 +36,6 @@ import com.example.proyectodegrado.ui.screens.categories.CategoriesScreen
 import com.example.proyectodegrado.ui.screens.forecast.ForecastScreen
 import com.example.proyectodegrado.ui.screens.home.HomeScreen
 import com.example.proyectodegrado.ui.screens.login.LoginScreen
-import com.example.proyectodegrado.ui.screens.products.AllProductsScreen
 import com.example.proyectodegrado.ui.screens.products.ProductsByCategoryScreen
 import com.example.proyectodegrado.ui.screens.providers.ProvidersScreen
 import com.example.proyectodegrado.ui.screens.register.RegisterScreen
@@ -47,13 +46,12 @@ import com.example.proyectodegrado.ui.screens.workers.CreateWorkerScreen
 import com.example.proyectodegrado.ui.screens.workers.WorkersScreen
 import kotlinx.coroutines.launch
 
-// ---------------------
-// Función auxiliar para determinar el título basado en la ruta (adaptada)
+// La función determineTitle ahora usa "categories" para más claridad
 fun determineTitle(route: String?, categoryName: String? = null): String {
     return when (route) {
         "home" -> "Inicio"
-        "products" -> "Categorías" // Ruta "products" ahora es CategoriesScreen
-        "products/{categoryId}" -> categoryName ?: "Productos" // Título para productos de una categoría
+        "categories" -> "Categorías" // Ruta para la pantalla de categorías
+        "products/{categoryId}" -> categoryName ?: "Productos"
         "store" -> "Tienda"
         "workers" -> "Empleados"
         "schedule" -> "Horarios"
@@ -62,65 +60,42 @@ fun determineTitle(route: String?, categoryName: String? = null): String {
         "providers" -> "Proveedores"
         "barcode" -> "Código de Barras"
         "settings" -> "Ajustes"
-        "testAPI" -> "Test API"
-        "login", "register" -> "" // Sin título en TopAppBar para estas
+        "login", "register" -> ""
         "registerEmployee" -> "Nuevo Empleado"
-        else -> "TuKiosco" // Título por defecto
+        else -> "TuKiosco"
     }
 }
 
-// Función para decidir si mostrar el TopAppBar
 fun shouldShowTopBar(route: String?): Boolean {
     return route != "login" && route != "register"
 }
 
-// ----------- NUEVO: Lógica para mostrar retroceso en pantallas profundas ----------
 fun shouldShowBack(route: String?): Boolean {
-    // Añade aquí las rutas que NECESITAN botón de retroceso
-    return route == "products/{categoryId}" // ProductsByCategoryScreen
-            || route == "registerEmployee"      // CreateWorkerScreen
+    return route == "products/{categoryId}" || route == "registerEmployee"
 }
-
-// ---------------------------------------------------------------------
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
 
-    // Inyección de ViewModels (de la versión nueva)
+    // Los ViewModels se crean aquí, como fuente única de verdad.
     val loginViewModel = DependencyProvider.provideLoginViewModel()
     val registerViewModel = DependencyProvider.provideRegisterViewModel()
-    val categoryViewModel = DependencyProvider.provideCategoryViewModel() // Para CategoriesScreen
-    val productViewModel = DependencyProvider.provideProductViewModel() // Para ProductsByCategoryScreen
+    val categoryViewModel = DependencyProvider.provideCategoryViewModel()
+    val productViewModel = DependencyProvider.provideProductViewModel() // <-- Instancia única
     val storeViewModel = DependencyProvider.provideStoreViewModel()
     val providerViewModel = DependencyProvider.provideProviderViewModel()
     val scheduleViewModel = DependencyProvider.provideScheduleViewModel()
     val workersViewModel = DependencyProvider.provideWorkersViewModel()
 
-    // Estado para el Drawer y CoroutineScope
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
-
-    // Estado para guardar el título actual
     var currentTitle by rememberSaveable { mutableStateOf("Inicio") }
-    var categoryNameForTitle by rememberSaveable { mutableStateOf<String?>(null) }
 
-    // Escuchar cambios de navegación para actualizar el título
     LaunchedEffect(navController) {
         navController.currentBackStackEntryFlow.collect { backStackEntry ->
-            val route = backStackEntry?.destination?.route
-            // Ejemplo para custom titles: si quieres el nombre real de la categoría,
-            // puedes obtenerlo desde un viewModel o argumento extra
-            if (route == "products/{categoryId}") {
-                // Si quieres, pon el nombre de la categoría usando el id
-                // categoryNameForTitle = productViewModel.getCategoryNameById(backStackEntry.arguments?.getInt("categoryId"))
-                currentTitle = determineTitle(route, "Productos") // Aquí puedes personalizarlo
-            } else if (route == "registerEmployee") {
-                currentTitle = determineTitle(route)
-            } else {
-                currentTitle = determineTitle(route)
-            }
+            currentTitle = determineTitle(backStackEntry.destination.route)
         }
     }
 
@@ -132,7 +107,7 @@ fun AppNavigation() {
                 onItemSelected = { screenLabel ->
                     val route = when (screenLabel) {
                         "Inicio" -> "home"
-                        "Categorías" -> "products"
+                        "Categorías" -> "categories" // Apunta a la ruta correcta de categorías
                         "Tienda" -> "store"
                         "Empleados" -> "workers"
                         "Horarios" -> "schedule"
@@ -187,18 +162,19 @@ fun AppNavigation() {
                     .padding(innerPadding)
                     .fillMaxSize()
             ) {
-                composable("login") {
-                    LoginScreen(navController = navController, viewModel = loginViewModel)
-                }
-                composable("register") {
-                    RegisterScreen(navController = navController, viewModel = registerViewModel)
-                }
+                composable("login") { LoginScreen(navController = navController, viewModel = loginViewModel) }
+                composable("register") { RegisterScreen(navController = navController, viewModel = registerViewModel) }
+
+                // --- INICIO DE LA CORRECIÓN ---
                 composable("home") {
-                    HomeScreen(navController = navController)
+                    // Ahora le pasamos la instancia única del ViewModel
+                    HomeScreen(navController = navController, viewModel = productViewModel)
                 }
-                composable("products") {
+                composable("categories") { // La ruta de Categorías
                     CategoriesScreen(navController = navController, viewModel = categoryViewModel)
                 }
+                // --- FIN DE LA CORRECIÓN ---
+
                 composable(
                     route = "products/{categoryId}",
                     arguments = listOf(navArgument("categoryId") { type = NavType.IntType })
@@ -210,36 +186,15 @@ fun AppNavigation() {
                         categoryId = categoryId
                     )
                 }
-                composable("store") {
-                    StoreScreen(navController = navController, viewModel = storeViewModel)
-                }
-                composable("workers") {
-                    WorkersScreen(navController = navController, viewModel = workersViewModel)
-                }
-                composable("registerEmployee") {
-                    CreateWorkerScreen(navController = navController, viewModel = registerViewModel)
-                }
-                composable("schedule") {
-                    ScheduleScreen(navController = navController, viewModel = scheduleViewModel)
-                }
-                composable("forecast") {
-                    ForecastScreen(navController = navController)
-                }
-                composable("balance") {
-                    BalanceScreen(navController = navController)
-                }
-                composable("providers") {
-                    ProvidersScreen(navController = navController, viewModel = providerViewModel)
-                }
-                composable("barcode") {
-                    BarcodeScreen(navController = navController)
-                }
-                composable("settings") {
-                    SettingsScreen(navController = navController)
-                }
-                composable("all_products") {
-                    AllProductsScreen(navController = navController, viewModel = productViewModel)
-                }
+                composable("store") { StoreScreen(navController = navController, viewModel = storeViewModel) }
+                composable("workers") { WorkersScreen(navController = navController, viewModel = workersViewModel) }
+                composable("registerEmployee") { CreateWorkerScreen(navController = navController, viewModel = registerViewModel) }
+                composable("schedule") { ScheduleScreen(navController = navController, viewModel = scheduleViewModel) }
+                composable("forecast") { ForecastScreen(navController = navController) }
+                composable("balance") { BalanceScreen(navController = navController) }
+                composable("providers") { ProvidersScreen(navController = navController, viewModel = providerViewModel) }
+                composable("barcode") { BarcodeScreen(navController = navController) }
+                composable("settings") { SettingsScreen(navController = navController) }
             }
         }
     }

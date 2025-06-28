@@ -20,11 +20,15 @@ class ProductViewModel(
     private val imageRepository: ImageRepository
 ) : ViewModel() {
 
+    // --- STATES ---
     private val _products = MutableStateFlow<List<Product>>(emptyList())
     val products: StateFlow<List<Product>> = _products.asStateFlow()
 
     private val _productsByCategory = MutableStateFlow<List<Product>>(emptyList())
     val productsByCategory: StateFlow<List<Product>> = _productsByCategory.asStateFlow()
+
+    private val _availableCategories = MutableStateFlow<List<Category>>(emptyList())
+    val availableCategories: StateFlow<List<Category>> = _availableCategories.asStateFlow()
 
     private val _createProductFormState = MutableStateFlow(CreateProductFormState())
     val createProductFormState: StateFlow<CreateProductFormState> = _createProductFormState.asStateFlow()
@@ -32,74 +36,118 @@ class ProductViewModel(
     private val _imageUploadUiState = MutableStateFlow<UploadImageState>(UploadImageState.Idle)
     val imageUploadUiState: StateFlow<UploadImageState> = _imageUploadUiState.asStateFlow()
 
-    fun fetchAllProducts(
-        onSuccess: () -> Unit = {},
-        onError: (String) -> Unit = {}
-    ){
+    init {
+        fetchAvailableCategories()
+    }
+
+    private fun fetchAvailableCategories() {
         viewModelScope.launch {
             try {
-                val list = productRepository.getAllProducts()
-                _products.value = list
-                onSuccess()
-            } catch (e: IOException) { onError("Red: ${e.message}") }
-            catch (e: HttpException) { onError("HTTP: ${e.message}") }
-            catch (e: Exception) { onError("Desconocido: ${e.message}") }
+                _availableCategories.value = categoryRepository.getAllCategories()
+            } catch (e: Exception) {
+                println("Error fetching categories for ViewModel: ${e.message}")
+            }
         }
     }
 
-    fun fetchProductsByCategory(
-        categoryId: Int,
-        onSuccess: () -> Unit = {},
-        onError: (String) -> Unit = {}
-    ) {
+    fun fetchAllProducts(onSuccess: () -> Unit = {}, onError: (String) -> Unit = {}) {
         viewModelScope.launch {
             try {
-                val list = categoryRepository.getProductsForCategory(categoryId)
-                _productsByCategory.value = list
+                _products.value = productRepository.getAllProducts()
                 onSuccess()
             } catch (e: IOException) { onError("Red: ${e.message}") }
             catch (e: HttpException) { onError("HTTP: ${e.message}") }
-            catch (e: Exception) { onError("Desconocido: ${e.message}") }
+            catch (e: Exception) { onError("Error: ${e.message}") }
         }
     }
 
-    fun createProductFromState(
-        categoryId: Int,
-        storeId: Int,
-        onSuccess: () -> Unit,
-        onError: (String) -> Unit
-    ) {
+    fun fetchProductsByCategory(categoryId: Int, onSuccess: () -> Unit = {}, onError: (String) -> Unit = {}) {
+        viewModelScope.launch {
+            try {
+                _productsByCategory.value = productRepository.getProductsByCategory(categoryId)
+                onSuccess()
+            } catch (e: IOException) { onError("Red: ${e.message}") }
+            catch (e: HttpException) { onError("HTTP: ${e.message}") }
+            catch (e: Exception) { onError("Error: ${e.message}") }
+        }
+    }
+
+    fun createProductFromState(storeId: Int, onSuccess: () -> Unit, onError: (String) -> Unit) {
         val s = _createProductFormState.value
-        if (s.name.isBlank()) { onError("Nombre vacío"); return }
-        if (s.imageUrl == null) { onError("Imagen requerida"); return }
-        if (_imageUploadUiState.value !is UploadImageState.Idle) { onError("Subiendo imagen"); return }
-        val data = ProductData(s.sku, s.name, s.description, s.imageUrl, categoryId, s.brand)
-        val store = StoreData(storeId, s.stock.toIntOrNull() ?: 0, s.expirationDate)
+        if (s.name.isBlank() || s.sku.isBlank() || s.brand.isBlank() || s.categoryId <= 0) {
+            onError("Los campos Nombre, SKU, Marca y Categoría son requeridos.")
+            return
+        }
+        if (_imageUploadUiState.value is UploadImageState.Loading) {
+            onError("Por favor, espere a que la imagen termine de subirse.")
+            return
+        }
+
+        val request = ProductRequest(
+            sku = s.sku,
+            name = s.name,
+            description = s.description,
+            image = s.imageUrl ?: "",
+            brand = s.brand,
+            categoryId = s.categoryId,
+            storeId = storeId,
+            stock = s.stock.toIntOrNull() ?: 0,
+            expirationDate = "No aplica"
+        )
         viewModelScope.launch {
             try {
-                val resp = productRepository.createProduct(data, store)
+                val resp = productRepository.createProduct(request)
                 if (resp.isSuccessful) {
-                    _createProductFormState.value = CreateProductFormState()
-                    _imageUploadUiState.value = UploadImageState.Idle
-                    fetchProductsByCategory(categoryId, onSuccess = onSuccess, onError = onError)
-                } else onError("Error servidor")
-            } catch (e: Exception) { onError(e.message ?: "Error") }
+                    resetCreateProductFormState()
+                    onSuccess()
+                } else {
+                    onError("Error del servidor: ${resp.code()} - ${resp.message()}")
+                }
+            } catch (e: Exception) {
+                onError(e.message ?: "Error desconocido al crear producto")
+            }
         }
     }
 
-    fun deleteProduct(
-        id: Int,
-        categoryId: Int,
-        onSuccess: () -> Unit,
-        onError: (String) -> Unit
-    ) {
+    fun updateProduct(id: Int, updatedFormState: CreateProductFormState, storeId: Int, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        val s = updatedFormState
+        val request = ProductRequest(
+            sku = s.sku,
+            name = s.name,
+            description = s.description,
+            image = s.imageUrl ?: "",
+            brand = s.brand,
+            categoryId = s.categoryId,
+            storeId = storeId,
+            stock = s.stock.toIntOrNull() ?: 0,
+            expirationDate = "No aplica"
+        )
+        viewModelScope.launch {
+            try {
+                val resp = productRepository.updateProduct(id, request)
+                if (resp.isSuccessful) {
+                    onSuccess()
+                } else {
+                    onError("Error actualizando: ${resp.code()} - ${resp.message()}")
+                }
+            } catch (e: Exception) {
+                onError(e.message ?: "Error desconocido al actualizar")
+            }
+        }
+    }
+
+    fun deleteProduct(id: Int, onSuccess: () -> Unit, onError: (String) -> Unit) {
         viewModelScope.launch {
             try {
                 val resp = productRepository.deleteProduct(id)
                 if (resp.isSuccessful) {
-                    fetchProductsByCategory(categoryId, onSuccess = onSuccess, onError = onError)
-                } else onError("Falló")
-            } catch (e: Exception) { onError(e.message ?: "Error") }
+                    onSuccess()
+                } else {
+                    onError("Error eliminando: ${resp.code()} - ${resp.message()}")
+                }
+            } catch (e: Exception) {
+                onError(e.message ?: "Error desconocido al eliminar")
+            }
         }
     }
 
@@ -107,18 +155,27 @@ class ProductViewModel(
         _createProductFormState.value = newState
     }
 
-    fun handleProductImageSelection(uri: Uri?) {
-        if (uri == null) return
-        viewModelScope.launch {
-            _imageUploadUiState.value = UploadImageState.Loading
-            when (val result = imageRepository.getPresignedUrlAndUpload(uri, "product", 0)) {
-                is ImageUploadResult.Success -> {
-                    _imageUploadUiState.value = UploadImageState.Idle
-                    _createProductFormState.update { it.copy(imageUrl = result.accessUrl) }
-                }
-                is ImageUploadResult.Error -> _imageUploadUiState.value = UploadImageState.Error(result.message)
-            }
-        }
+    // --- CORRECCIÓN: CAMBIAR DE 'private' A 'public' ---
+    fun resetCreateProductFormState() {
+        _createProductFormState.value = CreateProductFormState()
+        _imageUploadUiState.value = UploadImageState.Idle
     }
 
+    fun prepareFormForEdit(product: Product) {
+        _createProductFormState.value = CreateProductFormState(
+            name = product.name,
+            description = product.description,
+            sku = product.sku ?: "",
+            brand = product.brand,
+            categoryId = product.categoryId,
+            imageUrl = product.image,
+            stock = product.stock?.toString() ?: "0",
+            expirationDate = product.expirationDate ?: ""
+        )
+        _imageUploadUiState.value = UploadImageState.Idle
+    }
+
+    fun handleProductImageSelection(uri: Uri?) {
+        // Lógica de subida de imagen comentada
+    }
 }
