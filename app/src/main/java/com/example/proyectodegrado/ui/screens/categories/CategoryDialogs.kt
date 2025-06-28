@@ -56,7 +56,8 @@ fun CreateCategoryDialog(
 
                 Spacer(Modifier.height(16.dp))
 
-                UploadImage(
+                // Componente de imagen que ya tienes
+                ImagePickerButton(
                     modifier = Modifier.align(Alignment.CenterHorizontally),
                     currentImageUrl = formState.imageUrl,
                     uploadState = imageUploadState,
@@ -66,7 +67,7 @@ fun CreateCategoryDialog(
                 if (imageUploadState is UploadImageState.Error) {
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        text = "Error imagen: ${(imageUploadState as UploadImageState.Error).message}",
+                        text = "Error imagen: ${imageUploadState.message}",
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.align(Alignment.CenterHorizontally)
@@ -135,7 +136,9 @@ fun EditCategoryDialog(
                     TextButton(onClick = onDismiss) { Text("Cancelar") }
                     Spacer(Modifier.width(8.dp))
                     Button(onClick = {
-                        val request = CategoryRequest(name, description, category.image)
+                        // --- CORRECCIÓN: USAR EL OPERADOR ELVIS (?:) ---
+                        // Si category.image es null, usamos "" como valor por defecto.
+                        val request = CategoryRequest(name, description, category.image ?: "")
                         onEdit(request)
                     }) {
                         Text("Guardar")

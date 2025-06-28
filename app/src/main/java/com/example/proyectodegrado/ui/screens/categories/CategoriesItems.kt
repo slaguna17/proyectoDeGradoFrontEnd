@@ -1,30 +1,16 @@
 package com.example.proyectodegrado.ui.screens.categories
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Surface
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.filled.PhotoCamera // Importar el ícono
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -59,20 +45,35 @@ fun CategoryItem(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(180.dp)
+                    // --- INICIO: LÓGICA DEL PLACEHOLDER ---
+                    .background(MaterialTheme.colorScheme.secondaryContainer) // Color de fondo
             ) {
-                AsyncImage(
-                    model = category.image,
-                    contentDescription = category.name,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
+                if (!category.image.isNullOrBlank()) {
+                    AsyncImage(
+                        model = category.image,
+                        contentDescription = category.name,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    // Si no hay imagen, mostramos el ícono
+                    Icon(
+                        imageVector = Icons.Default.PhotoCamera,
+                        contentDescription = "Sin imagen",
+                        modifier = Modifier
+                            .size(64.dp)
+                            .align(Alignment.Center),
+                        tint = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.5f)
+                    )
+                }
+                // --- FIN: LÓGICA DEL PLACEHOLDER ---
 
                 Surface(
                     modifier = Modifier
                         .padding(12.dp)
                         .align(Alignment.TopEnd),
                     shape = RoundedCornerShape(16.dp),
-                    color = androidx.compose.material.MaterialTheme.colors.primary.copy(alpha = 0.9f)
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.9f)
                 ) {
                     Text(
                         text = category.name,
@@ -81,10 +82,7 @@ fun CategoryItem(
                     )
                 }
             }
-            Column(modifier = Modifier
-                .padding(16.dp)
-
-            ) {
+            Column(modifier = Modifier.padding(16.dp)) {
                 Text(
                     text = category.name,
                     style = MaterialTheme.typography.headlineMedium,
@@ -98,25 +96,16 @@ fun CategoryItem(
                     overflow = TextOverflow.Ellipsis,
                     lineHeight = 20.sp
                 )
-                if (category.description.length > 100) {
-                    Spacer(Modifier.height(4.dp))
-                    androidx.compose.material.Text(
-                        text = "Read more",
-                        style = androidx.compose.material.MaterialTheme.typography.caption,
-                        color = androidx.compose.material.MaterialTheme.colors.primary,
-                        modifier = Modifier.clickable { /* TODO: expand */ }
-                    )
-                }
                 Spacer(Modifier.height(16.dp))
 
                 Row(
-                    modifier= Modifier.fillMaxWidth(),
-                    horizontalArrangement= Arrangement.End
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
                 ) {
                     OutlinedButton(
                         onClick = { onEdit(category) },
-                        modifier= Modifier.padding(end = 8.dp),
-                        border  = BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
+                        modifier = Modifier.padding(end = 8.dp),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
                     ) {
                         Icon(Icons.Default.Edit, contentDescription = "Editar")
                         Spacer(Modifier.width(4.dp))
@@ -124,7 +113,7 @@ fun CategoryItem(
                     }
                     Button(
                         onClick = { onDelete(category) },
-                        colors  = ButtonDefaults.buttonColors(containerColor = Color.Red, contentColor = Color.White)
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error, contentColor = Color.White)
                     ) {
                         Icon(Icons.Default.Delete, contentDescription = "Eliminar")
                         Spacer(Modifier.width(4.dp))
