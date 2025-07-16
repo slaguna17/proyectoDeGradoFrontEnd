@@ -29,8 +29,10 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel) {
     // State variables
     var errorMessage by remember { mutableStateOf("") }
 
-    // Input Field variables
+    //Image
     val logo = painterResource(R.drawable.logonobackground)
+
+    // Input Field variables
     var username by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }

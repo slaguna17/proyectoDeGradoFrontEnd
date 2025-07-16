@@ -92,7 +92,6 @@ fun ProductsByCategoryScreen(
         floatingActionButton = {
             if (storeId != null) {
                 FloatingActionButton(onClick = {
-                    // Pre-seleccionar la categoría actual al crear un producto desde esta pantalla
                     viewModel.updateCreateProductFormState(CreateProductFormState(categoryId = categoryId))
                     showCreateDialog = true
                 }) {

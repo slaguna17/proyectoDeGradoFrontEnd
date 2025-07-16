@@ -59,30 +59,25 @@ object DependencyProvider {
         }
         ImageRepository(imageApiService, applicationContext)
     }
-    // ------------------------------------
 
-    // --- ViewModels ---
+    // ViewModels
     fun provideLoginViewModel(): LoginViewModel {
         return LoginViewModel(userRepository)
     }
 
     fun provideRegisterViewModel(): RegisterViewModel {
-        // Ejemplo: Si el registro necesita subir avatar
-        return RegisterViewModel(userRepository, imageRepository) // <--- INYECTADO
+        return RegisterViewModel(userRepository, imageRepository)
     }
 
     fun provideProductViewModel(): ProductViewModel {
-        // Ejemplo: Si productos necesita subir imagen
-        return ProductViewModel(productRepository, categoryRepository, imageRepository) // <--- INYECTADO
+        return ProductViewModel(productRepository, categoryRepository, imageRepository)
     }
     fun provideCategoryViewModel(): CategoryViewModel {
-        // Ejemplo: Si productos necesita subir imagen
-        return CategoryViewModel(categoryRepository, imageRepository) // <--- INYECTADO
+        return CategoryViewModel(categoryRepository, imageRepository)
     }
 
     fun provideStoreViewModel(): StoreViewModel {
-        // Ejemplo: Si tienda necesita subir logo
-        return StoreViewModel(storeRepository, imageRepository) // <--- INYECTADO
+        return StoreViewModel(storeRepository, imageRepository)
     }
 
     fun provideProviderViewModel(): ProvidersViewModel {
@@ -94,7 +89,6 @@ object DependencyProvider {
     }
 
     fun provideWorkersViewModel(): WorkersViewModel {
-        return WorkersViewModel(workerRepository)
+        return WorkersViewModel(workerRepository, storeRepository, scheduleRepository)
     }
-
 }

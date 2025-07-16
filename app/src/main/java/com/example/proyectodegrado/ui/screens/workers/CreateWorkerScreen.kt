@@ -17,8 +17,8 @@ import com.example.proyectodegrado.R
 import com.example.proyectodegrado.data.model.RegisterRequest
 import com.example.proyectodegrado.data.model.Role
 import com.example.proyectodegrado.ui.screens.register.RegisterViewModel
+import com.example.proyectodegrado.ui.screens.register.RoleDropdown
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateWorkerScreen(navController: NavController, viewModel: RegisterViewModel) {
     var username by remember { mutableStateOf("") }
@@ -32,8 +32,9 @@ fun CreateWorkerScreen(navController: NavController, viewModel: RegisterViewMode
     var expanded by remember { mutableStateOf(false) }
 
     val roles by viewModel.roles.collectAsState()
-    val filteredRoles = roles.filter { !it.isAdmin }
+//    val filteredRoles = roles.filter { !it.isAdmin }
     var selectedRole by remember { mutableStateOf<Role?>(null) }
+    var showRoleError by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.fetchRoles()
@@ -42,7 +43,7 @@ fun CreateWorkerScreen(navController: NavController, viewModel: RegisterViewMode
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(horizontal = 80.dp)
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -52,49 +53,76 @@ fun CreateWorkerScreen(navController: NavController, viewModel: RegisterViewMode
             modifier = Modifier.size(200.dp)
         )
         Text("Nuevo Empleado", fontSize = 24.sp)
-
-        Spacer(Modifier.height(16.dp))
-        OutlinedTextField(value = username, onValueChange = { username = it }, label = { Text("Usuario") })
-        Spacer(Modifier.height(8.dp))
-        OutlinedTextField(value = email, onValueChange = { email = it }, label = { Text("Email") })
-        Spacer(Modifier.height(8.dp))
-        OutlinedTextField(value = password, onValueChange = { password = it }, label = { Text("Contraseña") }, visualTransformation = PasswordVisualTransformation())
-        Spacer(Modifier.height(8.dp))
-        OutlinedTextField(value = repeatPassword, onValueChange = { repeatPassword = it }, label = { Text("Repetir Contraseña") }, visualTransformation = PasswordVisualTransformation())
-        Spacer(Modifier.height(8.dp))
-        OutlinedTextField(value = fullName, onValueChange = { fullName = it }, label = { Text("Nombre completo") })
-        Spacer(Modifier.height(8.dp))
-        OutlinedTextField(value = phone, onValueChange = { phone = it }, label = { Text("Teléfono") })
-        Spacer(Modifier.height(8.dp))
-        OutlinedTextField(value = dateOfBirth, onValueChange = { dateOfBirth = it }, label = { Text("Fecha de nacimiento") })
         Spacer(Modifier.height(16.dp))
 
-        ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }) {
-            OutlinedTextField(
-                readOnly = true,
-                value = selectedRole?.name ?: "Selecciona un rol",
-                onValueChange = {},
-                label = { Text("Rol") },
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                modifier = Modifier.menuAnchor().fillMaxWidth()
-            )
-            ExposedDropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false }
-            ) {
-                filteredRoles.forEach { role ->
-                    DropdownMenuItem(
-                        text = { Text(role.name) },
-                        onClick = {
-                            selectedRole = role
-                            viewModel.setSelectedRoleId(role.id)
-                            expanded = false
-                        }
-                    )
-                }
-            }
-        }
+        OutlinedTextField(
+            value = username,
+            onValueChange = { username = it },
+            label = { Text("Usuario") },
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(Modifier.height(8.dp))
 
+        OutlinedTextField(
+            value = email,
+            onValueChange = { email = it },
+            label = { Text("Email") },
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(Modifier.height(8.dp))
+
+        OutlinedTextField(
+            value = password,
+            onValueChange = { password = it },
+            label = { Text("Contraseña") },
+            visualTransformation = PasswordVisualTransformation(),
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(Modifier.height(8.dp))
+
+        OutlinedTextField(
+            value = repeatPassword,
+            onValueChange = { repeatPassword = it },
+            label = { Text("Repetir Contraseña") },
+            visualTransformation = PasswordVisualTransformation(),
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(Modifier.height(8.dp))
+
+        OutlinedTextField(
+            value = fullName,
+            onValueChange = { fullName = it },
+            label = { Text("Nombre completo") },
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(Modifier.height(8.dp))
+
+        OutlinedTextField(
+            value = phone,
+            onValueChange = { phone = it },
+            label = { Text("Teléfono") },
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(Modifier.height(8.dp))
+
+        OutlinedTextField(
+            value = dateOfBirth,
+            onValueChange = { dateOfBirth = it },
+            label = { Text("Fecha de nacimiento") },
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(Modifier.height(16.dp))
+
+        RoleDropdown(
+            viewModel = viewModel,
+            roles = roles,
+            selectedRole = selectedRole,
+            onRoleSelected = {
+                selectedRole = it
+                showRoleError = false
+            },
+            isError = showRoleError
+        )
         Spacer(Modifier.height(16.dp))
 
         if (errorMessage.isNotBlank()) {
@@ -107,10 +135,10 @@ fun CreateWorkerScreen(navController: NavController, viewModel: RegisterViewMode
                 return@Button
             }
             if (selectedRole == null) {
+                showRoleError = true
                 errorMessage = "Debes seleccionar un rol"
                 return@Button
             }
-
             val request = RegisterRequest(
                 username = username,
                 email = email,
@@ -121,10 +149,10 @@ fun CreateWorkerScreen(navController: NavController, viewModel: RegisterViewMode
                 avatar = "",
                 roleId = selectedRole!!.id
             )
-
-            viewModel.registerUser(
-                request,
-                onSuccess = { navController.navigate("workers") },
+            viewModel.registerUser(request,
+                onSuccess = { navController ->
+                    navController.navigate("home")
+                },
                 onError = { errorMessage = it },
                 navController = navController
             )

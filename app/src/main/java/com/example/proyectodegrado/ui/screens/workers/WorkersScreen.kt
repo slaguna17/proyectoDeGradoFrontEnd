@@ -11,61 +11,80 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.example.proyectodegrado.data.model.Worker
+import com.example.proyectodegrado.ui.components.StoreDropdown
 
 @Composable
-fun WorkersScreen(viewModel: WorkersViewModel, navController: NavController) {
-    val searchQuery by viewModel.searchQuery.collectAsState()
+fun WorkersScreen(
+    viewModel: WorkersViewModel,
+    navController: NavController
+) {
     val employees by viewModel.employees.collectAsState()
-    val dialogContext by viewModel.selectedWorkerContext.collectAsState()
+    val stores by viewModel.stores.collectAsState()
+    val selectedWorkerContext by viewModel.selectedWorkerContext.collectAsState()
+    val assignError by viewModel.assignError.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    var selectedStoreId by remember { mutableStateOf<Int?>(null) }
 
     LaunchedEffect(Unit) {
-        viewModel.onSearchQueryChange("")
+        viewModel.loadStoresAndSchedules()
+        viewModel.filterByStore(null)
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        Column(Modifier.fillMaxSize().padding(16.dp)) {
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = viewModel::onSearchQueryChange,
-                label = { Text("Buscar empleado") },
-                modifier = Modifier.fillMaxWidth()
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { navController.navigate("registerEmployee") },
+            ) {
+                Icon(Icons.Default.PersonAdd, contentDescription = "Agregar empleado")
+            }
+
+        }
+    ) { innerPadding ->
+        Column(
+            Modifier
+                .padding(innerPadding)
+                .fillMaxSize()
+                .padding(horizontal = 40.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            StoreDropdown(
+                stores = stores,
+                selectedStoreId = selectedStoreId,
+                onStoreSelected = {
+                    selectedStoreId = it
+                    viewModel.filterByStore(it)
+                }
             )
-
-            Spacer(Modifier.height(16.dp))
-
+            Spacer(Modifier.height(12.dp))
             if (employees.isEmpty()) {
-                Text("No hay empleados", modifier = Modifier.align(Alignment.CenterHorizontally))
+                Text("No hay empleados en esta tienda", style = MaterialTheme.typography.bodyMedium)
             } else {
-                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(employees) { worker ->
+                LazyColumn {
+                    items(employees, key = { it.id }) { worker ->
                         WorkerItem(
                             worker = worker,
                             onAssignClick = { viewModel.openAssignScheduleDialog(worker) },
-                            onEditClick = { /* TODO */ },
-                            onDeleteClick = { /* TODO */ }
+                            onEditClick = { /* editar empleado */ },
+                            onDeleteClick = { /* eliminar empleado */ }
                         )
                     }
                 }
             }
         }
 
-        FloatingActionButton(
-            onClick = { navController.navigate("registerEmployee") },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp)
-        ) {
-            Icon(Icons.Default.PersonAdd, contentDescription = "Agregar empleado")
+        // Diálogo de asignar tienda/turno
+        if (selectedWorkerContext != null) {
+            AssignScheduleDialog(
+                stores = stores,
+                schedules = viewModel.schedules.collectAsState().value,
+                formState = selectedWorkerContext!!.formState,
+                onFormStateChange = viewModel::updateAssignForm,
+                onConfirm = { viewModel.assignSchedule { /* éxito: podrías mostrar snackbar */ } },
+                onDismiss = { viewModel.closeAssignScheduleDialog() },
+                errorMessage = assignError
+            )
         }
     }
 
-    if (dialogContext != null) {
-        AssignScheduleDialog(
-            workerContext = dialogContext!!,
-            onDismiss = { viewModel.closeDialog() },
-            onFormStateChange = viewModel::updateAssignScheduleForm,
-            onConfirm = viewModel::confirmScheduleAssignment
-        )
-    }
 }

@@ -1,14 +1,15 @@
 package com.example.proyectodegrado.ui.screens.workers
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Text
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PersonAdd
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
 import com.example.proyectodegrado.data.model.Worker
 
 @Composable
@@ -18,25 +19,38 @@ fun WorkerItem(
     onEditClick: () -> Unit,
     onDeleteClick: () -> Unit
 ) {
-    Column(
-        Modifier
+    Card(
+        modifier = Modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surfaceVariant)
-            .padding(12.dp)
+            .padding(vertical = 8.dp),
+        shape = RoundedCornerShape(20.dp),
+        elevation = CardDefaults.cardElevation(6.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
-        Text("#${worker.id} - ${worker.username}", style = MaterialTheme.typography.bodyLarge)
-
-        Spacer(Modifier.height(8.dp))
-
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = onAssignClick) {
-                Text("Asignar Horario")
+        Column(Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    Icons.Default.PersonAdd,
+                    contentDescription = null,
+                    modifier = Modifier.size(40.dp)
+                )
+                Spacer(Modifier.width(10.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(worker.fullName ?: worker.username, style = MaterialTheme.typography.titleMedium)
+                    Text(worker.email ?: "", style = MaterialTheme.typography.bodySmall)
+                }
             }
-            OutlinedButton(onClick = onEditClick) {
-                Text("Editar")
-            }
-            OutlinedButton(onClick = onDeleteClick) {
-                Text("Borrar")
+            Spacer(Modifier.height(12.dp))
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                OutlinedButton(onClick = onEditClick) { Text("Editar") }
+                OutlinedButton(onClick = onAssignClick) { Text("Asignar") }
+                Button(
+                    onClick = onDeleteClick,
+                    colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.error)
+                ) { Text("Eliminar") }
             }
         }
     }
