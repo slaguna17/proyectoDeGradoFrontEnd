@@ -15,7 +15,6 @@ import retrofit2.HttpException
 import java.io.IOException
 
 class RegisterViewModel(private val userRepository: UserRepository, private val imageRepository: ImageRepository) : ViewModel() {
-
     private var registerResult: String = ""
     private val _roles = MutableStateFlow<List<Role>>(emptyList())
     val roles: StateFlow<List<Role>> = _roles.asStateFlow()
@@ -23,9 +22,9 @@ class RegisterViewModel(private val userRepository: UserRepository, private val 
 
     fun registerUser(
         request: RegisterRequest,
-        onSuccess: (NavController) -> Unit, // Modificado para recibir NavController
+        onSuccess: (NavController) -> Unit,
         onError: (String) -> Unit,
-        navController: NavController // Recibe NavController como parámetro
+        navController: NavController
     ) {
         viewModelScope.launch {
             try {
@@ -48,7 +47,6 @@ class RegisterViewModel(private val userRepository: UserRepository, private val 
             }
         }
     }
-
 
     fun fetchRoles() {
         viewModelScope.launch {

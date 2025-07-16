@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
@@ -16,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
@@ -45,6 +47,7 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel) {
     // Roles
     val roles by viewModel.roles.collectAsState()
     var selectedRole by remember { mutableStateOf<Role?>(null) }
+    var showRoleError by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.fetchRoles()
@@ -53,6 +56,7 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel) {
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .padding(horizontal = 70.dp)
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
@@ -86,16 +90,40 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel) {
         OutlinedTextField(value = fullName, onValueChange = { fullName = it }, label = { Text(text = "Nombre completo") })
         Spacer(modifier = Modifier.height(16.dp))
 
-        OutlinedTextField(value = phone, onValueChange = { phone = it }, label = { Text(text = "Telefono") })
+        OutlinedTextField(
+            value = phone,
+            onValueChange = { phone = it },
+            label = { Text("Teléfono") },
+            keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Phone),
+        )
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(value = dateOfBirth, onValueChange = { dateOfBirth = it }, label = { Text(text = "Fecha de nacimiento") })
         Spacer(modifier = Modifier.height(16.dp))
 
-        RoleDropdown(viewModel = viewModel, roles = roles, selectedRole = selectedRole, onRoleSelected = { role ->
-            selectedRole = role
-        })
+        RoleDropdown(
+            viewModel = viewModel,
+            roles = roles,
+            selectedRole = selectedRole,
+            onRoleSelected = {
+                selectedRole = it
+                showRoleError = false
+            },
+            isError = showRoleError
+        )
         Spacer(modifier = Modifier.height(16.dp))
+
+        if (showRoleError) {
+            Text(
+                text = "Debes seleccionar un rol",
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier
+                    .align(Alignment.Start)
+                    .padding(start = 8.dp, top = 2.dp)
+            )
+        }
+
 
 //        uploadImage(
 //            buttonText = "Elegir foto de categoria",
@@ -116,6 +144,11 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel) {
                 errorMessage = "Contraseñas no coinciden"
                 return@Button
             }
+            if (selectedRole == null) {
+                showRoleError = true
+                errorMessage = "Debes seleccionar un rol"
+                return@Button
+            }
             println("selectedRole?.id: ${selectedRole?.id}")
             val request = RegisterRequest(
                 username = username,
@@ -125,11 +158,11 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel) {
                 dateOfBirth = dateOfBirth,
                 phone = phone,
                 avatar = avatar.toString(),
-                roleId = selectedRole?.id ?: 0 // Usa el ID del rol seleccionado
+                roleId = selectedRole?.id ?: 0
             )
             viewModel.registerUser(request,
-                onSuccess = { navController -> // Recibe NavController
-                    navController.navigate("home") // Navega a la pantalla de inicio
+                onSuccess = { navController ->
+                    navController.navigate("home")
                 },
                 onError = { errorMessage = it },
                 navController = navController
@@ -150,55 +183,6 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel) {
                 }
             )
         }
-
         Spacer(modifier = Modifier.height(16.dp))
-    }
-}
-
-@Composable
-fun RoleDropdown(
-    viewModel: RegisterViewModel,
-    roles: List<Role>,
-    selectedRole: Role?,
-    onRoleSelected: (Role) -> Unit
-) {
-    var expanded by remember { mutableStateOf(false) }
-
-    Column {
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { expanded = true },
-            shape = RoundedCornerShape(4.dp),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
-        ) {
-            Row(
-                modifier = Modifier.padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = selectedRole?.name ?: "Selecciona un rol",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Icon(imageVector = Icons.Default.ArrowDropDown, contentDescription = "Dropdown")
-            }
-        }
-
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            roles.forEach { role ->
-                DropdownMenuItem(
-                    onClick = {
-                        onRoleSelected(role)
-                        viewModel.setSelectedRoleId(role.id)
-                        expanded = false
-                    },
-                    text = { Text(text = role.name) }
-                )
-            }
-        }
     }
 }
