@@ -121,8 +121,8 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel) {
                 username = username,
                 email = email,
                 password = password,
-                full_name = fullName,
-                date_of_birth = dateOfBirth,
+                fullName = fullName,
+                dateOfBirth = dateOfBirth,
                 phone = phone,
                 avatar = avatar.toString(),
                 roleId = selectedRole?.id ?: 0 // Usa el ID del rol seleccionado

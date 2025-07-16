@@ -1,13 +1,9 @@
 package com.example.proyectodegrado.ui.screens.workers
 
-import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -119,8 +115,8 @@ fun CreateWorkerScreen(navController: NavController, viewModel: RegisterViewMode
                 username = username,
                 email = email,
                 password = password,
-                full_name = fullName,
-                date_of_birth = dateOfBirth,
+                fullName = fullName,
+                dateOfBirth = dateOfBirth,
                 phone = phone,
                 avatar = "",
                 roleId = selectedRole!!.id

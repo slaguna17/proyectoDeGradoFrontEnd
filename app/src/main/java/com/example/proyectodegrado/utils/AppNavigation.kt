@@ -36,6 +36,8 @@ import com.example.proyectodegrado.ui.screens.categories.CategoriesScreen
 import com.example.proyectodegrado.ui.screens.forecast.ForecastScreen
 import com.example.proyectodegrado.ui.screens.home.HomeScreen
 import com.example.proyectodegrado.ui.screens.login.LoginScreen
+import com.example.proyectodegrado.ui.screens.products.AllProductsScreen
+import com.example.proyectodegrado.ui.screens.products.ProductViewModel
 import com.example.proyectodegrado.ui.screens.products.ProductsByCategoryScreen
 import com.example.proyectodegrado.ui.screens.providers.ProvidersScreen
 import com.example.proyectodegrado.ui.screens.register.RegisterScreen
@@ -46,44 +48,15 @@ import com.example.proyectodegrado.ui.screens.workers.CreateWorkerScreen
 import com.example.proyectodegrado.ui.screens.workers.WorkersScreen
 import kotlinx.coroutines.launch
 
-// La función determineTitle ahora usa "categories" para más claridad
-fun determineTitle(route: String?, categoryName: String? = null): String {
-    return when (route) {
-        "home" -> "Inicio"
-        "categories" -> "Categorías" // Ruta para la pantalla de categorías
-        "products/{categoryId}" -> categoryName ?: "Productos"
-        "store" -> "Tienda"
-        "workers" -> "Empleados"
-        "schedule" -> "Horarios"
-        "forecast" -> "Pronósticos"
-        "balance" -> "Caja"
-        "providers" -> "Proveedores"
-        "barcode" -> "Código de Barras"
-        "settings" -> "Ajustes"
-        "login", "register" -> ""
-        "registerEmployee" -> "Nuevo Empleado"
-        else -> "TuKiosco"
-    }
-}
-
-fun shouldShowTopBar(route: String?): Boolean {
-    return route != "login" && route != "register"
-}
-
-fun shouldShowBack(route: String?): Boolean {
-    return route == "products/{categoryId}" || route == "registerEmployee"
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
 
-    // Los ViewModels se crean aquí, como fuente única de verdad.
     val loginViewModel = DependencyProvider.provideLoginViewModel()
     val registerViewModel = DependencyProvider.provideRegisterViewModel()
     val categoryViewModel = DependencyProvider.provideCategoryViewModel()
-    val productViewModel = DependencyProvider.provideProductViewModel() // <-- Instancia única
+    val productViewModel = DependencyProvider.provideProductViewModel()
     val storeViewModel = DependencyProvider.provideStoreViewModel()
     val providerViewModel = DependencyProvider.provideProviderViewModel()
     val scheduleViewModel = DependencyProvider.provideScheduleViewModel()
@@ -107,7 +80,8 @@ fun AppNavigation() {
                 onItemSelected = { screenLabel ->
                     val route = when (screenLabel) {
                         "Inicio" -> "home"
-                        "Categorías" -> "categories" // Apunta a la ruta correcta de categorías
+                        "Productos" -> "products"
+                        "Categorías" -> "categories"
                         "Tienda" -> "store"
                         "Empleados" -> "workers"
                         "Horarios" -> "schedule"
@@ -164,16 +138,9 @@ fun AppNavigation() {
             ) {
                 composable("login") { LoginScreen(navController = navController, viewModel = loginViewModel) }
                 composable("register") { RegisterScreen(navController = navController, viewModel = registerViewModel) }
-
-                // --- INICIO DE LA CORRECIÓN ---
-                composable("home") {
-                    // Ahora le pasamos la instancia única del ViewModel
-                    HomeScreen(navController = navController, viewModel = productViewModel)
-                }
-                composable("categories") { // La ruta de Categorías
-                    CategoriesScreen(navController = navController, viewModel = categoryViewModel)
-                }
-                // --- FIN DE LA CORRECIÓN ---
+                composable("home") { HomeScreen() }
+                composable("categories") { CategoriesScreen(navController = navController, viewModel = categoryViewModel) }
+                composable("products") { AllProductsScreen(navController = navController, viewModel = productViewModel) }
 
                 composable(
                     route = "products/{categoryId}",
