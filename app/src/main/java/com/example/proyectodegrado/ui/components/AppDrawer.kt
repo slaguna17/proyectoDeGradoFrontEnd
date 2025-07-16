@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -30,17 +29,16 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import com.example.proyectodegrado.R
 
-// Composable para el contenido del Drawer (tomado de la versión antigua)
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DrawerContent(onItemSelected: (String) -> Unit) {
-    val profilePic = painterResource(id = R.drawable.lemon_drink) // Reemplaza con tu imagen
+    val profilePic = painterResource(id = R.drawable.lemon_drink)
     val homeIcon = ImageVector.vectorResource(id = R.drawable.home)
+    val productIcon = ImageVector.vectorResource(id = R.drawable.products)
+    val categoryIcon = ImageVector.vectorResource(id = R.drawable.category)
     val settingsIcon = ImageVector.vectorResource(id = R.drawable.settings)
     val workersIcon = ImageVector.vectorResource(id = R.drawable.group)
     val scheduleIcon = ImageVector.vectorResource(id = R.drawable.schedule)
     val forecastIcon = ImageVector.vectorResource(id = R.drawable.bar_chart)
-    val categoriesIcon = ImageVector.vectorResource(id = R.drawable.products) // Icono para Categorías/Productos
     val storeIcon = ImageVector.vectorResource(id = R.drawable.store)
     val balanceIcon = ImageVector.vectorResource(id = R.drawable.wallet)
     val providerIcon = ImageVector.vectorResource(id = R.drawable.truck)
@@ -63,7 +61,7 @@ fun DrawerContent(onItemSelected: (String) -> Unit) {
                     text = "TuKiosco",
                     style = MaterialTheme.typography.titleLarge
                 )
-                IconButton(onClick = { /* Acción de clic en avatar (opcional) */ }) {
+                IconButton(onClick = { /* Acción de clic en avatar TODO */ }) {
                     Image(
                         painter = profilePic,
                         contentDescription = "Avatar",
@@ -76,16 +74,17 @@ fun DrawerContent(onItemSelected: (String) -> Unit) {
             HorizontalDivider()
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Ítems del Drawer
+            // Menu Items
             DrawerItem("Inicio", homeIcon, onItemSelected)
-            DrawerItem("Categorías", categoriesIcon, onItemSelected) // Cambiado para reflejar CategoriesScreen
+            DrawerItem("Productos", productIcon, onItemSelected)
+            DrawerItem("Categorías", categoryIcon, onItemSelected)
             DrawerItem("Tienda", storeIcon, onItemSelected)
             DrawerItem("Empleados", workersIcon, onItemSelected)
             DrawerItem("Horarios", scheduleIcon, onItemSelected)
-            DrawerItem("Pronósticos", forecastIcon, onItemSelected) // Corregido "Pronosticos" a "Pronósticos"
+            DrawerItem("Pronósticos", forecastIcon, onItemSelected)
             DrawerItem("Caja", balanceIcon, onItemSelected)
             DrawerItem("Proveedores", providerIcon, onItemSelected)
-            DrawerItem("Código de barras", barcodeIcon , onItemSelected) // Corregido "Codigo" a "Código"
+            DrawerItem("Código de barras", barcodeIcon , onItemSelected)
 
             Spacer(Modifier.weight(1f))
             HorizontalDivider()
@@ -95,8 +94,6 @@ fun DrawerContent(onItemSelected: (String) -> Unit) {
     }
 }
 
-// Composable para cada ítem individual en el Drawer (tomado de la versión antigua)
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DrawerItem(label: String, icon: ImageVector, onClick: (String) -> Unit) {
     ListItem(
