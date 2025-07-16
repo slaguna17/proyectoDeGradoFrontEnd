@@ -39,12 +39,15 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel) {
     // State Variables
     val loginState by viewModel.loginState.observeAsState()
     var isLoading by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val appPrefs = remember { AppPreferences(context) }
+    var rememberMe by remember { mutableStateOf(false) }
 
     // Images
     val logo = painterResource(R.drawable.logonobackground)
 
     // Screen variables
-    var email by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf(appPrefs.getUserEmail() ?: "") }
     var password by remember { mutableStateOf("") }
 
     // Forgot password state
@@ -52,7 +55,6 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel) {
     var showForgotDialog by remember { mutableStateOf(false) }
     var forgotLoading by remember { mutableStateOf(false) }
 
-    // Efecto para manejar cierre del diálogo y loading según resultado de forgotPassword
     LaunchedEffect(forgotResult) {
         if (forgotLoading && forgotResult != null) {
             forgotLoading = false
@@ -113,6 +115,11 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel) {
                     val context = LocalContext.current
                     val userName = result.getOrNull()?.user?.username ?: "Usuario"
                     AppPreferences(context).saveUserName(userName)
+                    if (rememberMe) {
+                        appPrefs.saveUserEmail(email)
+                    } else {
+                        appPrefs.clearUserEmail()
+                    }
                     navController.navigate("home")
                 }
                 result.isFailure -> {
@@ -122,18 +129,21 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel) {
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Checkbox(checked = false, onCheckedChange = {/* TODO */ })
-            Text(text = "Recuerdame")
+            Checkbox(
+                checked = rememberMe,
+                onCheckedChange = { rememberMe = it }
+            )
+            Text(text = "Recuérdame")
         }
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         TextButton(onClick = { showForgotDialog = true }) {
             Text(text = "¿Olvidaste tu contraseña?")
         }
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         Row {
             Text(text = "¿Eres nuevo? ")

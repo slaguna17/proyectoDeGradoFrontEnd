@@ -1,16 +1,12 @@
 package com.example.proyectodegrado.ui.screens.register
 
 import android.net.Uri
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -56,26 +52,38 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 70.dp)
+            .padding(horizontal = 80.dp)
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Image(painter = logo, contentDescription = "Main Logo", modifier = Modifier.size(200.dp))
         Text(text = "¡Registrate!", fontSize = 28.sp, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(32.dp))
-
-        OutlinedTextField(value = username, onValueChange = { username = it }, label = { Text(text = "Nombre de usuario") })
         Spacer(modifier = Modifier.height(16.dp))
 
-        OutlinedTextField(value = email, onValueChange = { email = it }, label = { Text(text = "Correo Electronico") })
+        OutlinedTextField(
+            value = username,
+            onValueChange = { username = it },
+            label = { Text(text = "Nombre de usuario") },
+            modifier = Modifier.fillMaxWidth()
+
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+
+        OutlinedTextField(
+            value = email,
+            onValueChange = { email = it },
+            label = { Text(text = "Correo Electronico") },
+            modifier = Modifier.fillMaxWidth()
+        )
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
             visualTransformation = PasswordVisualTransformation(),
-            label = { Text(text = "Contraseña") }
+            label = { Text(text = "Contraseña") },
+            modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -83,11 +91,17 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel) {
             value = repeatPassword,
             onValueChange = { repeatPassword = it },
             visualTransformation = PasswordVisualTransformation(),
-            label = { Text(text = "Repetir Contraseña") }
+            label = { Text(text = "Repetir Contraseña") },
+            modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(16.dp))
 
-        OutlinedTextField(value = fullName, onValueChange = { fullName = it }, label = { Text(text = "Nombre completo") })
+        OutlinedTextField(
+            value = fullName,
+            onValueChange = { fullName = it },
+            label = { Text(text = "Nombre completo") },
+            modifier = Modifier.fillMaxWidth()
+        )
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
@@ -95,10 +109,15 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel) {
             onValueChange = { phone = it },
             label = { Text("Teléfono") },
             keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Phone),
+            modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(16.dp))
 
-        OutlinedTextField(value = dateOfBirth, onValueChange = { dateOfBirth = it }, label = { Text(text = "Fecha de nacimiento") })
+        OutlinedTextField(value = dateOfBirth,
+            onValueChange = { dateOfBirth = it },
+            label = { Text(text = "Fecha de nacimiento") },
+            modifier = Modifier.fillMaxWidth()
+        )
         Spacer(modifier = Modifier.height(16.dp))
 
         RoleDropdown(
@@ -123,7 +142,6 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel) {
                     .padding(start = 8.dp, top = 2.dp)
             )
         }
-
 
 //        uploadImage(
 //            buttonText = "Elegir foto de categoria",
