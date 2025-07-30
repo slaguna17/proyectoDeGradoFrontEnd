@@ -1,15 +1,26 @@
 package com.example.proyectodegrado.ui.screens.categories
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
@@ -17,6 +28,7 @@ import com.example.proyectodegrado.data.model.Category
 import com.example.proyectodegrado.data.model.CreateCategoryFormState
 import com.example.proyectodegrado.ui.components.RefreshableContainer
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CategoriesScreen(
     navController: NavController,
@@ -31,68 +43,85 @@ fun CategoriesScreen(
     var showEdit     by rememberSaveable { mutableStateOf(false) }
     var showDelete   by rememberSaveable { mutableStateOf(false) }
 
-    var toEdit   by remember { mutableStateOf<Category?>(null) }
-    var toDelete by remember { mutableStateOf<Category?>(null) }
+    var toEdit       by remember { mutableStateOf<Category?>(null) }
+    var toDelete     by remember { mutableStateOf<Category?>(null) }
 
-    // Para Swipe Refresh
     var isRefreshing by remember { mutableStateOf(false) }
+    var isLoadingFirstTime by remember { mutableStateOf(true) }
 
-    // Carga inicial
-    LaunchedEffect(Unit) {
-        viewModel.fetchCategories(onError = { errorMessage = it })
-    }
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    // Función para refrescar (swipe)
     fun refreshCategories() {
         isRefreshing = true
         viewModel.fetchCategories(
-            onSuccess = { isRefreshing = false },
-            onError   = { error ->
-                errorMessage = error
+            onSuccess = {
                 isRefreshing = false
+                isLoadingFirstTime = false
+            },
+            onError = {
+                errorMessage = it
+                isRefreshing = false
+                isLoadingFirstTime = false
             }
         )
     }
 
-    Column(
-        Modifier
-            .fillMaxSize()
-            .padding(8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Button(onClick = {
-            viewModel.updateCreateCategoryFormState(CreateCategoryFormState())
-            showCreate = true
-        }) {
-            Text("+ Nueva Categoría")
+    LaunchedEffect(Unit) {
+        if (categories.isEmpty()) {
+            refreshCategories()
+        } else {
+            isLoadingFirstTime = false
         }
-        Spacer(Modifier.height(8.dp))
+    }
 
-        // REFRESCO (Swipe down)
+    LaunchedEffect(errorMessage) {
+        errorMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            errorMessage = null
+        }
+    }
+
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        floatingActionButton = {
+            FloatingActionButton(onClick = {
+                viewModel.updateCreateCategoryFormState(CreateCategoryFormState())
+                showCreate = true
+            }) {
+                Icon(Icons.Default.Add, contentDescription = "Nueva Categoría")
+            }
+        }
+    ) { innerPadding ->
         RefreshableContainer(
             refreshing = isRefreshing,
             onRefresh = { refreshCategories() },
-            modifier = Modifier.weight(1f)
+            modifier = Modifier
+                .fillMaxSize()
         ) {
-            if (categories.isEmpty()) {
-                Box(
-                    Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (errorMessage != null) {
-                        Text(errorMessage!!, color = MaterialTheme.colorScheme.error)
-                    } else {
-                        Text("Cargando categorías...", color = MaterialTheme.colorScheme.onBackground)
-                    }
+            if (isLoadingFirstTime) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            } else if (categories.isEmpty()) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("No hay categorías.", color = MaterialTheme.colorScheme.onBackground)
                 }
             } else {
-                LazyColumn {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize()
+                ) {
                     items(categories) { cat ->
                         CategoryItem(
-                            category      = cat,
+                            category = cat,
                             navController = navController,
-                            onEdit        = { toEdit = it; showEdit = true },
-                            onDelete      = { toDelete = it; showDelete = true }
+                            onEdit = {
+                                toEdit = it
+                                showEdit = true
+                            },
+                            onDelete = {
+                                toDelete = it
+                                showDelete = true
+                            }
                         )
                     }
                 }
@@ -100,42 +129,59 @@ fun CategoriesScreen(
         }
     }
 
-    // Diálogos
     if (showCreate) {
         CreateCategoryDialog(
-            show              = true,
-            onDismiss         = { showCreate = false },
-            formState         = formState,
-            imageUploadState  = imageState,
+            show = true,
+            onDismiss = { showCreate = false },
+            formState = formState,
+            imageUploadState = imageState,
             onFormStateChange = viewModel::updateCreateCategoryFormState,
-            onImageUriSelected= viewModel::handleCategoryImageSelection,
-            onCreateClick     = {
-                viewModel.createCategoryFromState(onError = { errorMessage = it })
-                showCreate = false
+            onImageUriSelected = viewModel::handleCategoryImageSelection,
+            onCreateClick = {
+                viewModel.createCategoryFromState(
+                    onSuccess = {
+                        showCreate = false
+                        refreshCategories()
+                    },
+                    onError = { errorMessage = it }
+                )
             }
         )
     }
 
     if (showEdit && toEdit != null) {
         EditCategoryDialog(
-            show      = true,
+            show = true,
             onDismiss = { showEdit = false },
-            category  = toEdit!!,
-            onEdit    = { req ->
-                viewModel.updateCategory(toEdit!!.id, req, onError = { errorMessage = it })
-                showEdit = false
+            category = toEdit!!,
+            onEdit = { req ->
+                viewModel.updateCategory(
+                    id = toEdit!!.id,
+                    request = req,
+                    onSuccess = {
+                        showEdit = false
+                        refreshCategories()
+                    },
+                    onError = { errorMessage = it }
+                )
             }
         )
     }
 
     if (showDelete && toDelete != null) {
         DeleteCategoryDialog(
-            show     = true,
-            onDismiss= { showDelete = false },
+            show = true,
+            onDismiss = { showDelete = false },
             category = toDelete!!,
             onDelete = {
-                viewModel.deleteCategory(toDelete!!.id, onError = { errorMessage = it })
-                showDelete = false
+                viewModel.deleteCategory(
+                    id = toDelete!!.id,
+                    onSuccess = {
+                        showDelete = false
+                        refreshCategories()
+                    },
+                    onError = { errorMessage = it }
+                )
             }
         )
     }

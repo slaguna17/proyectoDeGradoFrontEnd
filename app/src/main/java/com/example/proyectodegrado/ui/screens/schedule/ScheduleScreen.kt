@@ -3,6 +3,8 @@ package com.example.proyectodegrado.ui.screens.schedule
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -14,6 +16,7 @@ import com.example.proyectodegrado.data.model.Schedule
 import com.example.proyectodegrado.ui.components.RefreshableContainer
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScheduleScreen(
     navController: NavController,
@@ -56,37 +59,32 @@ fun ScheduleScreen(
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Spacer(Modifier.height(16.dp)) // <-- Pequeño espacio superior para que no esté pegado a la barra
-            Button(
-                onClick = { showCreateDialog = true }
-                // --- CORRECCIÓN: Se eliminó el Modifier.padding(top = 16.dp) ---
-            ) {
-                Text("+ Crear Turno")
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        floatingActionButton = {
+            FloatingActionButton(onClick = { showCreateDialog = true }) {
+                Icon(Icons.Default.Add, contentDescription = "Crear Turno")
             }
-            Spacer(Modifier.height(16.dp)) // <-- Espacio consistente antes de la lista
-
-            RefreshableContainer(
-                refreshing = isRefreshing,
-                onRefresh = ::refreshData
-            ) {
-                if (isLoading) {
+        }
+    ) { innerPadding ->
+        RefreshableContainer(
+            refreshing = isRefreshing,
+            onRefresh = ::refreshData,
+            modifier = Modifier
+                .fillMaxSize()
+        ) {
+            when {
+                isLoading -> {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator()
                     }
-                } else if (schedules.isEmpty()) {
+                }
+                schedules.isEmpty() -> {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Text("No hay turnos creados.")
                     }
-                } else {
-                    LazyColumn(contentPadding = PaddingValues(bottom = 8.dp)) { // Padding inferior para el último item
+                }
+                else -> {
+                    LazyColumn(contentPadding = PaddingValues(bottom = 8.dp)) {
                         items(schedules, key = { it.id }) { schedule ->
                             ScheduleItem(
                                 schedule = schedule,
@@ -111,7 +109,10 @@ fun ScheduleScreen(
         onDismiss = { showCreateDialog = false },
         onConfirm = { request ->
             viewModel.createSchedule(request,
-                onSuccess = { showSnackbar("Turno creado") },
+                onSuccess = {
+                    showSnackbar("Turno creado")
+                    refreshData()
+                },
                 onError = { error -> showSnackbar(error) }
             )
             showCreateDialog = false
@@ -125,7 +126,10 @@ fun ScheduleScreen(
         onConfirm = { request ->
             scheduleToEdit?.let {
                 viewModel.updateSchedule(it.id, request,
-                    onSuccess = { showSnackbar("Turno actualizado") },
+                    onSuccess = {
+                        showSnackbar("Turno actualizado")
+                        refreshData()
+                    },
                     onError = { error -> showSnackbar(error) }
                 )
             }
@@ -140,7 +144,10 @@ fun ScheduleScreen(
         onConfirm = {
             scheduleToDelete?.let {
                 viewModel.deleteSchedule(it.id,
-                    onSuccess = { showSnackbar("Turno eliminado") },
+                    onSuccess = {
+                        showSnackbar("Turno eliminado")
+                        refreshData()
+                    },
                     onError = { error -> showSnackbar(error) }
                 )
             }

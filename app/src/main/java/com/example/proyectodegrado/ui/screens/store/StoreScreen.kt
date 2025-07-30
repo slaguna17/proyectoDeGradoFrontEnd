@@ -3,6 +3,8 @@ package com.example.proyectodegrado.ui.screens.store
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -16,43 +18,43 @@ import com.example.proyectodegrado.data.model.StoreRequest
 import com.example.proyectodegrado.di.AppPreferences
 import com.example.proyectodegrado.ui.components.RefreshableContainer
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StoreScreen(
     navController: NavController,
     viewModel: StoreViewModel
 ) {
-    val stores      by viewModel.stores.collectAsStateWithLifecycle()
-    val context     = androidx.compose.ui.platform.LocalContext.current
+    val stores by viewModel.stores.collectAsStateWithLifecycle()
+    val context = androidx.compose.ui.platform.LocalContext.current
     val preferences = remember { AppPreferences(context) }
     var errorMessage by rememberSaveable { mutableStateOf<String?>(null) }
     var selectedStoreId by rememberSaveable { mutableStateOf(preferences.getStoreId() ?: "") }
 
     var showCreateDialog by rememberSaveable { mutableStateOf(false) }
-    var showEditDialog   by remember { mutableStateOf(false) }
+    var showEditDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
-    var storeToEdit      by remember { mutableStateOf<Store?>(null) }
-    var storeToDelete    by remember { mutableStateOf<Store?>(null) }
+    var storeToEdit by remember { mutableStateOf<Store?>(null) }
+    var storeToDelete by remember { mutableStateOf<Store?>(null) }
 
-    // Campos del formulario de crear
-    var formName    by remember { mutableStateOf("") }
+    // Campos del formulario crear
+    var formName by remember { mutableStateOf("") }
     var formAddress by remember { mutableStateOf("") }
-    var formCity    by remember { mutableStateOf("") }
-    var formLogo    by remember { mutableStateOf("") }
+    var formCity by remember { mutableStateOf("") }
+    var formLogo by remember { mutableStateOf("") }
     var formHistory by remember { mutableStateOf("") }
-    var formPhone   by remember { mutableStateOf("") }
+    var formPhone by remember { mutableStateOf("") }
 
-    // Campos temporales para editar (se cargan del store a editar)
-    var editName    by remember { mutableStateOf("") }
+    // Campos editar
+    var editName by remember { mutableStateOf("") }
     var editAddress by remember { mutableStateOf("") }
-    var editCity    by remember { mutableStateOf("") }
-    var editLogo    by remember { mutableStateOf("") }
+    var editCity by remember { mutableStateOf("") }
+    var editLogo by remember { mutableStateOf("") }
     var editHistory by remember { mutableStateOf("") }
-    var editPhone   by remember { mutableStateOf("") }
+    var editPhone by remember { mutableStateOf("") }
 
-    // Para Swipe Refresh
     var isRefreshing by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    // Carga inicial y refresh
     fun refreshStores() {
         isRefreshing = true
         viewModel.fetchStores(
@@ -65,15 +67,17 @@ fun StoreScreen(
         refreshStores()
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Button(
-            onClick = {
-                //Clean Form
+    LaunchedEffect(errorMessage) {
+        errorMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            errorMessage = null
+        }
+    }
+
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        floatingActionButton = {
+            FloatingActionButton(onClick = {
                 formName = ""
                 formAddress = ""
                 formCity = ""
@@ -81,36 +85,33 @@ fun StoreScreen(
                 formHistory = ""
                 formPhone = ""
                 showCreateDialog = true
-            },
-            modifier = Modifier
-                .padding(vertical = 8.dp)
-                .align(Alignment.CenterHorizontally)
-        ) {
-            Text("+ Nueva Tienda")
+            }) {
+                Icon(Icons.Default.Add, contentDescription = "Nueva Tienda")
+            }
         }
-
-        Spacer(Modifier.height(4.dp))
-
+    ) { innerPadding ->
         RefreshableContainer(
             refreshing = isRefreshing,
             onRefresh = { refreshStores() },
-            modifier = Modifier.weight(1f)
+            modifier = Modifier
+                .fillMaxSize()
         ) {
             if (stores.isEmpty()) {
                 Box(
                     Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    if (errorMessage != null) {
-                        Text(errorMessage!!, color = MaterialTheme.colorScheme.error)
-                    } else {
-                        Text("Cargando tiendas...", color = MaterialTheme.colorScheme.onBackground)
-                    }
+                    Text(
+                        text = errorMessage ?: "Cargando tiendas...",
+                        color = if (errorMessage != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onBackground
+                    )
                 }
             } else {
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(12.dp)
                 ) {
                     items(stores) { store ->
                         StoreItem(
@@ -130,7 +131,10 @@ fun StoreScreen(
                                 editPhone = it.phone
                                 showEditDialog = true
                             },
-                            onDelete = { storeToDelete = it; showDeleteDialog = true }
+                            onDelete = {
+                                storeToDelete = it
+                                showDeleteDialog = true
+                            }
                         )
                     }
                 }
@@ -138,7 +142,6 @@ fun StoreScreen(
         }
     }
 
-    // Diálogo crear tienda
     if (showCreateDialog) {
         CreateStoreDialog(
             show = true,
@@ -166,7 +169,6 @@ fun StoreScreen(
         )
     }
 
-    // Edit Store Dialog
     if (showEditDialog && storeToEdit != null) {
         EditStoreDialog(
             show = true,
@@ -195,7 +197,6 @@ fun StoreScreen(
         )
     }
 
-    // Delete Store Dialog
     if (showDeleteDialog && storeToDelete != null) {
         DeleteStoreDialog(
             show = true,
@@ -212,3 +213,4 @@ fun StoreScreen(
         )
     }
 }
+

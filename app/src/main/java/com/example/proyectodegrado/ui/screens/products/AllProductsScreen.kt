@@ -18,6 +18,7 @@ import com.example.proyectodegrado.data.model.Product
 import com.example.proyectodegrado.di.AppPreferences
 import com.example.proyectodegrado.ui.components.RefreshableContainer
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AllProductsScreen(
     navController: NavController,
@@ -77,7 +78,6 @@ fun AllProductsScreen(
         floatingActionButton = {
             if (storeId != null) {
                 FloatingActionButton(onClick = {
-                    // --- CORRECCIÓN: LLAMAR A LA FUNCIÓN CORRECTA ---
                     viewModel.resetCreateProductFormState()
                     showCreateDialog = true
                 }) {
@@ -86,24 +86,22 @@ fun AllProductsScreen(
             }
         }
     ) { innerPadding ->
-        Column(
-            Modifier
-                .padding(innerPadding)
-                .fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            if (storeId == null) {
-                Text(
-                    "Selecciona una tienda para poder gestionar productos.",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(16.dp)
-                )
-            }
 
+        if (storeId == null) {
+            Text(
+                "Selecciona una tienda para poder gestionar productos.",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .padding(16.dp)
+            )
+        } else {
             RefreshableContainer(
                 refreshing = isRefreshing,
-                onRefresh = refreshAllProducts
+                onRefresh = refreshAllProducts,
+                modifier = Modifier
+                    .fillMaxSize()
             ) {
                 when {
                     isLoadingFirstTime -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
@@ -131,6 +129,8 @@ fun AllProductsScreen(
                 }
             }
         }
+
+
     }
 
     if (showCreateDialog) {

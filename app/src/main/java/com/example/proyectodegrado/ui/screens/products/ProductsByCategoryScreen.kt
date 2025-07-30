@@ -1,10 +1,7 @@
 package com.example.proyectodegrado.ui.screens.products
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -27,7 +24,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.example.proyectodegrado.data.model.CreateProductFormState
@@ -100,39 +96,36 @@ fun ProductsByCategoryScreen(
             }
         }
     ) { innerPadding ->
-        Column(
-            Modifier
-                .padding(innerPadding)
-                .fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally
+        RefreshableContainer(
+            refreshing = isRefreshing,
+            onRefresh = refreshProducts,
+            modifier = Modifier
+                .fillMaxSize()
         ) {
-            RefreshableContainer(
-                refreshing = isRefreshing,
-                onRefresh = refreshProducts
-            ) {
-                when {
-                    isLoadingFirstTime -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
-                    productsByCategory.isNotEmpty() -> {
-                        LazyColumn(contentPadding = PaddingValues(vertical = 8.dp)) {
-                            items(productsByCategory, key = { it.id }) { product ->
-                                ProductItem(
-                                    product = product,
-                                    onEdit = {
-                                        productToInteractWith = it
-                                        viewModel.prepareFormForEdit(it)
-                                        showEditDialog = true
-                                    },
-                                    onDelete = {
-                                        productToInteractWith = it
-                                        showDeleteDialog = true
-                                    }
-                                )
-                            }
+            when {
+                isLoadingFirstTime -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+                productsByCategory.isNotEmpty() -> {
+                    LazyColumn {
+                        items(productsByCategory, key = { it.id }) { product ->
+                            ProductItem(
+                                product = product,
+                                onEdit = {
+                                    productToInteractWith = it
+                                    viewModel.prepareFormForEdit(it)
+                                    showEditDialog = true
+                                },
+                                onDelete = {
+                                    productToInteractWith = it
+                                    showDeleteDialog = true
+                                }
+                            )
                         }
                     }
-                    else -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("No hay productos en esta categoría.", color = MaterialTheme.colorScheme.onBackground)
-                    }
+                }
+                else -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("No hay productos en esta categoría.", color = MaterialTheme.colorScheme.onBackground)
                 }
             }
         }
@@ -153,7 +146,7 @@ fun ProductsByCategoryScreen(
                         storeId = storeId,
                         onSuccess = {
                             showCreateDialog = false
-                            refreshProducts() // Refresca la lista de la categoría
+                            refreshProducts()
                         },
                         onError = { errMsg -> errorMessage = errMsg }
                     )
@@ -176,7 +169,7 @@ fun ProductsByCategoryScreen(
                         storeId = storeId,
                         onSuccess = {
                             showEditDialog = false
-                            refreshProducts() // Refresca la lista de la categoría
+                            refreshProducts()
                         },
                         onError = { errMsg -> errorMessage = errMsg }
                     )
@@ -196,7 +189,7 @@ fun ProductsByCategoryScreen(
                         id = it.id,
                         onSuccess = {
                             showDeleteDialog = false
-                            refreshProducts() // Refresca la lista de la categoría
+                            refreshProducts()
                         },
                         onError = { errMsg -> errorMessage = errMsg }
                     )

@@ -1,5 +1,7 @@
 package com.example.proyectodegrado.data.model
 
+import com.google.gson.annotations.SerializedName
+
 data class Category(
     val id: Int,
     val name: String,
@@ -15,6 +17,7 @@ data class CategoryRequest(
 
 data class CategoryResponse(
     val message: String,
+    @SerializedName("category_id")
     val categoryId: Int? = null
 )
 

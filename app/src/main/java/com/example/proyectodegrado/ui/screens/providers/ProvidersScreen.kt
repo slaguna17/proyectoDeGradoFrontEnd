@@ -3,6 +3,8 @@ package com.example.proyectodegrado.ui.screens.providers
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -15,6 +17,7 @@ import com.example.proyectodegrado.data.model.Provider
 import com.example.proyectodegrado.data.model.ProviderRequest
 import com.example.proyectodegrado.ui.components.RefreshableContainer
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProvidersScreen(
     navController: NavController,
@@ -24,23 +27,21 @@ fun ProvidersScreen(
     var errorMessage by rememberSaveable { mutableStateOf<String?>(null) }
 
     var showCreateDialog by rememberSaveable { mutableStateOf(false) }
-    var showEditDialog   by remember { mutableStateOf(false) }
+    var showEditDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
-    var providerToEdit   by remember { mutableStateOf<Provider?>(null) }
+    var providerToEdit by remember { mutableStateOf<Provider?>(null) }
     var providerToDelete by remember { mutableStateOf<Provider?>(null) }
 
-    // Formulario para crear proveedor
-    var formName    by remember { mutableStateOf("") }
+    // Formulario de crear proveedor
+    var formName by remember { mutableStateOf("") }
     var formAddress by remember { mutableStateOf("") }
-    var formEmail   by remember { mutableStateOf("") }
-    var formPhone   by remember { mutableStateOf("") }
+    var formEmail by remember { mutableStateOf("") }
+    var formPhone by remember { mutableStateOf("") }
     var formContact by remember { mutableStateOf("") }
-    var formNotes   by remember { mutableStateOf("") }
+    var formNotes by remember { mutableStateOf("") }
 
-    // Para Swipe Refresh
     var isRefreshing by remember { mutableStateOf(false) }
 
-    // Carga inicial y refresh
     fun refreshProviders() {
         isRefreshing = true
         viewModel.fetchProviders(
@@ -53,14 +54,9 @@ fun ProvidersScreen(
         refreshProviders()
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Button(
-            onClick = {
+    Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(onClick = {
                 formName = ""
                 formAddress = ""
                 formEmail = ""
@@ -68,46 +64,43 @@ fun ProvidersScreen(
                 formContact = ""
                 formNotes = ""
                 showCreateDialog = true
-            },
-            modifier = Modifier
-                .padding(vertical = 8.dp)
-                .align(Alignment.CenterHorizontally)
-        ) {
-            Text("+ Crear Proveedor")
+            }) {
+                Icon(Icons.Default.Add, contentDescription = "Crear Proveedor")
+            }
         }
-
-        Spacer(Modifier.height(4.dp))
-
+    ) { innerPadding ->
         RefreshableContainer(
             refreshing = isRefreshing,
             onRefresh = { refreshProviders() },
-            modifier = Modifier.weight(1f)
+            modifier = Modifier
+                .fillMaxSize()
         ) {
             if (providers.isEmpty()) {
                 Box(
                     Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    if (errorMessage != null) {
-                        Text(errorMessage!!, color = MaterialTheme.colorScheme.error)
-                    } else {
-                        Text("Cargando proveedores...", color = MaterialTheme.colorScheme.onBackground)
-                    }
+                    Text(
+                        text = errorMessage ?: "Cargando proveedores...",
+                        color = if (errorMessage != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onBackground
+                    )
                 }
             } else {
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(12.dp)
                 ) {
                     items(providers) { provider ->
                         ProviderItem(
                             provider = provider,
                             onEdit = {
-                                providerToEdit = it
+                                providerToEdit = provider
                                 showEditDialog = true
                             },
                             onDelete = {
-                                providerToDelete = it
+                                providerToDelete = provider
                                 showDeleteDialog = true
                             }
                         )
@@ -117,7 +110,6 @@ fun ProvidersScreen(
         }
     }
 
-    // Diálogo crear proveedor
     if (showCreateDialog) {
         CreateProviderDialog(
             show = true,
@@ -145,7 +137,6 @@ fun ProvidersScreen(
         )
     }
 
-    // Diálogo editar proveedor
     if (showEditDialog && providerToEdit != null) {
         val p = providerToEdit!!
         EditProviderDialog(
@@ -158,15 +149,15 @@ fun ProvidersScreen(
             onEmailChange = { providerToEdit = p.copy(email = it) },
             phone = p.phone,
             onPhoneChange = { providerToEdit = p.copy(phone = it) },
-            contactPerson = p.contact_person_name,
-            onContactPersonChange = { providerToEdit = p.copy(contact_person_name = it) },
+            contactPerson = p.contactPersonName,
+            onContactPersonChange = { providerToEdit = p.copy(contactPersonName = it) },
             notes = p.notes,
             onNotesChange = { providerToEdit = p.copy(notes = it) },
             onDismiss = { showEditDialog = false },
             onSubmit = {
                 viewModel.updateProvider(
                     id = p.id,
-                    ProviderRequest(p.name, p.address, p.email, p.phone, p.contact_person_name, p.notes),
+                    ProviderRequest(p.name, p.address, p.email, p.phone, p.contactPersonName, p.notes),
                     onSuccess = { refreshProviders() },
                     onError = { errorMessage = it }
                 )
@@ -175,7 +166,6 @@ fun ProvidersScreen(
         )
     }
 
-    // Diálogo eliminar proveedor
     if (showDeleteDialog && providerToDelete != null) {
         DeleteProviderDialog(
             show = true,

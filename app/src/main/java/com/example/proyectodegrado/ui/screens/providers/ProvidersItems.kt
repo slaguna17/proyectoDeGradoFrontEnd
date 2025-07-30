@@ -56,7 +56,7 @@ fun ProviderItem(
                 fontSize = 14.sp
             )
             Text(
-                text = "Contacto: ${provider.contact_person_name}",
+                text = "Contacto: ${provider.contactPersonName}",
                 style = MaterialTheme.typography.bodySmall
             )
             if (provider.notes.isNotBlank()) {

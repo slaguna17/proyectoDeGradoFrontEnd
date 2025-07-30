@@ -21,35 +21,26 @@ data class Product(
     val createdAt: String?,
     @SerializedName("updated_at")
     val updatedAt: String?,
-
-    // --- CORRECCIÓN 1: AÑADIR CAMPOS NULABLES ---
-    // Estos campos pueden venir o no, dependiendo del endpoint
     @SerializedName("stock")
     val stock: Int?,
     @SerializedName("expiration_date")
     val expirationDate: String?,
-    // --- FIN CORRECCIÓN 1 ---
-
     @SerializedName("stores")
     val stores: List<StoreInfoFromProduct>?,
     @SerializedName("providers")
     val providers: List<ProviderInfoFromProduct>?
 )
 
-// --- CORRECCIÓN 2: AÑADIR LA CLASE 'PIVOT' QUE USA EL MODELO DE TIENDA ---
-// El modelo StoreInfoFromProduct ahora puede contener la información de la tabla pivote
 data class StoreInfoFromProduct(
     @SerializedName("id") val id: Int,
     @SerializedName("name") val name: String,
-    @SerializedName("pivot") val pivot: StoreProductPivot // <-- Añadido para el stock
+    @SerializedName("pivot") val pivot: StoreProductPivot
 )
 
 data class StoreProductPivot(
     @SerializedName("stock") val stock: Int,
     @SerializedName("expiration_date") val expirationDate: String?
 )
-// --- FIN CORRECCIÓN 2 ---
-
 
 data class ProviderInfoFromProduct(
     @SerializedName("id") val id: Int,

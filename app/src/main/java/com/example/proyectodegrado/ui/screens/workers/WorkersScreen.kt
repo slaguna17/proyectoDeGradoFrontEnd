@@ -43,7 +43,6 @@ fun WorkersScreen(
     ) { innerPadding ->
         Column(
             Modifier
-                .padding(innerPadding)
                 .fillMaxSize()
                 .padding(horizontal = 40.dp),
             horizontalAlignment = Alignment.CenterHorizontally
