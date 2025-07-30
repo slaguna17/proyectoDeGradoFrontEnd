@@ -43,31 +43,19 @@ fun CreateProductDialog(
                 Text("Crear Producto", style = MaterialTheme.typography.titleLarge)
                 Spacer(Modifier.height(16.dp))
 
-                // Fila para Imagen y campos principales
-                Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-//                        ImagePickerButton(
-//                            currentImageUrl = formState.imageUrl,
-//                            uploadState = imageUploadState,
-//                            onImageSelected = onImageUriSelected
-//                        )
-                    }
-                    Column(Modifier.weight(1f)) {
-                        OutlinedTextField(
-                            value = formState.name,
-                            onValueChange = { onFormStateChange(formState.copy(name = it)) },
-                            label = { Text("Nombre") },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                        Spacer(Modifier.height(8.dp))
-                        OutlinedTextField(
-                            value = formState.sku,
-                            onValueChange = { onFormStateChange(formState.copy(sku = it)) },
-                            label = { Text("SKU") },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                }
+                OutlinedTextField(
+                    value = formState.name,
+                    onValueChange = { onFormStateChange(formState.copy(name = it)) },
+                    label = { Text("Nombre") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = formState.sku,
+                    onValueChange = { onFormStateChange(formState.copy(sku = it)) },
+                    label = { Text("SKU") },
+                    modifier = Modifier.fillMaxWidth()
+                )
                 Spacer(Modifier.height(8.dp))
                 OutlinedTextField(
                     value = formState.description,
@@ -115,8 +103,8 @@ fun CreateProductDialog(
                         }
                     }
                 }
-
                 Spacer(Modifier.height(8.dp))
+
                 OutlinedTextField(
                     value = formState.stock,
                     onValueChange = { onFormStateChange(formState.copy(stock = it)) },
@@ -125,6 +113,12 @@ fun CreateProductDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(Modifier.height(16.dp))
+
+//                ImagePickerButton(
+////                            currentImageUrl = formState.imageUrl,
+////                            uploadState = imageUploadState,
+////                            onImageSelected = onImageUriSelected
+////                        )
 
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                     TextButton(onClick = onDismiss) { Text("Cancelar") }

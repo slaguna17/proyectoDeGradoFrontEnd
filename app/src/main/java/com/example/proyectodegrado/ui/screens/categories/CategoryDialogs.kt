@@ -44,7 +44,6 @@ fun CreateCategoryDialog(
                     label = { Text("Nombre") },
                     modifier = Modifier.fillMaxWidth()
                 )
-
                 Spacer(Modifier.height(8.dp))
 
                 OutlinedTextField(
@@ -53,10 +52,8 @@ fun CreateCategoryDialog(
                     label = { Text("Descripción") },
                     modifier = Modifier.fillMaxWidth()
                 )
-
                 Spacer(Modifier.height(16.dp))
 
-                // Componente de imagen que ya tienes
                 ImagePickerButton(
                     modifier = Modifier.align(Alignment.CenterHorizontally),
                     currentImageUrl = formState.imageUrl,
@@ -73,7 +70,6 @@ fun CreateCategoryDialog(
                         modifier = Modifier.align(Alignment.CenterHorizontally)
                     )
                 }
-
                 Spacer(Modifier.height(16.dp))
 
                 Row(

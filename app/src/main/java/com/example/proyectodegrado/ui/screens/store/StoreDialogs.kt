@@ -7,7 +7,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 
-// --- Composable Interno Reutilizable ---
 @Composable
 private fun StoreDialogContent(
     title: String,
@@ -35,7 +34,7 @@ private fun StoreDialogContent(
             .widthIn(min = 320.dp, max = 400.dp)
     ) {
         Text(title, style = MaterialTheme.typography.titleLarge)
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(16.dp))
         OutlinedTextField(
             value = name,
             onValueChange = {
@@ -89,6 +88,7 @@ private fun StoreDialogContent(
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(Modifier.height(16.dp))
+
         Row(
             Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.End

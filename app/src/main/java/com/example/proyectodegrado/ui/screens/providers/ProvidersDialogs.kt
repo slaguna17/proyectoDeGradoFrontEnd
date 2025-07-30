@@ -34,7 +34,7 @@ private fun ProviderDialogContent(
             .widthIn(min = 320.dp, max = 400.dp)
     ) {
         Text(title, style = MaterialTheme.typography.titleLarge)
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(16.dp))
         OutlinedTextField(
             value = name,
             onValueChange = {
@@ -53,6 +53,7 @@ private fun ProviderDialogContent(
             )
         }
         Spacer(Modifier.height(8.dp))
+
         OutlinedTextField(
             value = address,
             onValueChange = onAddressChange,
@@ -60,6 +61,7 @@ private fun ProviderDialogContent(
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(Modifier.height(8.dp))
+
         OutlinedTextField(
             value = email,
             onValueChange = onEmailChange,
@@ -67,6 +69,7 @@ private fun ProviderDialogContent(
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(Modifier.height(8.dp))
+
         OutlinedTextField(
             value = phone,
             onValueChange = onPhoneChange,
@@ -74,6 +77,7 @@ private fun ProviderDialogContent(
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(Modifier.height(8.dp))
+
         OutlinedTextField(
             value = contactPerson,
             onValueChange = onContactPersonChange,
@@ -81,6 +85,7 @@ private fun ProviderDialogContent(
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(Modifier.height(8.dp))
+
         OutlinedTextField(
             value = notes,
             onValueChange = onNotesChange,
@@ -88,6 +93,7 @@ private fun ProviderDialogContent(
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(Modifier.height(16.dp))
+
         Row(
             Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.End

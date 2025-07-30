@@ -31,10 +31,10 @@ private fun ScheduleDialogContent(
     Column(
         Modifier
             .padding(16.dp)
-            .widthIn(min = 300.dp)
+            .widthIn(min = 320.dp, max = 400.dp)
     ) {
         Text(title, style = MaterialTheme.typography.titleLarge)
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(16.dp))
         OutlinedTextField(
             value = name,
             onValueChange = {
@@ -54,6 +54,7 @@ private fun ScheduleDialogContent(
             )
         }
         Spacer(Modifier.height(8.dp))
+
         OutlinedTextField(
             value = startTime,
             onValueChange = onStartTimeChange,
@@ -61,6 +62,7 @@ private fun ScheduleDialogContent(
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(Modifier.height(8.dp))
+
         OutlinedTextField(
             value = endTime,
             onValueChange = onEndTimeChange,
@@ -68,6 +70,7 @@ private fun ScheduleDialogContent(
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(Modifier.height(8.dp))
+
         OutlinedTextField(
             value = length,
             onValueChange = onLengthChange,
@@ -76,12 +79,14 @@ private fun ScheduleDialogContent(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
         )
         Spacer(Modifier.height(16.dp))
+
         Row(
             Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.End
         ) {
             TextButton(onClick = onDismiss) { Text("Cancelar") }
             Spacer(Modifier.width(8.dp))
+
             Button(onClick = {
                 if (name.isBlank()) {
                     showError = true
