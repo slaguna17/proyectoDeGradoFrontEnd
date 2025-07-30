@@ -9,6 +9,7 @@ import androidx.compose.ui.window.Dialog
 import com.example.proyectodegrado.data.model.AssignScheduleFormState
 import com.example.proyectodegrado.data.model.Schedule
 import com.example.proyectodegrado.data.model.Store
+import com.example.proyectodegrado.ui.components.ScheduleDropdown
 import com.example.proyectodegrado.ui.components.StoreDropdown
 
 @Composable

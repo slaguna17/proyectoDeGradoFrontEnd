@@ -14,13 +14,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.proyectodegrado.R
-import com.example.proyectodegrado.data.model.RegisterRequest
 import com.example.proyectodegrado.data.model.Role
-import com.example.proyectodegrado.ui.screens.register.RegisterViewModel
-import com.example.proyectodegrado.ui.screens.register.RoleDropdown
+import com.example.proyectodegrado.data.model.RegisterWorkerRequest
+import com.example.proyectodegrado.ui.components.StoreDropdown
+import com.example.proyectodegrado.ui.components.ScheduleDropdown
 
 @Composable
-fun CreateWorkerScreen(navController: NavController, viewModel: RegisterViewModel) {
+fun CreateWorkerScreen(
+    navController: NavController,
+    viewModel: WorkersViewModel
+) {
     var username by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -29,15 +32,22 @@ fun CreateWorkerScreen(navController: NavController, viewModel: RegisterViewMode
     var dateOfBirth by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf("") }
-    var expanded by remember { mutableStateOf(false) }
 
-    val roles by viewModel.roles.collectAsState()
-//    val filteredRoles = roles.filter { !it.isAdmin }
-    var selectedRole by remember { mutableStateOf<Role?>(null) }
-    var showRoleError by remember { mutableStateOf(false) }
+    val stores by viewModel.stores.collectAsState()
+    val schedules by viewModel.schedules.collectAsState()
+    val roles = listOf(
+        Role(
+            id = 2, name = "Empleado", isAdmin = false,
+            description = "hola"
+        )
+    )
+    var selectedRole by remember { mutableStateOf<Role?>(roles.firstOrNull()) }
+    var selectedStoreId by remember { mutableStateOf<Int?>(null) }
+    var selectedScheduleId by remember { mutableStateOf<Int?>(null) }
 
+    // Carga tiendas y horarios al entrar
     LaunchedEffect(Unit) {
-        viewModel.fetchRoles()
+        viewModel.loadStoresAndSchedules()
     }
 
     Column(
@@ -113,48 +123,65 @@ fun CreateWorkerScreen(navController: NavController, viewModel: RegisterViewMode
         )
         Spacer(Modifier.height(16.dp))
 
-        RoleDropdown(
-            viewModel = viewModel,
-            roles = roles,
-            selectedRole = selectedRole,
-            onRoleSelected = {
-                selectedRole = it
-                showRoleError = false
-            },
-            isError = showRoleError
+        // Dropdown de tienda
+        StoreDropdown(
+            stores = stores,
+            selectedStoreId = selectedStoreId,
+            onStoreSelected = { selectedStoreId = it }
         )
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(8.dp))
+
+        // Dropdown de turno
+        ScheduleDropdown(
+            schedules = schedules,
+            selectedScheduleId = selectedScheduleId,
+            onScheduleSelected = { selectedScheduleId = it }
+        )
+        Spacer(Modifier.height(8.dp))
+
+        // Si quieres permitir elegir rol, puedes poner un dropdown aquí
+        // Si siempre será "Empleado", selecciona por defecto
 
         if (errorMessage.isNotBlank()) {
             Text(errorMessage, color = MaterialTheme.colorScheme.error)
         }
 
         Button(onClick = {
-            if (password != repeatPassword) {
-                errorMessage = "Las contraseñas no coinciden"
-                return@Button
+            errorMessage = ""
+            when {
+                password != repeatPassword -> {
+                    errorMessage = "Las contraseñas no coinciden"
+                    return@Button
+                }
+                selectedRole == null -> {
+                    errorMessage = "Debes seleccionar un rol"
+                    return@Button
+                }
+                selectedStoreId == null -> {
+                    errorMessage = "Debes seleccionar una tienda"
+                    return@Button
+                }
+                selectedScheduleId == null -> {
+                    errorMessage = "Debes seleccionar un horario"
+                    return@Button
+                }
             }
-            if (selectedRole == null) {
-                showRoleError = true
-                errorMessage = "Debes seleccionar un rol"
-                return@Button
-            }
-            val request = RegisterRequest(
+
+            val request = RegisterWorkerRequest(
                 username = username,
                 email = email,
                 password = password,
                 fullName = fullName,
-                dateOfBirth = dateOfBirth,
                 phone = phone,
-                avatar = "",
+                storeId = selectedStoreId!!,
+                scheduleId = selectedScheduleId!!,
                 roleId = selectedRole!!.id
             )
-            viewModel.registerUser(request,
-                onSuccess = { navController ->
-                    navController.navigate("home")
-                },
-                onError = { errorMessage = it },
-                navController = navController
+
+            viewModel.registerWorker(
+                request,
+                onSuccess = { navController.navigate("workers") },
+                onError = { errorMessage = it }
             )
         }) {
             Text("Registrar Empleado")

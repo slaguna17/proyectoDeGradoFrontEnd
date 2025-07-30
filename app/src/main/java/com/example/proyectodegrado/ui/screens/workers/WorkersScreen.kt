@@ -22,68 +22,74 @@ fun WorkersScreen(
     val stores by viewModel.stores.collectAsState()
     val selectedWorkerContext by viewModel.selectedWorkerContext.collectAsState()
     val assignError by viewModel.assignError.collectAsState()
-    val snackbarHostState = remember { SnackbarHostState() }
     var selectedStoreId by remember { mutableStateOf<Int?>(null) }
 
+    // Cargar tiendas y empleados al iniciar
     LaunchedEffect(Unit) {
         viewModel.loadStoresAndSchedules()
-        viewModel.filterByStore(null)
+        viewModel.filterByStore(null) // null = todos los empleados al principio
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { navController.navigate("registerEmployee") },
+                onClick = { navController.navigate("registerEmployee") }
             ) {
                 Icon(Icons.Default.PersonAdd, contentDescription = "Agregar empleado")
             }
-
         }
     ) { innerPadding ->
+
         Column(
             Modifier
                 .fillMaxSize()
-                .padding(horizontal = 40.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(horizontal = 32.dp, vertical = 16.dp)
         ) {
+            // Filtro por tienda
             StoreDropdown(
                 stores = stores,
                 selectedStoreId = selectedStoreId,
                 onStoreSelected = {
                     selectedStoreId = it
-                    viewModel.filterByStore(it)
+                    viewModel.filterByStore(it) // Si it == null, muestra todos los empleados
                 }
             )
             Spacer(Modifier.height(12.dp))
+
             if (employees.isEmpty()) {
-                Text("No hay empleados en esta tienda", style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    "No hay empleados en esta tienda.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
             } else {
-                LazyColumn {
+                LazyColumn(
+                    modifier = Modifier.weight(1f)
+                ) {
                     items(employees, key = { it.id }) { worker ->
                         WorkerItem(
                             worker = worker,
                             onAssignClick = { viewModel.openAssignScheduleDialog(worker) },
-                            onEditClick = { /* editar empleado */ },
-                            onDeleteClick = { /* eliminar empleado */ }
+                            onEditClick = { /* TODO: viewModel.openEditWorkerDialog(worker) */ },
+                            onDeleteClick = { /* TODO: viewModel.openDeleteWorkerDialog(worker) */ }
                         )
                     }
                 }
             }
         }
 
-        // Diálogo de asignar tienda/turno
+        // Diálogo de asignar turno y tienda (ya implementado)
         if (selectedWorkerContext != null) {
             AssignScheduleDialog(
                 stores = stores,
                 schedules = viewModel.schedules.collectAsState().value,
                 formState = selectedWorkerContext!!.formState,
                 onFormStateChange = viewModel::updateAssignForm,
-                onConfirm = { viewModel.assignSchedule { /* éxito: podrías mostrar snackbar */ } },
+                onConfirm = { viewModel.assignSchedule { /* Éxito: puedes mostrar snackbar */ } },
                 onDismiss = { viewModel.closeAssignScheduleDialog() },
                 errorMessage = assignError
             )
         }
-    }
 
+        // TODO: Agregar aquí tus diálogos de editar y eliminar empleados si los implementas.
+    }
 }

@@ -46,6 +46,7 @@ import com.example.proyectodegrado.ui.screens.settings.SettingsScreen
 import com.example.proyectodegrado.ui.screens.store.StoreScreen
 import com.example.proyectodegrado.ui.screens.workers.CreateWorkerScreen
 import com.example.proyectodegrado.ui.screens.workers.WorkersScreen
+import com.example.proyectodegrado.ui.screens.workers.WorkersViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -155,7 +156,7 @@ fun AppNavigation() {
                 }
                 composable("store") { StoreScreen(navController = navController, viewModel = storeViewModel) }
                 composable("workers") { WorkersScreen(navController = navController, viewModel = workersViewModel) }
-                composable("registerEmployee") { CreateWorkerScreen(navController = navController, viewModel = registerViewModel) }
+                composable("registerEmployee") { CreateWorkerScreen(navController = navController, viewModel = workersViewModel) }
                 composable("schedule") { ScheduleScreen(navController = navController, viewModel = scheduleViewModel) }
                 composable("forecast") { ForecastScreen(navController = navController) }
                 composable("balance") { BalanceScreen(navController = navController) }

@@ -1,5 +1,6 @@
 package com.example.proyectodegrado.ui.screens.workers
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.proyectodegrado.data.model.*
@@ -32,19 +33,37 @@ class WorkersViewModel(
     private val _assignError = MutableStateFlow<String?>(null)
     val assignError: StateFlow<String?> = _assignError.asStateFlow()
 
-    // Filter worker by store
+    // Filtrado por tienda
     fun filterByStore(storeId: Int?) {
         viewModelScope.launch {
             val result = if (storeId != null) {
                 workerRepository.getEmployeesByStore(storeId)
             } else {
-                workerRepository.searchEmployees("")
+                workerRepository.getAllEmployees()
             }
-            _employees.value = result
+            Log.d("WORKERS", "Empleados recibidos: ${result.size} $result")
+            _employees.value = result.distinctBy { it.id }
         }
     }
 
-    // Dialog for assigning
+    // Registrar nuevo empleado
+    fun registerWorker(
+        request: RegisterWorkerRequest,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            val result = workerRepository.registerWorker(request)
+            if (result.isSuccess) {
+                filterByStore(null) // Recargar lista general después de registrar
+                onSuccess()
+            } else {
+                onError(result.exceptionOrNull()?.message ?: "Error registrando empleado")
+            }
+        }
+    }
+
+    // Diálogo de asignación de tienda/turno
     fun openAssignScheduleDialog(worker: Worker) {
         _selectedWorkerContext.value = SelectedWorkerContext(
             worker,

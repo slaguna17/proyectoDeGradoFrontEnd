@@ -1,4 +1,4 @@
-package com.example.proyectodegrado.ui.screens.workers
+package com.example.proyectodegrado.ui.components
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.DropdownMenuItem

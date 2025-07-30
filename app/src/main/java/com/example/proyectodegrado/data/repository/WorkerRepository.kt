@@ -1,28 +1,50 @@
 package com.example.proyectodegrado.data.repository
 
 import com.example.proyectodegrado.data.api.WorkerService
-import com.example.proyectodegrado.data.model.AssignScheduleRequest
-import com.example.proyectodegrado.data.model.Worker
-import retrofit2.Response
+import com.example.proyectodegrado.data.model.*
 
-class WorkerRepository(private val workerService: WorkerService) {
+class WorkerRepository(
+    private val workerService: WorkerService
+) {
 
-    // Search employees by text
-    suspend fun searchEmployees(query: String): List<Worker> {
-        return workerService.searchEmployees(query)
+    suspend fun getAllEmployees(): List<Worker> {
+        return try {
+            workerService.getAllEmployees()
+        } catch (e: Exception) {
+            emptyList()
+        }
     }
 
-    // Search employee by Store
     suspend fun getEmployeesByStore(storeId: Int): List<Worker> {
-        return workerService.getEmployeesByStore(storeId)
+        return try {
+            workerService.getEmployeesByStore(storeId)
+        } catch (e: Exception) {
+            emptyList()
+        }
     }
 
-    // Assign schedule
     suspend fun assignSchedule(userId: Int, storeId: Int, scheduleId: Int): Boolean {
-        val response: Response<Unit> = workerService.assignSchedule(
-            userId,
-            AssignScheduleRequest(storeId, scheduleId)
-        )
-        return response.isSuccessful
+        return try {
+            val response = workerService.assignSchedule(
+                userId,
+                AssignScheduleRequest(storeId, scheduleId)
+            )
+            response.isSuccessful
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    suspend fun registerWorker(request: RegisterWorkerRequest): Result<Unit> {
+        return try {
+            val response = workerService.createEmployee(request)
+            if (response.isSuccessful) {
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception(response.errorBody()?.string() ?: "Unknown error"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 }
