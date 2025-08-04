@@ -47,4 +47,16 @@ class WorkerRepository(
             Result.failure(e)
         }
     }
+
+    suspend fun updateWorker(workerId: Int, name: String, email: String, phone: String): Boolean {
+        val req = UpdateWorkerRequest(full_name = name, email = email, phone = phone)
+        val response = workerService.updateWorker(workerId, req)
+        return response.isSuccessful
+    }
+
+    // NUEVO: Eliminar empleado
+    suspend fun deleteWorker(workerId: Int): Boolean {
+        val response = workerService.deleteWorker(workerId)
+        return response.isSuccessful
+    }
 }

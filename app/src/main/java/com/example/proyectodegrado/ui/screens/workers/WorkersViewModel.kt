@@ -33,8 +33,11 @@ class WorkersViewModel(
     private val _assignError = MutableStateFlow<String?>(null)
     val assignError: StateFlow<String?> = _assignError.asStateFlow()
 
+    private var selectedStoreId: Int? = null
+
     // Filtrado por tienda
     fun filterByStore(storeId: Int?) {
+        selectedStoreId = storeId
         viewModelScope.launch {
             val result = if (storeId != null) {
                 workerRepository.getEmployeesByStore(storeId)
@@ -118,4 +121,21 @@ class WorkersViewModel(
             _schedules.value = scheduleRepository.getAllSchedules()
         }
     }
+
+    fun updateWorker(workerId: Int, name: String, email: String, phone: String, onSuccess: () -> Unit) {
+        viewModelScope.launch {
+            workerRepository.updateWorker(workerId, name, email, phone)
+            filterByStore(selectedStoreId) // actualiza la lista
+            onSuccess()
+        }
+    }
+
+    fun deleteWorker(workerId: Int, onSuccess: () -> Unit) {
+        viewModelScope.launch {
+            workerRepository.deleteWorker(workerId)
+            filterByStore(selectedStoreId)
+            onSuccess()
+        }
+    }
+
 }

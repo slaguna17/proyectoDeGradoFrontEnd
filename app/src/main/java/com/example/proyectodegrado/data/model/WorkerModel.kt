@@ -9,6 +9,7 @@ data class Worker(
     val email: String?,
     val roles: List<String> = emptyList(),
     val avatar: String? = null,
+    val phone: String,
     @SerializedName("store_id") val storeId: Int? = null,
     @SerializedName("store_name") val storeName: String? = null,
     @SerializedName("schedule_id") val scheduleId: Int? = null,
@@ -39,4 +40,10 @@ data class AssignScheduleFormState(
 data class SelectedWorkerContext(
     val worker: Worker,
     val formState: AssignScheduleFormState = AssignScheduleFormState()
+)
+
+data class UpdateWorkerRequest(
+    val full_name: String,
+    val email: String,
+    val phone: String
 )

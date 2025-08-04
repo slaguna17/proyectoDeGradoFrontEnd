@@ -22,4 +22,15 @@ interface WorkerService {
 
     @POST("/api/users/employees")
     suspend fun createEmployee(@Body request: RegisterWorkerRequest): Response<Unit>
+
+    @PUT("/api/users/updateUser/{id}")
+    suspend fun updateWorker(
+        @Path("id") workerId: Int,
+        @Body update: UpdateWorkerRequest
+    ): Response<Unit>
+
+    @DELETE("/api/users/deleteUser/{id}")
+    suspend fun deleteWorker(
+        @Path("id") workerId: Int
+    ): Response<Unit>
 }
