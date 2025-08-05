@@ -73,7 +73,6 @@ fun WorkersScreen(
         }
 
         // --- Dialogos ---
-        // Asignar tienda y horario (ya lo tienes)
         if (selectedWorkerContext != null) {
             AssignScheduleDialog(
                 stores = stores,

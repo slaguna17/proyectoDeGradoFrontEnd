@@ -61,7 +61,7 @@ fun DrawerContent(onItemSelected: (String) -> Unit) {
                     text = "TuKiosco",
                     style = MaterialTheme.typography.titleLarge
                 )
-                IconButton(onClick = { /* Acción de clic en avatar TODO */ }) {
+                IconButton(onClick = { onItemSelected("profile") }) {
                     Image(
                         painter = profilePic,
                         contentDescription = "Avatar",

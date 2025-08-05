@@ -39,6 +39,7 @@ import com.example.proyectodegrado.ui.screens.login.LoginScreen
 import com.example.proyectodegrado.ui.screens.products.AllProductsScreen
 import com.example.proyectodegrado.ui.screens.products.ProductViewModel
 import com.example.proyectodegrado.ui.screens.products.ProductsByCategoryScreen
+import com.example.proyectodegrado.ui.screens.profile.ProfileScreen
 import com.example.proyectodegrado.ui.screens.providers.ProvidersScreen
 import com.example.proyectodegrado.ui.screens.register.RegisterScreen
 import com.example.proyectodegrado.ui.screens.schedule.ScheduleScreen
@@ -62,6 +63,7 @@ fun AppNavigation() {
     val providerViewModel = DependencyProvider.provideProviderViewModel()
     val scheduleViewModel = DependencyProvider.provideScheduleViewModel()
     val workersViewModel = DependencyProvider.provideWorkersViewModel()
+    val profileViewModel = DependencyProvider.provideProfileViewModel()
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -91,6 +93,7 @@ fun AppNavigation() {
                         "Proveedores" -> "providers"
                         "Código de barras" -> "barcode"
                         "Ajustes" -> "settings"
+                        "profile" -> "profile"
                         else -> null
                     }
                     scope.launch {
@@ -163,6 +166,13 @@ fun AppNavigation() {
                 composable("providers") { ProvidersScreen(navController = navController, viewModel = providerViewModel) }
                 composable("barcode") { BarcodeScreen(navController = navController) }
                 composable("settings") { SettingsScreen(navController = navController) }
+                composable("profile") {
+                    ProfileScreen(
+                        navController = navController,
+                        viewModel = profileViewModel
+                    )
+                }
+
             }
         }
     }

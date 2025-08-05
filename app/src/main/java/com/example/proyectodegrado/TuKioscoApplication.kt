@@ -6,8 +6,8 @@ import com.example.proyectodegrado.di.DependencyProvider // Importa tu provider
 class TuKioskoApplication : Application() {
     override fun onCreate() {
         super.onCreate()
-        // Inicializa el DependencyProvider aquí, pasándole el contexto de la aplicación
+        // Inicialize DependencyProvider here with context
         DependencyProvider.initialize(this)
-        println("DependencyProvider inicializado.") // Log opcional para verificar
+        println("DependencyProvider inicializado.")
     }
 }

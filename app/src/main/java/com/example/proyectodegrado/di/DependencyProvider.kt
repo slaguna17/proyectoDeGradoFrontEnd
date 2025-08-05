@@ -24,6 +24,7 @@ import com.example.proyectodegrado.ui.screens.schedule.ScheduleViewModel
 import com.example.proyectodegrado.ui.screens.store.StoreViewModel
 import com.example.proyectodegrado.data.repository.* // Importa todos tus repositorios
 import com.example.proyectodegrado.ui.screens.categories.CategoryViewModel
+import com.example.proyectodegrado.ui.screens.profile.ProfileViewModel
 import com.example.proyectodegrado.ui.screens.workers.WorkersViewModel
 
 object DependencyProvider {
@@ -45,7 +46,7 @@ object DependencyProvider {
     private val imageApiService: ImageApiService by lazy { RetrofitClient.createService(ImageApiService::class.java) }
 
     // --- Repositories ---
-    private val userRepository: UserRepository by lazy { UserRepository(userService) }
+    private val userRepository: UserRepository by lazy { UserRepository(userService, applicationContext) }
     private val productRepository: ProductRepository by lazy { ProductRepository(productService) }
     private val categoryRepository: CategoryRepository by lazy { CategoryRepository(categoryService) }
     private val storeRepository: StoreRepository by lazy { StoreRepository(storeService) }
@@ -91,4 +92,9 @@ object DependencyProvider {
     fun provideWorkersViewModel(): WorkersViewModel {
         return WorkersViewModel(workerRepository, storeRepository, scheduleRepository)
     }
+
+    fun provideProfileViewModel(): ProfileViewModel {
+        return ProfileViewModel(userRepository)
+    }
+
 }

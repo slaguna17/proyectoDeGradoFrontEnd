@@ -41,4 +41,17 @@ class AppPreferences(context: Context) {
     fun clearUserEmail() {
         sharedPreferences.edit().remove("user_email").apply()
     }
+
+    fun saveUserId(userId: String) {
+        sharedPreferences.edit().putString("user_id", userId).apply()
+    }
+
+    fun getUserId(): String? {
+        return sharedPreferences.getString("user_id", null)
+    }
+
+    fun clearUserId() {
+        sharedPreferences.edit().remove("user_id").apply()
+    }
+
 }

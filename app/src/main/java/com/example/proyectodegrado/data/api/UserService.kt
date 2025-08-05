@@ -18,36 +18,34 @@ import retrofit2.http.PUT
 import retrofit2.http.Path
 
 interface UserService {
-    //Valid auth credentials
     @POST("/api/users/login")
     suspend fun login(@Body request: LoginRequest): Response<LoginResponse>
 
-    //Get all Users, GET
     @GET("/api/users")
-    suspend fun getAllUsers():List<User>
+    suspend fun getAllUsers(): List<User>
 
-    //Get specific User
     @GET("/api/users/{id}")
     suspend fun getUser(@Path("id") userId: Int): User
 
-    //Create new User
     @POST("/api/users/register")
     suspend fun registerUser(@Body request: RegisterRequest): Response<RegisterResponse>
 
-    //Get user roles
     @GET("/api/users/default/roles")
     suspend fun getRoles(): List<Role>
 
-    //Change Password
     @PUT("/api/users/changePassword/{id}")
     suspend fun changePassword(@Path("id") userId: Int): String
 
-    //Forgot Password
     @POST("/api/users/forgotPassword")
     suspend fun forgotPassword(@Body request: ForgotPasswordRequest): Response<ForgotPasswordResponse>
 
-    //Reset Password
     @POST("/api/users/resetPassword")
     suspend fun resetPassword(@Body request: ResetPasswordRequest): Response<ResetPasswordResponse>
 
+    // NUEVO: Update user profile
+    @PUT("/api/users/updateUser/{id}")
+    suspend fun updateUser(
+        @Path("id") userId: Int,
+        @Body fields: Map<String, @JvmSuppressWildcards Any>
+    ): Response<Unit>
 }
