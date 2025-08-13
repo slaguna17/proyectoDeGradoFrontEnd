@@ -18,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -30,14 +31,13 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.proyectodegrado.di.DependencyProvider
 import com.example.proyectodegrado.ui.components.DrawerContent
-import com.example.proyectodegrado.ui.screens.balance.BalanceScreen
 import com.example.proyectodegrado.ui.screens.barcode.BarcodeScreen
+import com.example.proyectodegrado.ui.screens.cash.CashScreen
 import com.example.proyectodegrado.ui.screens.categories.CategoriesScreen
 import com.example.proyectodegrado.ui.screens.forecast.ForecastScreen
 import com.example.proyectodegrado.ui.screens.home.HomeScreen
 import com.example.proyectodegrado.ui.screens.login.LoginScreen
 import com.example.proyectodegrado.ui.screens.products.AllProductsScreen
-import com.example.proyectodegrado.ui.screens.products.ProductViewModel
 import com.example.proyectodegrado.ui.screens.products.ProductsByCategoryScreen
 import com.example.proyectodegrado.ui.screens.profile.ProfileScreen
 import com.example.proyectodegrado.ui.screens.providers.ProvidersScreen
@@ -47,7 +47,6 @@ import com.example.proyectodegrado.ui.screens.settings.SettingsScreen
 import com.example.proyectodegrado.ui.screens.store.StoreScreen
 import com.example.proyectodegrado.ui.screens.workers.CreateWorkerScreen
 import com.example.proyectodegrado.ui.screens.workers.WorkersScreen
-import com.example.proyectodegrado.ui.screens.workers.WorkersViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -89,7 +88,7 @@ fun AppNavigation() {
                         "Empleados" -> "workers"
                         "Horarios" -> "schedule"
                         "Pronósticos" -> "forecast"
-                        "Caja" -> "balance"
+                        "Caja" -> "cash" // ✅ ahora existe el destino simple "cash"
                         "Proveedores" -> "providers"
                         "Código de barras" -> "barcode"
                         "Ajustes" -> "settings"
@@ -157,22 +156,38 @@ fun AppNavigation() {
                         categoryId = categoryId
                     )
                 }
+
                 composable("store") { StoreScreen(navController = navController, viewModel = storeViewModel) }
                 composable("workers") { WorkersScreen(navController = navController, viewModel = workersViewModel) }
                 composable("registerEmployee") { CreateWorkerScreen(navController = navController, viewModel = workersViewModel) }
                 composable("schedule") { ScheduleScreen(navController = navController, viewModel = scheduleViewModel) }
                 composable("forecast") { ForecastScreen(navController = navController) }
-                composable("balance") { BalanceScreen(navController = navController) }
+
+                // ✅ NUEVO: destino simple "cash" (sin args).
+                // Toma userId/storeId de la sesión (o 1/1 si no hay).
+                composable("cash") {
+                    val storeId = DependencyProvider.getCurrentStoreId()
+                    val userId  = DependencyProvider.getCurrentUserId()
+                    CashScreen(storeId = storeId, userId = userId)
+                }
+
+                // (Opcional) Mantén también la variante con argumentos si en algún flujo los pasas explícitos:
+                composable(
+                    route = "cash/{storeId}/{userId}",
+                    arguments = listOf(
+                        navArgument("storeId") { type = NavType.IntType },
+                        navArgument("userId") { type = NavType.IntType }
+                    )
+                ) { backStackEntry ->
+                    val storeId = backStackEntry.arguments!!.getInt("storeId")
+                    val userId = backStackEntry.arguments!!.getInt("userId")
+                    CashScreen(storeId = storeId, userId = userId)
+                }
+
                 composable("providers") { ProvidersScreen(navController = navController, viewModel = providerViewModel) }
                 composable("barcode") { BarcodeScreen(navController = navController) }
                 composable("settings") { SettingsScreen(navController = navController) }
-                composable("profile") {
-                    ProfileScreen(
-                        navController = navController,
-                        viewModel = profileViewModel
-                    )
-                }
-
+                composable("profile") { ProfileScreen(navController = navController, viewModel = profileViewModel) }
             }
         }
     }
