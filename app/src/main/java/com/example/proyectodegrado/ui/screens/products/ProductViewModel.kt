@@ -8,6 +8,7 @@ import com.example.proyectodegrado.data.repository.CategoryRepository
 import com.example.proyectodegrado.data.repository.ImageRepository
 import com.example.proyectodegrado.data.repository.ImageUploadResult
 import com.example.proyectodegrado.data.repository.ProductRepository
+import com.example.proyectodegrado.data.repository.StoreRepository
 import com.example.proyectodegrado.ui.components.UploadImageState
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -17,10 +18,11 @@ import java.io.IOException
 class ProductViewModel(
     private val productRepository: ProductRepository,
     private val categoryRepository: CategoryRepository,
-    private val imageRepository: ImageRepository
+    private val imageRepository: ImageRepository,
+    private val storeRepository: StoreRepository
 ) : ViewModel() {
 
-    // --- STATES ---
+    // --- STATES EXISTENTES ---
     private val _products = MutableStateFlow<List<Product>>(emptyList())
     val products: StateFlow<List<Product>> = _products.asStateFlow()
 
@@ -36,8 +38,16 @@ class ProductViewModel(
     private val _imageUploadUiState = MutableStateFlow<UploadImageState>(UploadImageState.Idle)
     val imageUploadUiState: StateFlow<UploadImageState> = _imageUploadUiState.asStateFlow()
 
+    // --- NUEVO: Tiendas y filtro seleccionado ---
+    private val _stores = MutableStateFlow<List<StoreOption>>(emptyList())
+    val stores: StateFlow<List<StoreOption>> = _stores.asStateFlow()
+
+    private val _selectedStoreId = MutableStateFlow<Int?>(null)
+    val selectedStoreId: StateFlow<Int?> = _selectedStoreId.asStateFlow()
+
     init {
         fetchAvailableCategories()
+        // No forzamos tienda por defecto aquí; se puede setear desde la pantalla según AppPreferences
     }
 
     private fun fetchAvailableCategories() {
@@ -50,10 +60,32 @@ class ProductViewModel(
         }
     }
 
+    // --- NUEVO: cargar lista de tiendas ---
+    fun fetchStores(onError: (String) -> Unit = {}) {
+        viewModelScope.launch {
+            try {
+                val fetched = storeRepository.getAllStores()
+                _stores.value = fetched.map { StoreOption(it.id, it.name) }
+            } catch (e: IOException) { onError("Red (tiendas): ${e.message}") }
+            catch (e: HttpException) { onError("HTTP (tiendas): ${e.message}") }
+            catch (e: Exception) { onError("Error (tiendas): ${e.message}") }
+        }
+    }
+
+    fun setSelectedStore(storeId: Int?) {
+        _selectedStoreId.value = storeId
+    }
+
+    // --- LISTADOS CON FILTRO POR TIENDA ---
     fun fetchAllProducts(onSuccess: () -> Unit = {}, onError: (String) -> Unit = {}) {
         viewModelScope.launch {
             try {
-                _products.value = productRepository.getAllProducts()
+                val storeId = _selectedStoreId.value
+                _products.value = if (storeId == null) {
+                    productRepository.getAllProducts()
+                } else {
+                    productRepository.getProductsByStore(storeId)
+                }
                 onSuccess()
             } catch (e: IOException) { onError("Red: ${e.message}") }
             catch (e: HttpException) { onError("HTTP: ${e.message}") }
@@ -61,10 +93,23 @@ class ProductViewModel(
         }
     }
 
-    fun fetchProductsByCategory(categoryId: Int, onSuccess: () -> Unit = {}, onError: (String) -> Unit = {}) {
+    fun fetchProductsByCategory(
+        categoryId: Int,
+        onSuccess: () -> Unit = {},
+        onError: (String) -> Unit = {}
+    ) {
         viewModelScope.launch {
             try {
-                _productsByCategory.value = productRepository.getProductsByCategory(categoryId)
+                val base = productRepository.getProductsByCategory(categoryId)
+                val storeId = _selectedStoreId.value
+                _productsByCategory.value = if (storeId == null) {
+                    base
+                } else {
+                    // Filtramos localmente por tienda usando la relación stores[].pivot.stock
+                    base.filter { product ->
+                        product.stores?.any { it.id == storeId } == true
+                    }
+                }
                 onSuccess()
             } catch (e: IOException) { onError("Red: ${e.message}") }
             catch (e: HttpException) { onError("HTTP: ${e.message}") }
@@ -155,7 +200,6 @@ class ProductViewModel(
         _createProductFormState.value = newState
     }
 
-    // --- CORRECCIÓN: CAMBIAR DE 'private' A 'public' ---
     fun resetCreateProductFormState() {
         _createProductFormState.value = CreateProductFormState()
         _imageUploadUiState.value = UploadImageState.Idle

@@ -28,6 +28,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -42,26 +43,32 @@ import com.example.proyectodegrado.data.model.Product
 @Composable
 fun ProductItem(
     product: Product,
+    currentStoreId: Int?,
     onEdit: (Product) -> Unit,
     onDelete: (Product) -> Unit
 ) {
+    val stockForCurrentStore = remember(currentStoreId, product) {
+        currentStoreId?.let { sid ->
+            product.stores?.firstOrNull { it.id == sid }?.pivot?.stock
+        }
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp), // Aumentamos el padding para más espacio
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(4.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White) // Fondo blanco como en CategoryItem
+        colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Column {
-            // --- INICIO: SECCIÓN DE IMAGEN (Como en CategoryItem) ---
+            // Imagen / encabezado
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(180.dp)
-                    .background(MaterialTheme.colorScheme.secondaryContainer) // Color de fondo si no hay imagen
+                    .background(MaterialTheme.colorScheme.secondaryContainer)
             ) {
-                // Si hay una URL de imagen, la mostramos
                 if (!product.image.isNullOrBlank()) {
                     AsyncImage(
                         model = product.image,
@@ -70,7 +77,6 @@ fun ProductItem(
                         modifier = Modifier.fillMaxSize()
                     )
                 } else {
-                    // Si no hay imagen, mostramos un ícono de cámara como placeholder
                     Icon(
                         imageVector = Icons.Default.PhotoCamera,
                         contentDescription = "Sin imagen",
@@ -81,7 +87,7 @@ fun ProductItem(
                     )
                 }
 
-                // Pequeña etiqueta para la marca del producto
+                // Etiqueta de marca
                 Surface(
                     modifier = Modifier
                         .padding(12.dp)
@@ -90,22 +96,21 @@ fun ProductItem(
                     color = MaterialTheme.colorScheme.primary.copy(alpha = 0.9f)
                 ) {
                     Text(
-                        text = product.brand, // Mostramos la marca aquí
+                        text = product.brand,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                         color = MaterialTheme.colorScheme.onPrimary,
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
             }
-            // --- FIN: SECCIÓN DE IMAGEN ---
 
-            // --- INICIO: SECCIÓN DE TEXTO Y BOTONES ---
+            // Cuerpo
             Column(
                 modifier = Modifier.padding(16.dp)
             ) {
                 Text(
                     text = product.name,
-                    style = MaterialTheme.typography.headlineSmall, // Estilo más grande para el título
+                    style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
@@ -121,7 +126,60 @@ fun ProductItem(
                     overflow = TextOverflow.Ellipsis,
                     lineHeight = 20.sp
                 )
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(12.dp))
+
+                // --- NUEVO: Stock por tienda actual (si hay selección) ---
+                if (currentStoreId != null) {
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = MaterialTheme.colorScheme.secondaryContainer
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Stock (tienda seleccionada)",
+                                style = MaterialTheme.typography.labelLarge
+                            )
+                            Text(
+                                text = (stockForCurrentStore ?: 0).toString(),
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                    Spacer(Modifier.height(8.dp))
+                } else {
+                    // Si no hay tienda seleccionada, mostramos stock general si existe
+                    product.stock?.let { stk ->
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = MaterialTheme.colorScheme.surfaceVariant
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Stock (general)",
+                                    style = MaterialTheme.typography.labelLarge
+                                )
+                                Text(
+                                    text = stk.toString(),
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                            }
+                        }
+                        Spacer(Modifier.height(8.dp))
+                    }
+                }
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -146,7 +204,6 @@ fun ProductItem(
                     }
                 }
             }
-            // --- FIN: SECCIÓN DE TEXTO Y BOTONES ---
         }
     }
 }

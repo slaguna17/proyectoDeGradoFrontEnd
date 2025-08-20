@@ -50,7 +50,7 @@ fun CategoryItem(
             ) {
                 if (!category.image.isNullOrBlank()) {
                     AsyncImage(
-                        model = category.image,
+                        model = category.imageUrl ?: category.image,
                         contentDescription = category.name,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize()

@@ -142,7 +142,7 @@ fun AppNavigation() {
                 composable("login") { LoginScreen(navController = navController, viewModel = loginViewModel) }
                 composable("register") { RegisterScreen(navController = navController, viewModel = registerViewModel) }
                 composable("home") { HomeScreen() }
-                composable("categories") { CategoriesScreen(navController = navController, viewModel = categoryViewModel) }
+                composable("categories") { CategoriesScreen(navController= navController, viewModel = categoryViewModel) }
                 composable("products") { AllProductsScreen(navController = navController, viewModel = productViewModel) }
 
                 composable(

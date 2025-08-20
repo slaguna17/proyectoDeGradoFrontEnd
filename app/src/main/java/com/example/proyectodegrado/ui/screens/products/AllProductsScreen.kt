@@ -28,6 +28,9 @@ fun AllProductsScreen(
     val createFormState by viewModel.createProductFormState.collectAsStateWithLifecycle()
     val imageUploadState by viewModel.imageUploadUiState.collectAsStateWithLifecycle()
     val availableCategories by viewModel.availableCategories.collectAsStateWithLifecycle()
+    val storeOptions by viewModel.stores.collectAsStateWithLifecycle()
+    val selectedStoreId by viewModel.selectedStoreId.collectAsStateWithLifecycle()
+
     val snackbarHostState = remember { SnackbarHostState() }
 
     var errorMessage by rememberSaveable { mutableStateOf<String?>(null) }
@@ -40,7 +43,7 @@ fun AllProductsScreen(
     var productToInteractWith by remember { mutableStateOf<Product?>(null) }
 
     val context = LocalContext.current
-    val storeId = remember { AppPreferences(context).getStoreId()?.toIntOrNull() }
+    val currentStoreForCrud = remember { AppPreferences(context).getStoreId()?.toIntOrNull() }
 
     val refreshAllProducts: () -> Unit = {
         isRefreshing = true
@@ -58,11 +61,25 @@ fun AllProductsScreen(
         )
     }
 
+    // Cargar tiendas al entrar
     LaunchedEffect(Unit) {
+        viewModel.fetchStores(onError = { msg -> errorMessage = msg })
+    }
+
+    // Usar la tienda de preferencias como preseleccionada si existe
+    LaunchedEffect(currentStoreForCrud) {
+        if (selectedStoreId == null && currentStoreForCrud != null) {
+            viewModel.setSelectedStore(currentStoreForCrud)
+        }
+    }
+
+    // Cargar productos iniciales o cuando cambia la tienda seleccionada
+    LaunchedEffect(selectedStoreId) {
         if (allProducts.isEmpty()) {
             refreshAllProducts()
         } else {
-            isLoadingFirstTime = false
+            // Si ya había datos, solo refrescamos por cambio de tienda
+            refreshAllProducts()
         }
     }
 
@@ -76,7 +93,7 @@ fun AllProductsScreen(
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
-            if (storeId != null) {
+            if (currentStoreForCrud != null) {
                 FloatingActionButton(onClick = {
                     viewModel.resetCreateProductFormState()
                     showCreateDialog = true
@@ -87,16 +104,20 @@ fun AllProductsScreen(
         }
     ) { innerPadding ->
 
-        if (storeId == null) {
-            Text(
-                "Selecciona una tienda para poder gestionar productos.",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier
-                    .padding(innerPadding)
-                    .padding(16.dp)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+        ) {
+
+            // --- NUEVO: Filtro por tienda ---
+            StoreFilterBar(
+                stores = storeOptions,
+                selectedStoreId = selectedStoreId,
+                onStoreSelected = { id ->
+                    viewModel.setSelectedStore(id)
+                }
             )
-        } else {
+
             RefreshableContainer(
                 refreshing = isRefreshing,
                 onRefresh = refreshAllProducts,
@@ -110,6 +131,7 @@ fun AllProductsScreen(
                             items(allProducts, key = { it.id }) { product ->
                                 ProductItem(
                                     product = product,
+                                    currentStoreId = selectedStoreId, // NUEVO: stock por tienda
                                     onEdit = {
                                         productToInteractWith = it
                                         viewModel.prepareFormForEdit(it)
@@ -129,8 +151,6 @@ fun AllProductsScreen(
                 }
             }
         }
-
-
     }
 
     if (showCreateDialog) {
@@ -143,9 +163,9 @@ fun AllProductsScreen(
             onFormStateChange = viewModel::updateCreateProductFormState,
             onImageUriSelected = viewModel::handleProductImageSelection,
             onCreateClick = {
-                if (storeId != null) {
+                if (currentStoreForCrud != null) {
                     viewModel.createProductFromState(
-                        storeId = storeId,
+                        storeId = currentStoreForCrud,
                         onSuccess = {
                             showCreateDialog = false
                             refreshAllProducts()
@@ -164,11 +184,11 @@ fun AllProductsScreen(
             product = productToInteractWith,
             availableCategories = availableCategories,
             onEditClick = { updatedFormState ->
-                if (storeId != null && productToInteractWith != null) {
+                if (currentStoreForCrud != null && productToInteractWith != null) {
                     viewModel.updateProduct(
                         id = productToInteractWith!!.id,
                         updatedFormState = updatedFormState,
-                        storeId = storeId,
+                        storeId = currentStoreForCrud,
                         onSuccess = {
                             showEditDialog = false
                             refreshAllProducts()

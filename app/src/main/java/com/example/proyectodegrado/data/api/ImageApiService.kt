@@ -1,10 +1,8 @@
 package com.example.proyectodegrado.data.api
 
-// Importa tus clases DTO (Data Transfer Object) aquí
-import com.example.proyectodegrado.data.model.ConfirmUploadRequest
-import com.example.proyectodegrado.data.model.ConfirmUploadResponse
-import com.example.proyectodegrado.data.model.PresignedUrlRequest
-import com.example.proyectodegrado.data.model.PresignedUrlResponse
+import com.example.proyectodegrado.data.model.ImageUrlResponse
+import com.example.proyectodegrado.data.model.PresignPutRequest
+import com.example.proyectodegrado.data.model.PresignPutResponse
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import retrofit2.Response
@@ -12,21 +10,22 @@ import retrofit2.http.*
 
 interface ImageApiService {
 
-    @POST("api/images/presigned-url") // Endpoint para obtener URL prefirmada
-    suspend fun getPresignedUrl(
-        @Body request: PresignedUrlRequest // <-- Espera UN objeto
-    ): Response<PresignedUrlResponse>
+    // Presign PUT (backend: /api/images/presign/put)
+    @POST("/api/images/presign/put")
+    suspend fun presignPut(@Body request: PresignPutRequest): Response<PresignPutResponse>
 
-    @PUT // Método PUT para subir a S3
+    // Upload a S3 (PUT a la URL de presign)
+    @PUT
     suspend fun uploadImageToS3(
-        @Url uploadUrl: String, // URL dinámica de S3
-        @Header("Content-Type") contentType: String, // Cabecera Content-Type es crucial
-        @Body imageBytes: RequestBody // Cuerpo de la solicitud con los bytes
-    ): Response<ResponseBody> // La respuesta de S3 suele ser vacía en éxito (200 OK)
+        @Url uploadUrl: String,
+        @Header("Content-Type") contentType: String,
+        @Body imageBytes: RequestBody
+    ): Response<ResponseBody>
 
-    @POST("api/images/confirm-upload") // Endpoint para confirmar subida
-    suspend fun confirmImageUpload(
-        @Body request: ConfirmUploadRequest
-        // @Header("Authorization") token: String? = null // Añadir si usas Auth
-    ): Response<ConfirmUploadResponse>
+    // (Opcional) Convertir key -> URL firmada (si necesitas desde app)
+    @GET("/api/images/url")
+    suspend fun getImageUrl(
+        @Query("key") key: String,
+        @Query("signed") signed: Boolean = true
+    ): Response<ImageUrlResponse>
 }

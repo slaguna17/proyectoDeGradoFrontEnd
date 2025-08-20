@@ -3,113 +3,99 @@ package com.example.proyectodegrado.data.repository
 
 import android.content.Context
 import android.net.Uri
+import android.provider.OpenableColumns
 import android.util.Log
 import com.example.proyectodegrado.data.api.ImageApiService
-// Importa tus DTOs y la clase sellada de resultado
-import com.example.proyectodegrado.data.model.ConfirmUploadRequest
-import com.example.proyectodegrado.data.model.PresignedUrlRequest
+import com.example.proyectodegrado.data.model.PresignPutRequest
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.InputStream
 
-// Clase sellada para manejar resultados
 sealed class ImageUploadResult {
-    data class Success(val accessUrl: String) : ImageUploadResult()
+    data class Success(val imageKey: String, val readUrl: String?) : ImageUploadResult()
     data class Error(val message: String, val cause: Throwable? = null) : ImageUploadResult()
 }
 
 class ImageRepository(
     private val apiService: ImageApiService,
-    private val context: Context // Necesario para ContentResolver
+    private val context: Context
 ) {
+    private val tag = "ImageRepository"
 
-    private val tag = "ImageRepository" // Para logs
+    private fun guessFileName(uri: Uri, fallback: String = "image.jpg"): String {
+        return try {
+            context.contentResolver.query(uri, null, null, null, null)?.use { c ->
+                val nameIdx = c.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                if (c.moveToFirst() && nameIdx >= 0) c.getString(nameIdx) else fallback
+            } ?: fallback
+        } catch (_: Exception) { fallback }
+    }
 
-    suspend fun getPresignedUrlAndUpload(
+    private fun buildFolder(entityType: String, entityId: Int) =
+        "${entityType.lowercase()}/${entityId}"
+
+    suspend fun uploadWithPresignPut(
         imageUri: Uri,
-        entityType: String,
-        entityId: Int // O el tipo de ID que uses (Long, String)
-    ): ImageUploadResult {
-
-        // 1. Obtener ContentType y InputStream del Uri
+        entityType: String, // "categories" | "products" | "users" | "stores"
+        entityId: Int
+    ): ImageUploadResult = withContext(Dispatchers.IO) {
         val contentType = context.contentResolver.getType(imageUri)
         if (contentType == null || !contentType.startsWith("image/")) {
-            Log.e(tag, "Tipo de archivo no válido o desconocido: $contentType para $imageUri")
-            return ImageUploadResult.Error("Tipo de archivo no válido ($contentType). Selecciona una imagen.")
+            return@withContext ImageUploadResult.Error("Invalid or unknown content type: $contentType")
         }
 
         var inputStream: InputStream? = null
         try {
             inputStream = context.contentResolver.openInputStream(imageUri)
-            if (inputStream == null) {
-                Log.e(tag, "No se pudo abrir InputStream para el URI: $imageUri")
-                return ImageUploadResult.Error("No se pudo leer el archivo seleccionado.")
+            if (inputStream == null) return@withContext ImageUploadResult.Error("Cannot read selected file.")
+
+            val fileName = guessFileName(imageUri)
+            val folder = buildFolder(entityType, entityId)
+
+            // 1) Presign PUT
+            val presignResp = apiService.presignPut(
+                PresignPutRequest(folder = folder, fileName = fileName, contentType = contentType)
+            )
+            if (!presignResp.isSuccessful || presignResp.body() == null) {
+                val code = presignResp.code()
+                val body = presignResp.errorBody()?.string()
+                Log.e(tag, "Presign error: $code - $body")
+                return@withContext ImageUploadResult.Error("Server error getting presigned URL ($code)")
             }
+            val presign = presignResp.body()!!
 
-            // 2. Solicitar URL prefirmada al backend
-            Log.d(tag, "Solicitando Presigned URL para contentType: $contentType, entityType: $entityType")
-            val presignedUrlRequest = PresignedUrlRequest(contentType, entityType)
-            val presignedResponse = apiService.getPresignedUrl(presignedUrlRequest)
+            // 2) Upload to S3 (PUT)
+            val bytes = inputStream.readBytes()
+            val rb = bytes.toRequestBody(contentType.toMediaTypeOrNull())
 
-            if (!presignedResponse.isSuccessful || presignedResponse.body() == null) {
-                val errorBody = presignedResponse.errorBody()?.string() ?: "Error desconocido"
-                Log.e(tag, "Error al obtener Presigned URL: ${presignedResponse.code()} - $errorBody")
-                return ImageUploadResult.Error("Error del servidor al obtener URL: ${presignedResponse.code()}")
-            }
-
-            val presignedData = presignedResponse.body()!!
-            Log.d(tag, "Presigned URL obtenida.")
-
-            // 3. Preparar RequestBody y subir a S3
-            val imageBytes = inputStream.readBytes()
-            val requestBody = imageBytes.toRequestBody(contentType.toMediaTypeOrNull())
-
-            Log.d(tag, "Subiendo imagen a S3 (${imageBytes.size / 1024} KB)...")
-            val uploadResponse = apiService.uploadImageToS3(
-                uploadUrl = presignedData.uploadUrl,
+            val upload = apiService.uploadImageToS3(
+                uploadUrl = presign.url,
                 contentType = contentType,
-                imageBytes = requestBody
+                imageBytes = rb
             )
-
-            if (!uploadResponse.isSuccessful) {
-                val errorBody = uploadResponse.errorBody()?.string() ?: "Error desconocido S3"
-                Log.e(tag, "Error al subir a S3: ${uploadResponse.code()} - $errorBody")
-                return ImageUploadResult.Error("Error al subir imagen (${uploadResponse.code()})")
+            if (!upload.isSuccessful) {
+                val code = upload.code()
+                val body = upload.errorBody()?.string()
+                Log.e(tag, "S3 upload error: $code - $body")
+                return@withContext ImageUploadResult.Error("S3 upload failed ($code)")
             }
 
-            Log.d(tag, "Subida a S3 exitosa!")
-
-            // 4. Confirmar subida al backend
-            Log.d(tag, "Confirmando subida al backend (Key: ${presignedData.imageKey})...")
-            val confirmRequest = ConfirmUploadRequest(
-                entityId = entityId,
-                entityType = entityType,
-                imageUrl = presignedData.accessUrl, // La URL pública final
-                imageKey = presignedData.imageKey
-            )
-            val confirmResponse = apiService.confirmImageUpload(confirmRequest)
-
-            if (!confirmResponse.isSuccessful || confirmResponse.body() == null) {
-                val errorBody = confirmResponse.errorBody()?.string() ?: "Error desconocido confirmación"
-                Log.e(tag, "Error al confirmar subida: ${confirmResponse.code()} - $errorBody")
-                // Considera intentar borrar de S3 aquí si la confirmación falla
-                // imageService.deleteImageFromS3(presignedData.imageKey) -> Necesitarías una función y endpoint para esto
-                return ImageUploadResult.Error("Error al confirmar en servidor (${confirmResponse.code()})")
-            }
-
-            Log.d(tag, "Confirmación exitosa. URL final: ${presignedData.accessUrl}")
-            return ImageUploadResult.Success(presignedData.accessUrl)
+            // 3) Listo: devolvemos la KEY (para guardar en BD)
+            //    y (opcional) pedimos URL firmada si quisieras mostrar de inmediato.
+            //    OJO: tu backend ya devuelve image_url en GET ?signed=true, así que esto es opcional.
+            return@withContext ImageUploadResult.Success(imageKey = presign.key, readUrl = null)
 
         } catch (e: Exception) {
-            Log.e(tag, "Excepción durante el proceso de subida: ${e.message}", e)
-            return ImageUploadResult.Error("Error durante la subida: ${e.message ?: "Desconocido"}", e)
+            Log.e(tag, "Upload exception: ${e.message}", e)
+            return@withContext ImageUploadResult.Error("Upload error: ${e.message}", e)
         } finally {
-            // Asegúrate de cerrar el InputStream
-            try {
-                inputStream?.close()
-            } catch (ioe: Exception) {
-                Log.e(tag, "Error al cerrar InputStream: ${ioe.message}")
-            }
+            try { inputStream?.close() } catch (_: Exception) {}
         }
+    }
+
+    suspend fun getSignedUrl(key: String): String? {
+        return apiService.getImageUrl(key = key, signed = true).body()?.url
     }
 }

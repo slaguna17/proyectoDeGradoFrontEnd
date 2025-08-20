@@ -86,7 +86,7 @@ object DependencyProvider {
         RegisterViewModel(userRepository, imageRepository)
 
     fun provideProductViewModel(): ProductViewModel =
-        ProductViewModel(productRepository, categoryRepository, imageRepository)
+        ProductViewModel(productRepository, categoryRepository, imageRepository, storeRepository)
 
     fun provideCategoryViewModel(): CategoryViewModel =
         CategoryViewModel(categoryRepository, imageRepository)

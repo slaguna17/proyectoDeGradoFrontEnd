@@ -1,6 +1,8 @@
 package com.example.proyectodegrado.ui.screens.products
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -24,6 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.example.proyectodegrado.data.model.CreateProductFormState
@@ -41,6 +44,10 @@ fun ProductsByCategoryScreen(
     val createFormState by viewModel.createProductFormState.collectAsStateWithLifecycle()
     val imageUploadState by viewModel.imageUploadUiState.collectAsStateWithLifecycle()
     val availableCategories by viewModel.availableCategories.collectAsStateWithLifecycle()
+
+    val storeOptions by viewModel.stores.collectAsStateWithLifecycle()
+    val selectedStoreId by viewModel.selectedStoreId.collectAsStateWithLifecycle()
+
     val snackbarHostState = remember { SnackbarHostState() }
 
     var errorMessage by rememberSaveable { mutableStateOf<String?>(null) }
@@ -53,7 +60,7 @@ fun ProductsByCategoryScreen(
     var productToInteractWith by remember { mutableStateOf<Product?>(null) }
 
     val context = LocalContext.current
-    val storeId = remember { AppPreferences(context).getStoreId()?.toIntOrNull() }
+    val currentStoreForCrud = remember { AppPreferences(context).getStoreId()?.toIntOrNull() }
 
     val refreshProducts: () -> Unit = {
         isRefreshing = true
@@ -72,7 +79,18 @@ fun ProductsByCategoryScreen(
         )
     }
 
-    LaunchedEffect(categoryId) {
+    // Cargar tiendas (si no están) y usar la de preferencias como preselección
+    LaunchedEffect(Unit) {
+        viewModel.fetchStores(onError = { msg -> errorMessage = msg })
+    }
+    LaunchedEffect(currentStoreForCrud) {
+        if (selectedStoreId == null && currentStoreForCrud != null) {
+            viewModel.setSelectedStore(currentStoreForCrud)
+        }
+    }
+
+    // Cargar productos cuando cambia categoría o tienda
+    LaunchedEffect(categoryId, selectedStoreId) {
         refreshProducts()
     }
 
@@ -86,7 +104,7 @@ fun ProductsByCategoryScreen(
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
-            if (storeId != null) {
+            if (currentStoreForCrud != null) {
                 FloatingActionButton(onClick = {
                     viewModel.updateCreateProductFormState(CreateProductFormState(categoryId = categoryId))
                     showCreateDialog = true
@@ -96,36 +114,50 @@ fun ProductsByCategoryScreen(
             }
         }
     ) { innerPadding ->
-        RefreshableContainer(
-            refreshing = isRefreshing,
-            onRefresh = refreshProducts,
+
+        Column(
             modifier = Modifier
                 .fillMaxSize()
         ) {
-            when {
-                isLoadingFirstTime -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
-                productsByCategory.isNotEmpty() -> {
-                    LazyColumn {
-                        items(productsByCategory, key = { it.id }) { product ->
-                            ProductItem(
-                                product = product,
-                                onEdit = {
-                                    productToInteractWith = it
-                                    viewModel.prepareFormForEdit(it)
-                                    showEditDialog = true
-                                },
-                                onDelete = {
-                                    productToInteractWith = it
-                                    showDeleteDialog = true
-                                }
-                            )
+            // --- NUEVO: Filtro por tienda ---
+            StoreFilterBar(
+                stores = storeOptions,
+                selectedStoreId = selectedStoreId,
+                onStoreSelected = { id -> viewModel.setSelectedStore(id) }
+            )
+
+            RefreshableContainer(
+                refreshing = isRefreshing,
+                onRefresh = refreshProducts,
+                modifier = Modifier
+                    .fillMaxSize()
+            ) {
+                when {
+                    isLoadingFirstTime -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                    productsByCategory.isNotEmpty() -> {
+                        LazyColumn(contentPadding = PaddingValues(vertical = 8.dp)) {
+                            items(productsByCategory, key = { it.id }) { product ->
+                                ProductItem(
+                                    product = product,
+                                    currentStoreId = selectedStoreId, // NUEVO: stock por tienda
+                                    onEdit = {
+                                        productToInteractWith = it
+                                        viewModel.prepareFormForEdit(it)
+                                        showEditDialog = true
+                                    },
+                                    onDelete = {
+                                        productToInteractWith = it
+                                        showDeleteDialog = true
+                                    }
+                                )
+                            }
                         }
                     }
-                }
-                else -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("No hay productos en esta categoría.", color = MaterialTheme.colorScheme.onBackground)
+                    else -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text("No hay productos en esta categoría.", color = MaterialTheme.colorScheme.onBackground)
+                    }
                 }
             }
         }
@@ -141,9 +173,9 @@ fun ProductsByCategoryScreen(
             onFormStateChange = viewModel::updateCreateProductFormState,
             onImageUriSelected = viewModel::handleProductImageSelection,
             onCreateClick = {
-                if (storeId != null) {
+                if (currentStoreForCrud != null) {
                     viewModel.createProductFromState(
-                        storeId = storeId,
+                        storeId = currentStoreForCrud,
                         onSuccess = {
                             showCreateDialog = false
                             refreshProducts()
@@ -162,11 +194,11 @@ fun ProductsByCategoryScreen(
             product = productToInteractWith,
             availableCategories = availableCategories,
             onEditClick = { updatedFormState ->
-                if (storeId != null && productToInteractWith != null) {
+                if (currentStoreForCrud != null && productToInteractWith != null) {
                     viewModel.updateProduct(
                         id = productToInteractWith!!.id,
                         updatedFormState = updatedFormState,
-                        storeId = storeId,
+                        storeId = currentStoreForCrud,
                         onSuccess = {
                             showEditDialog = false
                             refreshProducts()
