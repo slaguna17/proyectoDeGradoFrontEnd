@@ -24,7 +24,11 @@ fun StoreScreen(
     navController: NavController,
     viewModel: StoreViewModel
 ) {
-    val stores by viewModel.stores.collectAsStateWithLifecycle()
+    val stores            by viewModel.stores.collectAsStateWithLifecycle()
+    val imageUploadState  by viewModel.imageUploadUiState.collectAsStateWithLifecycle()
+    val createLogoKey     by viewModel.createLogoKey.collectAsStateWithLifecycle()
+    val editLogoKey       by viewModel.editLogoKey.collectAsStateWithLifecycle()
+
     val context = androidx.compose.ui.platform.LocalContext.current
     val preferences = remember { AppPreferences(context) }
     var errorMessage by rememberSaveable { mutableStateOf<String?>(null) }
@@ -40,7 +44,7 @@ fun StoreScreen(
     var formName by remember { mutableStateOf("") }
     var formAddress by remember { mutableStateOf("") }
     var formCity by remember { mutableStateOf("") }
-    var formLogo by remember { mutableStateOf("") }
+    var formLogo by remember { mutableStateOf("") } // preview de URL externa (opcional)
     var formHistory by remember { mutableStateOf("") }
     var formPhone by remember { mutableStateOf("") }
 
@@ -48,7 +52,7 @@ fun StoreScreen(
     var editName by remember { mutableStateOf("") }
     var editAddress by remember { mutableStateOf("") }
     var editCity by remember { mutableStateOf("") }
-    var editLogo by remember { mutableStateOf("") }
+    var editLogo by remember { mutableStateOf("") } // preview de URL externa actual
     var editHistory by remember { mutableStateOf("") }
     var editPhone by remember { mutableStateOf("") }
 
@@ -63,55 +67,36 @@ fun StoreScreen(
         )
     }
 
-    LaunchedEffect(Unit) {
-        refreshStores()
-    }
-
+    LaunchedEffect(Unit) { refreshStores() }
     LaunchedEffect(errorMessage) {
-        errorMessage?.let {
-            snackbarHostState.showSnackbar(it)
-            errorMessage = null
-        }
+        errorMessage?.let { snackbarHostState.showSnackbar(it); errorMessage = null }
     }
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             FloatingActionButton(onClick = {
-                formName = ""
-                formAddress = ""
-                formCity = ""
-                formLogo = ""
-                formHistory = ""
-                formPhone = ""
+                formName = ""; formAddress = ""; formCity = ""
+                formLogo = ""; formHistory = ""; formPhone = ""
+                viewModel.clearCreateLogoKey()
                 showCreateDialog = true
-            }) {
-                Icon(Icons.Default.Add, contentDescription = "Nueva Tienda")
-            }
+            }) { Icon(Icons.Default.Add, contentDescription = "Nueva Tienda") }
         }
     ) { innerPadding ->
         RefreshableContainer(
             refreshing = isRefreshing,
             onRefresh = { refreshStores() },
-            modifier = Modifier
-                .fillMaxSize()
+            modifier = Modifier.fillMaxSize().padding(innerPadding)
         ) {
             if (stores.isEmpty()) {
-                Box(
-                    Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = errorMessage ?: "Cargando tiendas...",
-                        color = if (errorMessage != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onBackground
-                    )
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(text = errorMessage ?: "Cargando tiendas...",
+                        color = if (errorMessage != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onBackground)
                 }
             } else {
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(12.dp)
+                    modifier = Modifier.fillMaxSize().padding(12.dp)
                 ) {
                     items(stores) { store ->
                         StoreItem(
@@ -126,9 +111,10 @@ fun StoreScreen(
                                 editName = it.name
                                 editAddress = it.address
                                 editCity = it.city
-                                editLogo = it.logo
+                                editLogo = it.logoUrl ?: it.logo ?: "" // preview actual
                                 editHistory = it.history
                                 editPhone = it.phone
+                                viewModel.clearEditLogoKey()
                                 showEditDialog = true
                             },
                             onDelete = {
@@ -145,22 +131,27 @@ fun StoreScreen(
     if (showCreateDialog) {
         CreateStoreDialog(
             show = true,
-            name = formName,
-            onNameChange = { formName = it },
-            address = formAddress,
-            onAddressChange = { formAddress = it },
-            city = formCity,
-            onCityChange = { formCity = it },
-            logo = formLogo,
-            onLogoChange = { formLogo = it },
-            history = formHistory,
-            onHistoryChange = { formHistory = it },
-            phone = formPhone,
-            onPhoneChange = { formPhone = it },
+            name = formName, onNameChange = { formName = it },
+            address = formAddress, onAddressChange = { formAddress = it },
+            city = formCity, onCityChange = { formCity = it },
+            logo = formLogo, onLogoChange = { formLogo = it },
+            history = formHistory, onHistoryChange = { formHistory = it },
+            phone = formPhone, onPhoneChange = { formPhone = it },
+            uploadState = imageUploadState,
+            onPickLogo = { uri -> viewModel.handleStoreLogoSelection(uri) },
             onDismiss = { showCreateDialog = false },
             onSubmit = {
+                // Enviamos logo_key si existe; si no, logo (URL externa)
                 viewModel.createStore(
-                    StoreRequest(formName, formAddress, formCity, formLogo, formHistory, formPhone),
+                    StoreRequest(
+                        name = formName,
+                        address = formAddress,
+                        city = formCity,
+                        logoKey = createLogoKey,   // <- KEY S3 si subiste imagen
+                        logo = formLogo.ifBlank { null }, // <- URL externa opcional
+                        history = formHistory,
+                        phone = formPhone
+                    ),
                     onSuccess = { refreshStores() },
                     onError = { errorMessage = it }
                 )
@@ -172,23 +163,27 @@ fun StoreScreen(
     if (showEditDialog && storeToEdit != null) {
         EditStoreDialog(
             show = true,
-            name = editName,
-            onNameChange = { editName = it },
-            address = editAddress,
-            onAddressChange = { editAddress = it },
-            city = editCity,
-            onCityChange = { editCity = it },
-            logo = editLogo,
-            onLogoChange = { editLogo = it },
-            history = editHistory,
-            onHistoryChange = { editHistory = it },
-            phone = editPhone,
-            onPhoneChange = { editPhone = it },
+            name = editName, onNameChange = { editName = it },
+            address = editAddress, onAddressChange = { editAddress = it },
+            city = editCity, onCityChange = { editCity = it },
+            logo = editLogo, onLogoChange = { editLogo = it },
+            history = editHistory, onHistoryChange = { editHistory = it },
+            phone = editPhone, onPhoneChange = { editPhone = it },
+            uploadState = imageUploadState,
+            onPickLogo = { uri -> viewModel.selectLogoForEdit(storeToEdit!!.id, uri) },
             onDismiss = { showEditDialog = false },
             onSubmit = {
                 viewModel.updateStore(
                     id = storeToEdit!!.id,
-                    StoreRequest(editName, editAddress, editCity, editLogo, editHistory, editPhone),
+                    request = StoreRequest(
+                        name = editName,
+                        address = editAddress,
+                        city = editCity,
+                        logoKey = editLogoKey,            // <- KEY S3 si se cambió
+                        logo = editLogo.ifBlank { null }, // <- URL externa opcional
+                        history = editHistory,
+                        phone = editPhone
+                    ),
                     onSuccess = { refreshStores() },
                     onError = { errorMessage = it }
                 )
@@ -213,4 +208,3 @@ fun StoreScreen(
         )
     }
 }
-

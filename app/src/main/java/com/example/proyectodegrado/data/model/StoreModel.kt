@@ -7,20 +7,22 @@ data class Store(
     val name: String,
     val address: String,
     val city: String,
-    val logo: String,
+    val logo: String?,
+    @SerializedName("logo_url")
+    val logoUrl: String?,
     val history: String,
     val phone: String
-    // val socials: List<String>
 )
 
 data class StoreRequest(
     val name: String,
     val address: String,
     val city: String,
-    val logo: String,
+    @SerializedName("logo_key")
+    val logoKey: String? = null,
+    val logo: String? = null,
     val history: String,
     val phone: String
-    // val socials: List<String>
 )
 
 data class StoreResponse(

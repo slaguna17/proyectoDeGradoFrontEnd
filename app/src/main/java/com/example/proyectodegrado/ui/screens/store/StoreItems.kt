@@ -51,7 +51,7 @@ fun StoreItem(
             ) {
                 if (!store.logo.isNullOrBlank()) {
                     AsyncImage(
-                        model = store.logo,
+                        model = store.logoUrl ?: store.logo,
                         contentDescription = store.name,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize()
@@ -67,7 +67,6 @@ fun StoreItem(
                         tint = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.5f)
                     )
                 }
-                // --- FIN: LÓGICA DEL PLACEHOLDER ---
 
                 // Badge de ciudad arriba a la derecha
                 if (store.city.isNotBlank()) {

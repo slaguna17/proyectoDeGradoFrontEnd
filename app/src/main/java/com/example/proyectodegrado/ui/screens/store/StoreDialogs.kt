@@ -1,11 +1,15 @@
 package com.example.proyectodegrado.ui.screens.store
 
+import android.net.Uri
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.example.proyectodegrado.ui.components.UploadImage
+import com.example.proyectodegrado.ui.components.UploadImageState
 
 @Composable
 private fun StoreDialogContent(
@@ -22,6 +26,8 @@ private fun StoreDialogContent(
     onHistoryChange: (String) -> Unit,
     phone: String,
     onPhoneChange: (String) -> Unit,
+    uploadState: UploadImageState,
+    onPickLogo: (Uri?) -> Unit,
     onDismiss: () -> Unit,
     onSubmit: () -> Unit,
     submitLabel: String
@@ -35,6 +41,20 @@ private fun StoreDialogContent(
     ) {
         Text(title, style = MaterialTheme.typography.titleLarge)
         Spacer(Modifier.height(16.dp))
+
+        // Selector de imagen (S3)
+        UploadImage(
+            modifier = Modifier.align(Alignment.CenterHorizontally),
+            currentImageUrl = if (logo.isBlank()) null else logo,
+            uploadState = uploadState,
+            onImageSelected = onPickLogo
+        )
+        if (uploadState is UploadImageState.Error) {
+            Spacer(Modifier.height(8.dp))
+            Text("Error de imagen: ${uploadState.message}", color = MaterialTheme.colorScheme.error)
+        }
+
+        Spacer(Modifier.height(12.dp))
         OutlinedTextField(
             value = name,
             onValueChange = {
@@ -53,60 +73,38 @@ private fun StoreDialogContent(
             )
         }
         Spacer(Modifier.height(8.dp))
-        OutlinedTextField(
-            value = address,
-            onValueChange = onAddressChange,
-            label = { Text("Dirección") },
-            modifier = Modifier.fillMaxWidth()
-        )
+        OutlinedTextField(value = address, onValueChange = onAddressChange, label = { Text("Dirección") }, modifier = Modifier.fillMaxWidth())
         Spacer(Modifier.height(8.dp))
-        OutlinedTextField(
-            value = city,
-            onValueChange = onCityChange,
-            label = { Text("Ciudad") },
-            modifier = Modifier.fillMaxWidth()
-        )
+        OutlinedTextField(value = city, onValueChange = onCityChange, label = { Text("Ciudad") }, modifier = Modifier.fillMaxWidth())
         Spacer(Modifier.height(8.dp))
+
+        // Campo opcional para URL externa (si no usas S3)
         OutlinedTextField(
             value = logo,
             onValueChange = onLogoChange,
-            label = { Text("URL Logo") },
+            label = { Text("Logo (URL opcional)") },
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(Modifier.height(8.dp))
-        OutlinedTextField(
-            value = history,
-            onValueChange = onHistoryChange,
-            label = { Text("Historia") },
-            modifier = Modifier.fillMaxWidth()
-        )
+        OutlinedTextField(value = history, onValueChange = onHistoryChange, label = { Text("Historia") }, modifier = Modifier.fillMaxWidth())
         Spacer(Modifier.height(8.dp))
-        OutlinedTextField(
-            value = phone,
-            onValueChange = onPhoneChange,
-            label = { Text("Teléfono") },
-            modifier = Modifier.fillMaxWidth()
-        )
+        OutlinedTextField(value = phone, onValueChange = onPhoneChange, label = { Text("Teléfono") }, modifier = Modifier.fillMaxWidth())
         Spacer(Modifier.height(16.dp))
 
-        Row(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End
-        ) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
             TextButton(onClick = onDismiss) { Text("Cancelar") }
             Spacer(Modifier.width(8.dp))
-            Button(onClick = {
-                if (name.isBlank()) {
-                    showError = true
-                } else {
-                    onSubmit()
+            Button(
+                enabled = uploadState is UploadImageState.Idle,
+                onClick = {
+                    if (name.isBlank()) { showError = true } else onSubmit()
                 }
-            }) { Text(submitLabel) }
+            ) { Text(submitLabel) }
         }
     }
 }
 
-// --- Diálogo para CREAR ---
+// --- CREAR ---
 @Composable
 fun CreateStoreDialog(
     show: Boolean,
@@ -122,6 +120,8 @@ fun CreateStoreDialog(
     onHistoryChange: (String) -> Unit,
     phone: String,
     onPhoneChange: (String) -> Unit,
+    uploadState: UploadImageState,
+    onPickLogo: (Uri?) -> Unit,
     onDismiss: () -> Unit,
     onSubmit: () -> Unit
 ) {
@@ -130,27 +130,20 @@ fun CreateStoreDialog(
         Surface(shape = MaterialTheme.shapes.medium) {
             StoreDialogContent(
                 title = "Crear Tienda",
-                name = name,
-                onNameChange = onNameChange,
-                address = address,
-                onAddressChange = onAddressChange,
-                city = city,
-                onCityChange = onCityChange,
-                logo = logo,
-                onLogoChange = onLogoChange,
-                history = history,
-                onHistoryChange = onHistoryChange,
-                phone = phone,
-                onPhoneChange = onPhoneChange,
-                onDismiss = onDismiss,
-                onSubmit = onSubmit,
-                submitLabel = "Crear"
+                name = name, onNameChange = onNameChange,
+                address = address, onAddressChange = onAddressChange,
+                city = city, onCityChange = onCityChange,
+                logo = logo, onLogoChange = onLogoChange,
+                history = history, onHistoryChange = onHistoryChange,
+                phone = phone, onPhoneChange = onPhoneChange,
+                uploadState = uploadState, onPickLogo = onPickLogo,
+                onDismiss = onDismiss, onSubmit = onSubmit, submitLabel = "Crear"
             )
         }
     }
 }
 
-// --- Diálogo para EDITAR ---
+// --- EDITAR ---
 @Composable
 fun EditStoreDialog(
     show: Boolean,
@@ -166,6 +159,8 @@ fun EditStoreDialog(
     onHistoryChange: (String) -> Unit,
     phone: String,
     onPhoneChange: (String) -> Unit,
+    uploadState: UploadImageState,
+    onPickLogo: (Uri?) -> Unit,
     onDismiss: () -> Unit,
     onSubmit: () -> Unit
 ) {
@@ -174,27 +169,20 @@ fun EditStoreDialog(
         Surface(shape = MaterialTheme.shapes.medium) {
             StoreDialogContent(
                 title = "Editar Tienda",
-                name = name,
-                onNameChange = onNameChange,
-                address = address,
-                onAddressChange = onAddressChange,
-                city = city,
-                onCityChange = onCityChange,
-                logo = logo,
-                onLogoChange = onLogoChange,
-                history = history,
-                onHistoryChange = onHistoryChange,
-                phone = phone,
-                onPhoneChange = onPhoneChange,
-                onDismiss = onDismiss,
-                onSubmit = onSubmit,
-                submitLabel = "Guardar"
+                name = name, onNameChange = onNameChange,
+                address = address, onAddressChange = onAddressChange,
+                city = city, onCityChange = onCityChange,
+                logo = logo, onLogoChange = onLogoChange,
+                history = history, onHistoryChange = onHistoryChange,
+                phone = phone, onPhoneChange = onPhoneChange,
+                uploadState = uploadState, onPickLogo = onPickLogo,
+                onDismiss = onDismiss, onSubmit = onSubmit, submitLabel = "Guardar"
             )
         }
     }
 }
 
-// --- Diálogo para ELIMINAR ---
+// --- ELIMINAR ---
 @Composable
 fun DeleteStoreDialog(
     show: Boolean,
@@ -203,15 +191,20 @@ fun DeleteStoreDialog(
     onConfirm: () -> Unit
 ) {
     if (!show) return
+
     Dialog(onDismissRequest = onDismiss) {
         Surface(shape = MaterialTheme.shapes.medium) {
-            Column(Modifier.padding(20.dp)) {
-                Text(message, style = MaterialTheme.typography.bodyLarge)
-                Spacer(Modifier.height(20.dp))
-                Row(
-                    horizontalArrangement = Arrangement.End,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
+            Column(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .widthIn(min = 320.dp, max = 400.dp)
+            ) {
+                Text("Eliminar Tienda", style = MaterialTheme.typography.titleLarge)
+                Spacer(Modifier.height(8.dp))
+                Text(message, style = MaterialTheme.typography.bodyMedium)
+                Spacer(Modifier.height(16.dp))
+
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                     TextButton(onClick = onDismiss) { Text("Cancelar") }
                     Spacer(Modifier.width(8.dp))
                     Button(
@@ -220,11 +213,10 @@ fun DeleteStoreDialog(
                             containerColor = MaterialTheme.colorScheme.error,
                             contentColor = MaterialTheme.colorScheme.onError
                         )
-                    ) {
-                        Text("Eliminar")
-                    }
+                    ) { Text("Eliminar") }
                 }
             }
         }
     }
 }
+
