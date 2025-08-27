@@ -3,32 +3,20 @@ package com.example.proyectodegrado.data.model
 import com.google.gson.annotations.SerializedName
 
 data class Product(
-    @SerializedName("id")
-    val id: Int,
-    @SerializedName("SKU")
-    val sku: String?,
-    @SerializedName("name")
-    val name: String,
-    @SerializedName("description")
-    val description: String,
-    @SerializedName("image")
-    val image: String?,
-    @SerializedName("brand")
-    val brand: String,
-    @SerializedName("category_id")
-    val categoryId: Int,
-    @SerializedName("created_at")
-    val createdAt: String?,
-    @SerializedName("updated_at")
-    val updatedAt: String?,
-    @SerializedName("stock")
-    val stock: Int?,
-    @SerializedName("expiration_date")
-    val expirationDate: String?,
-    @SerializedName("stores")
-    val stores: List<StoreInfoFromProduct>?,
-    @SerializedName("providers")
-    val providers: List<ProviderInfoFromProduct>?
+    @SerializedName("id") val id: Int,
+    @SerializedName("SKU") val sku: String?,
+    @SerializedName("name") val name: String,
+    @SerializedName("description") val description: String,
+    @SerializedName("image") val image: String?,
+    @SerializedName("image_url") val imageUrl: String?,
+    @SerializedName("brand") val brand: String,
+    @SerializedName("category_id") val categoryId: Int,
+    @SerializedName("created_at") val createdAt: String?,
+    @SerializedName("updated_at") val updatedAt: String?,
+    @SerializedName("stock") val stock: Int?,
+    @SerializedName("expiration_date") val expirationDate: String?,
+    @SerializedName("stores") val stores: List<StoreInfoFromProduct>?,
+    @SerializedName("providers") val providers: List<ProviderInfoFromProduct>?
 )
 
 data class StoreInfoFromProduct(
@@ -48,24 +36,16 @@ data class ProviderInfoFromProduct(
 )
 
 data class ProductRequest(
-    @SerializedName("SKU")
-    val sku: String,
-    @SerializedName("name")
-    val name: String,
-    @SerializedName("description")
-    val description: String,
-    @SerializedName("image")
-    val image: String,
-    @SerializedName("brand")
-    val brand: String,
-    @SerializedName("category_id")
-    val categoryId: Int,
-    @SerializedName("store_id")
-    val storeId: Int,
-    @SerializedName("stock")
-    val stock: Int,
-    @SerializedName("expiration_date")
-    val expirationDate: String
+    @SerializedName("SKU") val sku: String,
+    @SerializedName("name") val name: String,
+    @SerializedName("description") val description: String,
+    // 👇 el backend lee image_key (y también image como fallback)
+    @SerializedName("image_key") val imageKey: String?,
+    @SerializedName("brand") val brand: String,
+    @SerializedName("category_id") val categoryId: Int,
+    @SerializedName("store_id") val storeId: Int,
+    @SerializedName("stock") val stock: Int,
+    @SerializedName("expiration_date") val expirationDate: String
 )
 
 data class ProductResponse(
@@ -81,5 +61,6 @@ data class CreateProductFormState(
     val stock: String = "0",
     val expirationDate: String = "",
     val categoryId: Int = -1,
+    val imageKey: String? = null,
     val imageUrl: String? = null
 )

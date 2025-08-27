@@ -15,6 +15,7 @@ import androidx.compose.ui.window.Dialog
 import com.example.proyectodegrado.data.model.Category
 import com.example.proyectodegrado.data.model.CreateProductFormState
 import com.example.proyectodegrado.data.model.Product
+import com.example.proyectodegrado.ui.components.UploadImage
 import com.example.proyectodegrado.ui.components.UploadImageState
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -114,15 +115,19 @@ fun CreateProductDialog(
                 )
                 Spacer(Modifier.height(16.dp))
 
-//                ImagePickerButton(
-////                            currentImageUrl = formState.imageUrl,
-////                            uploadState = imageUploadState,
-////                            onImageSelected = onImageUriSelected
-////                        )
+                UploadImage(
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                    currentImageUrl = formState.imageUrl,
+                    uploadState = imageUploadState,
+                    onImageSelected = onImageUriSelected     // (Uri?) -> Unit
+                )
 
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                     TextButton(onClick = onDismiss) { Text("Cancelar") }
-                    Button(onClick = onCreateClick) { Text("Crear") }
+                    Button(
+                        enabled = imageUploadState is UploadImageState.Idle,
+                        onClick = onCreateClick
+                    ) { Text("Crear") }
                 }
             }
         }
@@ -136,6 +141,8 @@ fun EditProductDialog(
     show: Boolean,
     onDismiss: () -> Unit,
     product: Product?,
+    imageUploadState: UploadImageState,
+    onImageSelected: (Uri?) -> Unit,
     availableCategories: List<Category>,
     onEditClick: (CreateProductFormState) -> Unit
 ) {
@@ -148,9 +155,8 @@ fun EditProductDialog(
             sku = product.sku ?: "",
             brand = product.brand,
             categoryId = product.categoryId,
-            imageUrl = product.image,
-            // El stock se edita en otra parte según el modelo, pero lo incluimos por si acaso
-            stock = "0"
+            imageUrl = product.imageUrl ?: product.image,
+            stock = product.stock?.toString() ?: "0"
         )
     ) }
 
@@ -185,9 +191,21 @@ fun EditProductDialog(
                     }
                 }
                 Spacer(Modifier.height(16.dp))
+
+                UploadImage(
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                    currentImageUrl = formState.imageUrl,
+                    uploadState = imageUploadState,
+                    onImageSelected = onImageSelected
+                )
+                Spacer(Modifier.height(16.dp))
+
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                     TextButton(onClick = onDismiss) { Text("Cancelar") }
-                    Button(onClick = { onEditClick(formState) }) { Text("Guardar") }
+                    Button(
+                        enabled = imageUploadState is UploadImageState.Idle,
+                        onClick = { onEditClick(formState) }
+                    ) { Text("Guardar") }
                 }
             }
         }

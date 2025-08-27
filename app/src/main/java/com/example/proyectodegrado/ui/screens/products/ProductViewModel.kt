@@ -22,7 +22,6 @@ class ProductViewModel(
     private val storeRepository: StoreRepository
 ) : ViewModel() {
 
-    // --- STATES EXISTENTES ---
     private val _products = MutableStateFlow<List<Product>>(emptyList())
     val products: StateFlow<List<Product>> = _products.asStateFlow()
 
@@ -38,12 +37,14 @@ class ProductViewModel(
     private val _imageUploadUiState = MutableStateFlow<UploadImageState>(UploadImageState.Idle)
     val imageUploadUiState: StateFlow<UploadImageState> = _imageUploadUiState.asStateFlow()
 
-    // --- NUEVO: Tiendas y filtro seleccionado ---
     private val _stores = MutableStateFlow<List<StoreOption>>(emptyList())
     val stores: StateFlow<List<StoreOption>> = _stores.asStateFlow()
 
     private val _selectedStoreId = MutableStateFlow<Int?>(null)
     val selectedStoreId: StateFlow<Int?> = _selectedStoreId.asStateFlow()
+
+    private val _editImageKey = MutableStateFlow<String?>(null)
+    val editImageKey: StateFlow<String?> = _editImageKey.asStateFlow()
 
     init {
         fetchAvailableCategories()
@@ -60,7 +61,6 @@ class ProductViewModel(
         }
     }
 
-    // --- NUEVO: cargar lista de tiendas ---
     fun fetchStores(onError: (String) -> Unit = {}) {
         viewModelScope.launch {
             try {
@@ -132,7 +132,7 @@ class ProductViewModel(
             sku = s.sku,
             name = s.name,
             description = s.description,
-            image = s.imageUrl ?: "",
+            imageKey = s.imageKey,
             brand = s.brand,
             categoryId = s.categoryId,
             storeId = storeId,
@@ -160,7 +160,7 @@ class ProductViewModel(
             sku = s.sku,
             name = s.name,
             description = s.description,
-            image = s.imageUrl ?: "",
+            imageKey = _editImageKey.value ?: s.imageKey,   // 👈
             brand = s.brand,
             categoryId = s.categoryId,
             storeId = storeId,
@@ -212,14 +212,44 @@ class ProductViewModel(
             sku = product.sku ?: "",
             brand = product.brand,
             categoryId = product.categoryId,
-            imageUrl = product.image,
+            imageUrl = product.imageUrl ?: product.image,
             stock = product.stock?.toString() ?: "0",
             expirationDate = product.expirationDate ?: ""
         )
         _imageUploadUiState.value = UploadImageState.Idle
+        _editImageKey.value = null
     }
 
     fun handleProductImageSelection(uri: Uri?) {
-        // Lógica de subida de imagen comentada
+        if (uri == null) return
+        viewModelScope.launch {
+            _imageUploadUiState.value = UploadImageState.Loading
+            when (val r = imageRepository.uploadWithPresignPut(uri, "products", 0)) {
+                is ImageUploadResult.Success -> {
+                    _createProductFormState.update { it.copy(imageKey = r.imageKey, imageUrl = it.imageUrl) }
+                    _imageUploadUiState.value = UploadImageState.Idle
+                }
+                is ImageUploadResult.Error -> {
+                    _imageUploadUiState.value = UploadImageState.Error(r.message)
+                }
+            }
+        }
     }
+
+    fun selectImageForEdit(productId: Int, uri: Uri?) {
+        if (uri == null) return
+        viewModelScope.launch {
+            _imageUploadUiState.value = UploadImageState.Loading
+            when (val r = imageRepository.uploadWithPresignPut(uri, "products", productId)) {
+                is ImageUploadResult.Success -> {
+                    _editImageKey.value = r.imageKey
+                    _imageUploadUiState.value = UploadImageState.Idle
+                }
+                is ImageUploadResult.Error -> {
+                    _imageUploadUiState.value = UploadImageState.Error(r.message)
+                }
+            }
+        }
+    }
+    fun clearEditImageKey() { _editImageKey.value = null }
 }

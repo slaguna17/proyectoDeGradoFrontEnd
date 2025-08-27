@@ -192,6 +192,8 @@ fun ProductsByCategoryScreen(
             show = true,
             onDismiss = { showEditDialog = false },
             product = productToInteractWith,
+            imageUploadState = imageUploadState,
+            onImageSelected = { uri -> viewModel.selectImageForEdit(productToInteractWith!!.id, uri) },
             availableCategories = availableCategories,
             onEditClick = { updatedFormState ->
                 if (currentStoreForCrud != null && productToInteractWith != null) {
@@ -201,6 +203,7 @@ fun ProductsByCategoryScreen(
                         storeId = currentStoreForCrud,
                         onSuccess = {
                             showEditDialog = false
+                            viewModel.clearEditImageKey()
                             refreshProducts()
                         },
                         onError = { errMsg -> errorMessage = errMsg }
@@ -208,6 +211,7 @@ fun ProductsByCategoryScreen(
                 }
             }
         )
+
     }
 
     if (showDeleteDialog) {

@@ -71,7 +71,7 @@ fun ProductItem(
             ) {
                 if (!product.image.isNullOrBlank()) {
                     AsyncImage(
-                        model = product.image,
+                        model = product.imageUrl ?: product.image,
                         contentDescription = product.name,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize()
