@@ -12,12 +12,12 @@ class CategoryRepository(private val categoryService: CategoryService){
     suspend fun getCategory(categoryId: Int): Category =
         categoryService.getCategory(categoryId)
 
-    suspend fun createCategory(name: String, description: String, imageKey: String?): Response<CategoryWriteResponse> {
+    suspend fun createCategory(name: String, description: String?, imageKey: String?): Response<Category> {
         val req = CategoryRequest(name = name, description = description, imageKey = imageKey)
         return categoryService.createCategory(req)
     }
 
-    suspend fun updateCategory(categoryId: Int, request: CategoryRequest): Response<CategoryWriteResponse> {
+    suspend fun updateCategory(categoryId: Int, request: CategoryRequest): Response<Unit> {
         return categoryService.updateCategory(categoryId, request)
     }
 

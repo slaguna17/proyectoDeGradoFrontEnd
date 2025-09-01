@@ -25,7 +25,7 @@ fun AllProductsScreen(
     viewModel: ProductViewModel
 ) {
     val allProducts by viewModel.products.collectAsStateWithLifecycle()
-    val createFormState by viewModel.createProductFormState.collectAsStateWithLifecycle()
+    val formState by viewModel.formState.collectAsStateWithLifecycle()
     val imageUploadState by viewModel.imageUploadUiState.collectAsStateWithLifecycle()
     val availableCategories by viewModel.availableCategories.collectAsStateWithLifecycle()
     val storeOptions by viewModel.stores.collectAsStateWithLifecycle()
@@ -95,7 +95,7 @@ fun AllProductsScreen(
         floatingActionButton = {
             if (currentStoreForCrud != null) {
                 FloatingActionButton(onClick = {
-                    viewModel.resetCreateProductFormState()
+                    viewModel.resetForm()
                     showCreateDialog = true
                 }) {
                     Icon(Icons.Default.Add, contentDescription = "Añadir Producto")
@@ -155,21 +155,17 @@ fun AllProductsScreen(
 
     if (showCreateDialog) {
         CreateProductDialog(
-            show = true,
-            onDismiss = { showCreateDialog = false },
-            formState = createFormState,
-            imageUploadState = imageUploadState,
-            availableCategories = availableCategories,
-            onFormStateChange = viewModel::updateCreateProductFormState,
-            onImageUriSelected = viewModel::handleProductImageSelection,
+            show = true, onDismiss = { showCreateDialog = false; viewModel.resetForm() },
+            formState = formState, imageUploadState = imageUploadState,
+            availableCategories = availableCategories, onNameChange = viewModel::onNameChange,
+            onSkuChange = viewModel::onSkuChange, onDescriptionChange = viewModel::onDescriptionChange,
+            onBrandChange = viewModel::onBrandChange, onCategorySelected = viewModel::onCategorySelected,
+            onStockChange = viewModel::onStockChange, onImageSelected = viewModel::onImageSelected,
             onCreateClick = {
                 if (currentStoreForCrud != null) {
-                    viewModel.createProductFromState(
+                    viewModel.createProduct(
                         storeId = currentStoreForCrud,
-                        onSuccess = {
-                            showCreateDialog = false
-                            refreshAllProducts()
-                        },
+                        onSuccess = { showCreateDialog = false; refreshAllProducts() },
                         onError = { errMsg -> errorMessage = errMsg }
                     )
                 }
@@ -177,31 +173,25 @@ fun AllProductsScreen(
         )
     }
 
-    if (showEditDialog) {
+    if (showEditDialog && productToInteractWith != null) {
         EditProductDialog(
-            show = true,
-            onDismiss = { showEditDialog = false },
-            product = productToInteractWith,
-            imageUploadState = imageUploadState,
-            onImageSelected = { uri -> viewModel.selectImageForEdit(productToInteractWith!!.id, uri) },
-            availableCategories = availableCategories,
-            onEditClick = { updatedFormState ->
-                if (currentStoreForCrud != null && productToInteractWith != null) {
+            show = true, onDismiss = { showEditDialog = false },
+            formState = formState, imageUploadState = imageUploadState,
+            availableCategories = availableCategories, onNameChange = viewModel::onNameChange,
+            onSkuChange = viewModel::onSkuChange, onDescriptionChange = viewModel::onDescriptionChange,
+            onBrandChange = viewModel::onBrandChange, onCategorySelected = viewModel::onCategorySelected,
+            onStockChange = viewModel::onStockChange, onImageSelected = viewModel::onImageSelected,
+            onEditClick = {
+                if (currentStoreForCrud != null) {
                     viewModel.updateProduct(
                         id = productToInteractWith!!.id,
-                        updatedFormState = updatedFormState,
                         storeId = currentStoreForCrud,
-                        onSuccess = {
-                            showEditDialog = false
-                            viewModel.clearEditImageKey()
-                            refreshAllProducts()
-                        },
-                        onError = { errMsg -> errorMessage = errMsg }
+                        onSuccess = { showEditDialog = false; refreshAllProducts() },
+                        onError = { /* Manejar error */ }
                     )
                 }
             }
         )
-
     }
 
     if (showDeleteDialog) {

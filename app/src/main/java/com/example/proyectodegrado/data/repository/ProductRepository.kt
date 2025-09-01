@@ -3,7 +3,6 @@ package com.example.proyectodegrado.data.repository
 import com.example.proyectodegrado.data.api.ProductService
 import com.example.proyectodegrado.data.model.Product
 import com.example.proyectodegrado.data.model.ProductRequest
-import com.example.proyectodegrado.data.model.ProductResponse
 import retrofit2.Response
 
 class ProductRepository(private val productService: ProductService) {
@@ -15,15 +14,15 @@ class ProductRepository(private val productService: ProductService) {
         return productService.getProductById(id)
     }
 
-    suspend fun createProduct(request: ProductRequest): Response<ProductResponse> {
+    suspend fun createProduct(request: ProductRequest): Response<Product> {
         return productService.createProduct(request)
     }
 
-    suspend fun updateProduct(id: Int, request: ProductRequest): Response<ProductResponse> {
+    suspend fun updateProduct(id: Int, request: ProductRequest): Response<Unit> {
         return productService.updateProduct(id, request)
     }
 
-    suspend fun deleteProduct(id: Int): Response<ProductResponse> {
+    suspend fun deleteProduct(id: Int): Response<Unit> {
         return productService.deleteProduct(id)
     }
 

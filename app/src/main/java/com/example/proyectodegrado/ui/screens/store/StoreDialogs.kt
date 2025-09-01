@@ -53,8 +53,8 @@ private fun StoreDialogContent(
             Spacer(Modifier.height(8.dp))
             Text("Error de imagen: ${uploadState.message}", color = MaterialTheme.colorScheme.error)
         }
-
         Spacer(Modifier.height(12.dp))
+
         OutlinedTextField(
             value = name,
             onValueChange = {
@@ -73,27 +73,23 @@ private fun StoreDialogContent(
             )
         }
         Spacer(Modifier.height(8.dp))
+
         OutlinedTextField(value = address, onValueChange = onAddressChange, label = { Text("Dirección") }, modifier = Modifier.fillMaxWidth())
         Spacer(Modifier.height(8.dp))
+
         OutlinedTextField(value = city, onValueChange = onCityChange, label = { Text("Ciudad") }, modifier = Modifier.fillMaxWidth())
         Spacer(Modifier.height(8.dp))
 
-        // Campo opcional para URL externa (si no usas S3)
-        OutlinedTextField(
-            value = logo,
-            onValueChange = onLogoChange,
-            label = { Text("Logo (URL opcional)") },
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(Modifier.height(8.dp))
         OutlinedTextField(value = history, onValueChange = onHistoryChange, label = { Text("Historia") }, modifier = Modifier.fillMaxWidth())
         Spacer(Modifier.height(8.dp))
+
         OutlinedTextField(value = phone, onValueChange = onPhoneChange, label = { Text("Teléfono") }, modifier = Modifier.fillMaxWidth())
         Spacer(Modifier.height(16.dp))
 
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
             TextButton(onClick = onDismiss) { Text("Cancelar") }
             Spacer(Modifier.width(8.dp))
+
             Button(
                 enabled = uploadState is UploadImageState.Idle,
                 onClick = {

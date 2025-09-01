@@ -1,23 +1,28 @@
 package com.example.proyectodegrado.data.model
 
-/** Request/Response para presign PUT */
-data class PresignPutRequest(
+/**
+ * Cuerpo de la petición para solicitar una URL de subida al backend.
+ * folder: "stores/1", "products/101", etc.
+ * fileName: "logo.webp", "avatar.jpg", etc.
+ */
+data class PresignRequest(
     val folder: String,
     val fileName: String,
     val contentType: String
 )
-data class PresignPutResponse(
-    val method: String, // "PUT"
-    val key: String,
-    val url: String,
-    val expiresIn: Int,
-    val maxMB: Int
+
+/**
+ * Respuesta del backend con la URL segura para subir el archivo a S3.
+ */
+data class PresignResponse(
+    val key: String, // La ruta completa del archivo en S3 (ej: "stores/1/logo.webp")
+    val url: String  // La URL temporal para hacer el PUT
 )
 
-/** (Opcional) Response para resolver URL de lectura, si lo usas desde app */
-data class ImageUrlResponse(
-    val key: String,
-    val url: String,
-    val signed: Boolean,
-    val expiresIn: Int?
-)
+/**
+ * Resultado sellado para las operaciones del ImageRepository.
+ */
+sealed class ImageUploadResult {
+    data class Success(val imageKey: String) : ImageUploadResult()
+    data class Error(val message: String) : ImageUploadResult()
+}

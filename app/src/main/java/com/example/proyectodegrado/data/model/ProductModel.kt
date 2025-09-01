@@ -1,6 +1,7 @@
 package com.example.proyectodegrado.data.model
 
 import com.google.gson.annotations.SerializedName
+import android.net.Uri
 
 data class Product(
     @SerializedName("id") val id: Int,
@@ -11,12 +12,8 @@ data class Product(
     @SerializedName("image_url") val imageUrl: String?,
     @SerializedName("brand") val brand: String,
     @SerializedName("category_id") val categoryId: Int,
-    @SerializedName("created_at") val createdAt: String?,
-    @SerializedName("updated_at") val updatedAt: String?,
-    @SerializedName("stock") val stock: Int?,
-    @SerializedName("expiration_date") val expirationDate: String?,
-    @SerializedName("stores") val stores: List<StoreInfoFromProduct>?,
-    @SerializedName("providers") val providers: List<ProviderInfoFromProduct>?
+    @SerializedName("stock") val stock: Int?, // Stock general, puede ser null
+    @SerializedName("stores") val stores: List<StoreInfoFromProduct>?
 )
 
 data class StoreInfoFromProduct(
@@ -26,31 +23,18 @@ data class StoreInfoFromProduct(
 )
 
 data class StoreProductPivot(
-    @SerializedName("stock") val stock: Int,
-    @SerializedName("expiration_date") val expirationDate: String?
-)
-
-data class ProviderInfoFromProduct(
-    @SerializedName("id") val id: Int,
-    @SerializedName("name") val name: String
+    @SerializedName("stock") val stock: Int
 )
 
 data class ProductRequest(
-    @SerializedName("SKU") val sku: String,
+    @SerializedName("SKU") val sku: String?,
     @SerializedName("name") val name: String,
     @SerializedName("description") val description: String,
-    // 👇 el backend lee image_key (y también image como fallback)
-    @SerializedName("image_key") val imageKey: String?,
+    @SerializedName("image") val imageKey: String?,
     @SerializedName("brand") val brand: String,
     @SerializedName("category_id") val categoryId: Int,
     @SerializedName("store_id") val storeId: Int,
-    @SerializedName("stock") val stock: Int,
-    @SerializedName("expiration_date") val expirationDate: String
-)
-
-data class ProductResponse(
-    val message: String,
-    val product: Product? = null
+    @SerializedName("stock") val stock: Int
 )
 
 data class CreateProductFormState(
@@ -62,5 +46,6 @@ data class CreateProductFormState(
     val expirationDate: String = "",
     val categoryId: Int = -1,
     val imageKey: String? = null,
-    val imageUrl: String? = null
+    val imageUrl: String? = null,
+    val localImageUri: Uri? = null
 )

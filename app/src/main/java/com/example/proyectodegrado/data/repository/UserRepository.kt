@@ -10,70 +10,44 @@ class UserRepository(
     private val userService: UserService,
     private val context: Context
 ) {
-    // Login
-    suspend fun login(email: String, password: String): Response<LoginResponse> {
-        return userService.login(LoginRequest(email, password))
-    }
+    suspend fun login(email: String, password: String): Response<LoginResponse> =
+        userService.login(LoginRequest(email, password))
 
-    // Register
-    suspend fun registerUser(request: RegisterRequest): Response<RegisterResponse> {
-        return userService.registerUser(request)
-    }
+    suspend fun registerUser(request: RegisterRequest): Response<RegisterResponse> =
+        userService.registerUser(request)
 
-    // Get all users
-    suspend fun getAllUsers(): List<User> {
-        return userService.getAllUsers()
-    }
+    suspend fun getAllUsers(): List<User> = userService.getAllUsers()
 
-    // Get user by ID
-    suspend fun getUserById(userId: Int): User {
-        return userService.getUser(userId)
-    }
+    suspend fun getUserById(userId: Int): User = userService.getUser(userId)
 
-    // Get all roles
-    suspend fun getRoles(): List<Role> {
-        return userService.getRoles()
-    }
+    suspend fun getRoles(): List<Role> = userService.getRoles()
 
-    // Forgot Password
-    suspend fun forgotPassword(email: String): Response<ForgotPasswordResponse> {
-        return userService.forgotPassword(ForgotPasswordRequest(email))
-    }
+    suspend fun forgotPassword(email: String): Response<ForgotPasswordResponse> =
+        userService.forgotPassword(ForgotPasswordRequest(email))
 
-    // Reset Password
-    suspend fun resetPassword(token: String, newPassword: String): Response<ResetPasswordResponse> {
-        return userService.resetPassword(ResetPasswordRequest(token, newPassword))
-    }
+    suspend fun resetPassword(token: String, newPassword: String): Response<ResetPasswordResponse> =
+        userService.resetPassword(ResetPasswordRequest(token, newPassword))
 
-    // Get current user (by id from preferences)
-    suspend fun getCurrentUser(): User? {
-        val userId = getCurrentUserId()
-        return if (userId != null) {
-            userService.getUser(userId)
-        } else {
-            null
-        }
-    }
+    suspend fun getCurrentUser(): User? = getCurrentUserId()?.let { userService.getUser(it) }
 
-    // Update user profile (nombre, email, teléfono)
-    suspend fun updateUserProfile(fullName: String, email: String, phone: String): Boolean {
-        val userId = getCurrentUserId()
-        if (userId == null) return false
-        val req = mapOf(
+    /** Actualiza perfil; opcionalmente cambia avatar con avatarKey o lo elimina con removeImage */
+    suspend fun updateUserProfile(
+        fullName: String,
+        email: String,
+        phone: String,
+        avatarKey: String? = null,
+        removeImage: Boolean = false
+    ): Boolean {
+        val userId = getCurrentUserId() ?: return false
+        val req = mutableMapOf<String, Any?>(
             "full_name" to fullName,
             "email" to email,
             "phone" to phone
         )
-        return try {
-            val response = userService.updateUser(userId, req)
-            response.isSuccessful
-        } catch (e: Exception) {
-            false
-        }
+        if (avatarKey != null) req["avatar_key"] = avatarKey
+        if (removeImage) req["removeImage"] = true
+        return try { userService.updateUser(userId, req).isSuccessful } catch (_: Exception) { false }
     }
 
-    // Obtener el ID del usuario actual guardado en preferencias
-    private fun getCurrentUserId(): Int? {
-        return AppPreferences(context).getUserId()?.toIntOrNull()
-    }
+    private fun getCurrentUserId(): Int? = AppPreferences(context).getUserId()?.toIntOrNull()
 }

@@ -13,6 +13,61 @@ import androidx.compose.ui.window.Dialog
 import com.example.proyectodegrado.data.model.*
 import com.example.proyectodegrado.ui.components.*
 
+@Composable
+private fun CategoryDialogContent(
+    title: String,
+    formState: CreateCategoryFormState,
+    uploadState: UploadImageState,
+    onNameChange: (String) -> Unit,
+    onDescriptionChange: (String) -> Unit,
+    onImageSelected: (Uri?) -> Unit,
+    onDismiss: () -> Unit,
+    onSubmit: () -> Unit,
+    submitLabel: String
+) {
+    Surface(shape = MaterialTheme.shapes.medium) {
+        Column(Modifier.padding(16.dp)) {
+            Text(title, style = MaterialTheme.typography.titleLarge)
+            Spacer(Modifier.height(16.dp))
+
+            OutlinedTextField(
+                value = formState.name,
+                onValueChange = onNameChange,
+                label = { Text("Nombre") },
+                modifier = Modifier.fillMaxWidth(),
+                isError = formState.name.isBlank()
+            )
+            Spacer(Modifier.height(8.dp))
+
+            OutlinedTextField(
+                value = formState.description,
+                onValueChange = onDescriptionChange,
+                label = { Text("Descripción") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(Modifier.height(16.dp))
+
+            // El logo a mostrar es la nueva imagen seleccionada, o la que ya existía
+            val imageUrl = formState.localImageUri?.toString() ?: formState.imageUrl
+            UploadImage(
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+                currentImageUrl = imageUrl,
+                uploadState = uploadState,
+                onImageSelected = onImageSelected
+            )
+            Spacer(Modifier.height(16.dp))
+
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                TextButton(onClick = onDismiss) { Text("Cancelar") }
+                Button(
+                    enabled = uploadState is UploadImageState.Idle && formState.name.isNotBlank(),
+                    onClick = onSubmit
+                ) { Text(submitLabel) }
+            }
+        }
+    }
+}
+
 // ---------- Crear ----------
 @Composable
 fun CreateCategoryDialog(
@@ -20,64 +75,24 @@ fun CreateCategoryDialog(
     onDismiss: () -> Unit,
     formState: CreateCategoryFormState,
     imageUploadState: UploadImageState,
-    onFormStateChange: (CreateCategoryFormState) -> Unit,
-    onImageUriSelected: (Uri?) -> Unit,
+    onNameChange: (String) -> Unit,
+    onDescriptionChange: (String) -> Unit,
+    onImageSelected: (Uri?) -> Unit,
     onCreateClick: () -> Unit
 ) {
     if (!show) return
     Dialog(onDismissRequest = onDismiss) {
-        Surface(shape = MaterialTheme.shapes.medium) {
-            Column(
-                Modifier
-                    .padding(16.dp)
-                    .verticalScroll(rememberScrollState())
-            ) {
-                Text("Crear Categoría", style = MaterialTheme.typography.titleLarge)
-                Spacer(Modifier.height(16.dp))
-
-                OutlinedTextField(
-                    value = formState.name,
-                    onValueChange = { onFormStateChange(formState.copy(name = it)) },
-                    label = { Text("Nombre") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(Modifier.height(8.dp))
-
-                OutlinedTextField(
-                    value = formState.description,
-                    onValueChange = { onFormStateChange(formState.copy(description = it)) },
-                    label = { Text("Descripción") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(Modifier.height(16.dp))
-
-                UploadImage(
-                    modifier = Modifier.align(Alignment.CenterHorizontally),
-                    currentImageUrl = formState.imageUrl,
-                    uploadState = imageUploadState,
-                    onImageSelected = onImageUriSelected
-                )
-                if (imageUploadState is UploadImageState.Error) {
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        text = "Error imagen: ${imageUploadState.message}",
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
-                    )
-                }
-
-                Spacer(Modifier.height(16.dp))
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    TextButton(onClick = onDismiss) { Text("Cancelar") }
-                    Spacer(Modifier.width(8.dp))
-                    Button(
-                        enabled = imageUploadState is UploadImageState.Idle,
-                        onClick = onCreateClick
-                    ) { Text("Crear") }
-                }
-            }
-        }
+        CategoryDialogContent(
+            title = "Crear Categoría",
+            formState = formState,
+            uploadState = imageUploadState,
+            onNameChange = onNameChange,
+            onDescriptionChange = onDescriptionChange,
+            onImageSelected = onImageSelected,
+            onDismiss = onDismiss,
+            onSubmit = onCreateClick,
+            submitLabel = "Crear"
+        )
     }
 }
 
@@ -86,84 +101,26 @@ fun CreateCategoryDialog(
 fun EditCategoryDialog(
     show: Boolean,
     onDismiss: () -> Unit,
-    category: Category,
+    formState: CreateCategoryFormState,
     imageUploadState: UploadImageState,
-    pendingImageKey: String?,                    // viene del VM.editImageKey
-    onPickNewImage: (Uri?) -> Unit,              // VM.selectImageForEdit(category.id, uri)
-    onClearPendingImage: () -> Unit,
-    onEdit: (CategoryRequest) -> Unit
+    onNameChange: (String) -> Unit,
+    onDescriptionChange: (String) -> Unit,
+    onImageSelected: (Uri?) -> Unit,
+    onEdit: () -> Unit
 ) {
     if (!show) return
-
-    var name by remember { mutableStateOf(category.name) }
-    var description by remember { mutableStateOf(category.description) }
-
     Dialog(onDismissRequest = onDismiss) {
-        Surface(shape = MaterialTheme.shapes.medium) {
-            Column(
-                modifier = Modifier
-                    .padding(16.dp)
-                    .verticalScroll(rememberScrollState())
-            ) {
-                Text("Editar Categoría", style = MaterialTheme.typography.titleLarge)
-                Spacer(Modifier.height(16.dp))
-
-                UploadImage(
-                    modifier = Modifier.align(Alignment.CenterHorizontally),
-                    currentImageUrl = category.imageUrl,   // la actual
-                    uploadState = imageUploadState,
-                    onImageSelected = onPickNewImage
-                )
-                if (imageUploadState is UploadImageState.Error) {
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        text = "Error imagen: ${imageUploadState.message}",
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
-                    )
-                }
-
-                Spacer(Modifier.height(16.dp))
-
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Nombre") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(Modifier.height(8.dp))
-
-                OutlinedTextField(
-                    value = description,
-                    onValueChange = { description = it },
-                    label = { Text("Descripción") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(Modifier.height(16.dp))
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    TextButton(onClick = {
-                        onClearPendingImage()
-                        onDismiss()
-                    }) { Text("Cancelar") }
-                    Spacer(Modifier.width(8.dp))
-                    Button(
-                        enabled = imageUploadState is UploadImageState.Idle,
-                        onClick = {
-                            val request = CategoryRequest(
-                                name = name.trim(),
-                                description = description.trim(),
-                                imageKey = pendingImageKey ?: category.image // usa la nueva key si existe
-                            )
-                            onEdit(request)
-                            onClearPendingImage()
-                        }
-                    ) { Text("Guardar") }
-                }
-            }
-        }
+        CategoryDialogContent(
+            title = "Editar Categoría",
+            formState = formState,
+            uploadState = imageUploadState,
+            onNameChange = onNameChange,
+            onDescriptionChange = onDescriptionChange,
+            onImageSelected = onImageSelected,
+            onDismiss = onDismiss,
+            onSubmit = onEdit,
+            submitLabel = "Guardar"
+        )
     }
 }
 

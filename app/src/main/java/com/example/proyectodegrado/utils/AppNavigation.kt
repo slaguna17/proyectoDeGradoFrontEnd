@@ -16,9 +16,9 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -67,6 +67,7 @@ fun AppNavigation() {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     var currentTitle by rememberSaveable { mutableStateOf("Inicio") }
+    val currentUser = profileViewModel.user.collectAsState().value
 
     LaunchedEffect(navController) {
         navController.currentBackStackEntryFlow.collect { backStackEntry ->
@@ -88,7 +89,7 @@ fun AppNavigation() {
                         "Empleados" -> "workers"
                         "Horarios" -> "schedule"
                         "Pronósticos" -> "forecast"
-                        "Caja" -> "cash" // ✅ ahora existe el destino simple "cash"
+                        "Caja" -> "cash"
                         "Proveedores" -> "providers"
                         "Código de barras" -> "barcode"
                         "Ajustes" -> "settings"
@@ -105,7 +106,8 @@ fun AppNavigation() {
                             }
                         }
                     }
-                }
+                },
+                avatarUrl = currentUser?.avatarUrl ?: currentUser?.avatar
             )
         }
     ) {

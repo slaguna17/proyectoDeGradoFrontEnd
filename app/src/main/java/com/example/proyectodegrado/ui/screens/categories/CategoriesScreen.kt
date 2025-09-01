@@ -15,115 +15,126 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.example.proyectodegrado.data.model.Category
 import com.example.proyectodegrado.data.model.CategoryRequest
+import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CategoriesScreen(
     navController: NavController,
     viewModel: CategoryViewModel
 ) {
-    val categories   by viewModel.categories.collectAsStateWithLifecycle()
-    val formState    by viewModel.createCategoryFormState.collectAsStateWithLifecycle()
-    val uploadState  by viewModel.imageUploadUiState.collectAsState()
-    val editKey      by viewModel.editImageKey.collectAsStateWithLifecycle()
+    val categories by viewModel.categories.collectAsStateWithLifecycle()
+    val formState by viewModel.formState.collectAsStateWithLifecycle()
+    val uploadState by viewModel.imageUploadUiState.collectAsStateWithLifecycle()
 
-    var errorMessage by rememberSaveable { mutableStateOf<String?>(null) }
-    var showCreate   by rememberSaveable { mutableStateOf(false) }
-    var showEdit     by rememberSaveable { mutableStateOf(false) }
-    var showDelete   by rememberSaveable { mutableStateOf(false) }
-    var toEdit       by remember { mutableStateOf<Category?>(null) }
-    var toDelete     by remember { mutableStateOf<Category?>(null) }
+    var showCreate by rememberSaveable { mutableStateOf(false) }
+    var showEdit by rememberSaveable { mutableStateOf(false) }
+    var showDelete by rememberSaveable { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) { viewModel.fetchCategories() }
+    var categoryToInteract by remember { mutableStateOf<Category?>(null) }
 
-    fun refresh() = viewModel.fetchCategories()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+
+    fun showSnackbar(message: String) {
+        scope.launch { snackbarHostState.showSnackbar(message) }
+    }
+
+    LaunchedEffect(Unit) {  viewModel.fetchCategories(onError = ::showSnackbar) }
+
+    fun refresh() = viewModel.fetchCategories(onError = ::showSnackbar)
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
-            FloatingActionButton(onClick = { showCreate = true }) {
+            FloatingActionButton(onClick = {
+                viewModel.resetForm()
+                showCreate = true
+            }) {
                 Icon(Icons.Default.Add, contentDescription = "Agregar")
             }
         }
     ) { padding ->
-        Box(Modifier.fillMaxSize()) {
-            if (categories.isEmpty()) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("No hay categorías")
-                }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),               // 👈 espacio externo
-                    verticalArrangement = Arrangement.spacedBy(12.dp)    // 👈 espacio entre cards
-                ) {
-                    items(categories, key = { it.id }) { cat ->
-                        CategoryItem(
-                            category = cat,
-                            navController = navController,
-                            onEdit = { toEdit = it; showEdit = true },
-                            onDelete = { toDelete = it; showDelete = true }
-                        )
-                    }
+        if (categories.isEmpty()) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("No hay categorías. ¡Agrega una!")
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(categories, key = { it.id }) { cat ->
+                    CategoryItem(
+                        category = cat,
+                        navController = navController,
+                        onEdit = {
+                            viewModel.prepareFormForEdit(it)
+                            categoryToInteract = it
+                            showEdit = true
+                        },
+                        onDelete = {
+                            categoryToInteract = it
+                            showDelete = true
+                        }
+                    )
                 }
             }
         }
     }
 
     // ---------- Crear ----------
-    CreateCategoryDialog(
-        show = showCreate,
-        onDismiss = {
-            showCreate = false
-            viewModel.resetCreateCategoryForm()
-        },
-        formState = formState,
-        imageUploadState = uploadState,
-        onFormStateChange = viewModel::updateCreateCategoryFormState,
-        onImageUriSelected = viewModel::handleCategoryImageSelection,
-        onCreateClick = {
-            viewModel.createCategoryFromState(
-                onSuccess = { showCreate = false; refresh() },
-                onError = { errorMessage = it }
-            )
-        }
-    )
+    if (showCreate) {
+        CreateCategoryDialog(
+            show = true,
+            onDismiss = { showCreate = false },
+            formState = formState,
+            imageUploadState = uploadState,
+            onNameChange = viewModel::onNameChange,
+            onDescriptionChange = viewModel::onDescriptionChange,
+            onImageSelected = viewModel::onImageSelected,
+            onCreateClick = {
+                viewModel.createCategory(
+                    onSuccess = { showCreate = false; refresh() },
+                    onError = { /* Manejar error con Snackbar */ }
+                )
+            }
+        )
+    }
 
     // ---------- Editar ----------
-    if (showEdit && toEdit != null) {
+    if (showEdit && categoryToInteract != null) {
         EditCategoryDialog(
             show = true,
             onDismiss = { showEdit = false },
-            category = toEdit!!,
+            formState = formState,
             imageUploadState = uploadState,
-            pendingImageKey = editKey,
-            onPickNewImage = { uri -> viewModel.selectImageForEdit(toEdit!!.id, uri) },
-            onClearPendingImage = { viewModel.clearEditImageKey() },
-            onEdit = { req: CategoryRequest ->
+            onNameChange = viewModel::onNameChange,
+            onDescriptionChange = viewModel::onDescriptionChange,
+            onImageSelected = viewModel::onImageSelected,
+            onEdit = {
                 viewModel.updateCategory(
-                    id = toEdit!!.id,
-                    request = req,
+                    id = categoryToInteract!!.id,
                     onSuccess = { showEdit = false; refresh() },
-                    onError = { errorMessage = it }
+                    onError = { /* Manejar error con Snackbar */ }
                 )
             }
         )
     }
 
     // ---------- Eliminar ----------
-    if (showDelete && toDelete != null) {
+    if (showDelete && categoryToInteract != null) {
         DeleteCategoryDialog(
             show = true,
             onDismiss = { showDelete = false },
-            category = toDelete!!,
+            category = categoryToInteract!!,
             onDelete = {
                 viewModel.deleteCategory(
-                    id = toDelete!!.id,
+                    id = categoryToInteract!!.id,
                     onSuccess = { showDelete = false; refresh() },
-                    onError = { errorMessage = it }
+                    onError = { /* Manejar error con Snackbar */ }
                 )
             }
         )
     }
-
-    // (Opcional) Mostrar errorMessage con Snackbar/AlertDialog si quieres.
 }

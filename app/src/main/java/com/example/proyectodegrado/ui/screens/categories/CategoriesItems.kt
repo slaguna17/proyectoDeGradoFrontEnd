@@ -9,7 +9,7 @@ import androidx.compose.material.Surface
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.PhotoCamera // Importar el ícono
+import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -45,8 +45,7 @@ fun CategoryItem(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(180.dp)
-                    // --- INICIO: LÓGICA DEL PLACEHOLDER ---
-                    .background(MaterialTheme.colorScheme.secondaryContainer) // Color de fondo
+                    .background(MaterialTheme.colorScheme.secondaryContainer)
             ) {
                 if (!category.image.isNullOrBlank()) {
                     AsyncImage(
@@ -56,7 +55,6 @@ fun CategoryItem(
                         modifier = Modifier.fillMaxSize()
                     )
                 } else {
-                    // Si no hay imagen, mostramos el ícono
                     Icon(
                         imageVector = Icons.Default.PhotoCamera,
                         contentDescription = "Sin imagen",
@@ -66,7 +64,6 @@ fun CategoryItem(
                         tint = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.5f)
                     )
                 }
-                // --- FIN: LÓGICA DEL PLACEHOLDER ---
 
                 Surface(
                     modifier = Modifier
@@ -88,14 +85,16 @@ fun CategoryItem(
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold
                 )
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    text = category.description,
-                    style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 3,
-                    overflow = TextOverflow.Ellipsis,
-                    lineHeight = 20.sp
-                )
+                if (!category.description.isNullOrBlank()) {
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = category.description,
+                        style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis,
+                        lineHeight = 20.sp
+                    )
+                }
                 Spacer(Modifier.height(16.dp))
 
                 Row(

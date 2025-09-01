@@ -2,7 +2,6 @@ package com.example.proyectodegrado.data.api
 
 import com.example.proyectodegrado.data.model.Product
 import com.example.proyectodegrado.data.model.ProductRequest
-import com.example.proyectodegrado.data.model.ProductResponse
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -14,13 +13,13 @@ interface ProductService {
     suspend fun getProductById(@Path("id") id: Int, @Query("signed") signed: Boolean = true): Product
 
     @POST("/api/products/createProduct")
-    suspend fun createProduct(@Body request: ProductRequest): Response<ProductResponse>
+    suspend fun createProduct(@Body request: ProductRequest): Response<Product>
 
     @PUT("/api/products/updateProduct/{id}")
-    suspend fun updateProduct(@Path("id") id: Int, @Body request: ProductRequest): Response<ProductResponse>
+    suspend fun updateProduct(@Path("id") id: Int, @Body request: ProductRequest): Response<Unit>
 
     @DELETE("/api/products/deleteProduct/{id}")
-    suspend fun deleteProduct(@Path("id") id: Int): Response<ProductResponse>
+    suspend fun deleteProduct(@Path("id") id: Int): Response<Unit>
 
     @GET("/api/products/categories/{categoryId}")
     suspend fun getProductsByCategory(@Path("categoryId") categoryId: Int, @Query("signed") signed: Boolean = true): List<Product>

@@ -18,15 +18,15 @@ data class StoreRequest(
     val name: String,
     val address: String,
     val city: String,
-    @SerializedName("logo_key")
-    val logoKey: String? = null,
-    val logo: String? = null,
     val history: String,
-    val phone: String
+    val phone: String,
+    val logo: String? = null
 )
+
 
 data class StoreResponse(
     val message: String,
-    @SerializedName("store_id")
-    val storeId: Int? = null
+    @SerializedName("id")
+    val storeId: Int? = null,
+    val store: Store? = null
 )

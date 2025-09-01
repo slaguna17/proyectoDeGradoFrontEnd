@@ -41,7 +41,7 @@ fun ProductsByCategoryScreen(
     categoryId: Int
 ) {
     val productsByCategory by viewModel.productsByCategory.collectAsStateWithLifecycle()
-    val createFormState by viewModel.createProductFormState.collectAsStateWithLifecycle()
+    val formState by viewModel.formState.collectAsStateWithLifecycle()
     val imageUploadState by viewModel.imageUploadUiState.collectAsStateWithLifecycle()
     val availableCategories by viewModel.availableCategories.collectAsStateWithLifecycle()
 
@@ -58,6 +58,12 @@ fun ProductsByCategoryScreen(
     var showEditDialog by rememberSaveable { mutableStateOf(false) }
     var showDeleteDialog by rememberSaveable { mutableStateOf(false) }
     var productToInteractWith by remember { mutableStateOf<Product?>(null) }
+
+    val onShowCreateDialog = {
+        viewModel.resetForm()
+        viewModel.onCategorySelected(categoryId)
+        showCreateDialog = true
+    }
 
     val context = LocalContext.current
     val currentStoreForCrud = remember { AppPreferences(context).getStoreId()?.toIntOrNull() }
@@ -106,8 +112,7 @@ fun ProductsByCategoryScreen(
         floatingActionButton = {
             if (currentStoreForCrud != null) {
                 FloatingActionButton(onClick = {
-                    viewModel.updateCreateProductFormState(CreateProductFormState(categoryId = categoryId))
-                    showCreateDialog = true
+                    onShowCreateDialog
                 }) {
                     Icon(Icons.Default.Add, contentDescription = "Añadir Producto")
                 }
@@ -165,53 +170,43 @@ fun ProductsByCategoryScreen(
 
     if (showCreateDialog) {
         CreateProductDialog(
-            show = true,
-            onDismiss = { showCreateDialog = false },
-            formState = createFormState,
-            imageUploadState = imageUploadState,
-            availableCategories = availableCategories,
-            onFormStateChange = viewModel::updateCreateProductFormState,
-            onImageUriSelected = viewModel::handleProductImageSelection,
+            show = true, onDismiss = { showCreateDialog = false },
+            formState = formState, imageUploadState = imageUploadState,
+            availableCategories = availableCategories, onNameChange = viewModel::onNameChange,
+            onSkuChange = viewModel::onSkuChange, onDescriptionChange = viewModel::onDescriptionChange,
+            onBrandChange = viewModel::onBrandChange, onCategorySelected = viewModel::onCategorySelected,
+            onStockChange = viewModel::onStockChange, onImageSelected = viewModel::onImageSelected,
             onCreateClick = {
                 if (currentStoreForCrud != null) {
-                    viewModel.createProductFromState(
+                    viewModel.createProduct(
                         storeId = currentStoreForCrud,
-                        onSuccess = {
-                            showCreateDialog = false
-                            refreshProducts()
-                        },
-                        onError = { errMsg -> errorMessage = errMsg }
+                        onSuccess = { showCreateDialog = false; refreshProducts() },
+                        onError = { /* Manejar error */ }
                     )
                 }
             }
         )
     }
 
-    if (showEditDialog) {
+    if (showEditDialog && productToInteractWith != null) {
         EditProductDialog(
-            show = true,
-            onDismiss = { showEditDialog = false },
-            product = productToInteractWith,
-            imageUploadState = imageUploadState,
-            onImageSelected = { uri -> viewModel.selectImageForEdit(productToInteractWith!!.id, uri) },
-            availableCategories = availableCategories,
-            onEditClick = { updatedFormState ->
-                if (currentStoreForCrud != null && productToInteractWith != null) {
+            show = true, onDismiss = { showEditDialog = false },
+            formState = formState, imageUploadState = imageUploadState,
+            availableCategories = availableCategories, onNameChange = viewModel::onNameChange,
+            onSkuChange = viewModel::onSkuChange, onDescriptionChange = viewModel::onDescriptionChange,
+            onBrandChange = viewModel::onBrandChange, onCategorySelected = viewModel::onCategorySelected,
+            onStockChange = viewModel::onStockChange, onImageSelected = viewModel::onImageSelected,
+            onEditClick = {
+                if (currentStoreForCrud != null) {
                     viewModel.updateProduct(
                         id = productToInteractWith!!.id,
-                        updatedFormState = updatedFormState,
                         storeId = currentStoreForCrud,
-                        onSuccess = {
-                            showEditDialog = false
-                            viewModel.clearEditImageKey()
-                            refreshProducts()
-                        },
-                        onError = { errMsg -> errorMessage = errMsg }
+                        onSuccess = { showEditDialog = false; refreshProducts() },
+                        onError = { /* Manejar error */ }
                     )
                 }
             }
         )
-
     }
 
     if (showDeleteDialog) {

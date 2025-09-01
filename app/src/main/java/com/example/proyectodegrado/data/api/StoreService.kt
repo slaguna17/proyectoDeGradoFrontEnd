@@ -17,13 +17,13 @@ interface StoreService {
 
     // Create (legacy, backend ya lo tiene)
     @POST("/api/stores/createStore")
-    suspend fun createStore(@Body request: StoreRequest): Response<StoreResponse>
+    suspend fun createStore(@Body request: StoreRequest): Response<Store>
 
     // Update (legacy)
     @PUT("/api/stores/updateStore/{id}")
-    suspend fun updateStore(@Path("id") storeId: Int, @Body request: StoreRequest): Response<StoreResponse>
+    suspend fun updateStore(@Path("id") storeId: Int, @Body request: StoreRequest): Response<Unit>
 
     // Delete (legacy)
     @DELETE("/api/stores/deleteStore/{id}")
-    suspend fun deleteStore(@Path("id") storeId: Int): Response<StoreResponse>
+    suspend fun deleteStore(@Path("id") storeId: Int): Response<Unit>
 }
