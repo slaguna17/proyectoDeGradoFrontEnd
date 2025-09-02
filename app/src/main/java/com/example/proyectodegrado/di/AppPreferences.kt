@@ -14,7 +14,7 @@ class AppPreferences(context: Context) {
         return sharedPreferences.getString("store_id", null)
     }
 
-    fun saveUserName(userName: String) {
+    fun saveUserName(userName: String?) {
         sharedPreferences.edit().putString("user_name", userName).apply()
     }
 

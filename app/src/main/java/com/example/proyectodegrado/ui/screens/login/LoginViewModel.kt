@@ -7,8 +7,9 @@ import androidx.lifecycle.viewModelScope
 import com.example.proyectodegrado.data.model.LoginResponse
 import com.example.proyectodegrado.data.repository.UserRepository
 import kotlinx.coroutines.launch
+import retrofit2.Response
 
-class LoginViewModel (private val userRepository: UserRepository) : ViewModel() {
+class LoginViewModel(private val userRepository: UserRepository) : ViewModel() {
 
     private val _loginState = MutableLiveData<Result<LoginResponse>>()
     val loginState: LiveData<Result<LoginResponse>> = _loginState
@@ -19,15 +20,21 @@ class LoginViewModel (private val userRepository: UserRepository) : ViewModel() 
     fun login(email: String, password: String) {
         viewModelScope.launch {
             try {
-                val response = userRepository.login(email, password)
-                if (response.isSuccessful) {
-                    response.body()?.let {
-                        _loginState.postValue(Result.success(it)) // it es LoginResponse
-                    } ?: run {
-                        _loginState.postValue(Result.failure(Exception("Empty response body")))
+                val http: Response<LoginResponse> = userRepository.login(email, password)
+
+                if (http.isSuccessful) {
+                    val body: LoginResponse? = http.body()
+                    if (body != null) {
+                        _loginState.postValue(Result.success(body))
+                    } else {
+                        _loginState.postValue(Result.failure(Exception("Respuesta vacía del servidor")))
                     }
                 } else {
-                    _loginState.postValue(Result.failure(Exception("Error: ${response.code()}")))
+                    _loginState.postValue(
+                        Result.failure(
+                            Exception("HTTP ${http.code()} ${http.message()}")
+                        )
+                    )
                 }
             } catch (e: Exception) {
                 _loginState.postValue(Result.failure(e))
@@ -38,11 +45,17 @@ class LoginViewModel (private val userRepository: UserRepository) : ViewModel() 
     fun sendPasswordReset(email: String) {
         viewModelScope.launch {
             try {
-                val response = userRepository.forgotPassword(email)
-                if (response.isSuccessful) {
-                    _forgotPasswordResult.postValue(Result.success(response.body()?.message ?: "Te enviamos instrucciones si el correo existe."))
+                val http: retrofit2.Response<com.example.proyectodegrado.data.model.ForgotPasswordResponse> =
+                    userRepository.forgotPassword(email)
+
+                if (http.isSuccessful) {
+                    _forgotPasswordResult.postValue(
+                        Result.success(http.body()?.message ?: "Si el correo existe, te enviamos instrucciones.")
+                    )
                 } else {
-                    _forgotPasswordResult.postValue(Result.failure(Exception("No se pudo enviar el correo. Intenta más tarde.")))
+                    _forgotPasswordResult.postValue(
+                        Result.failure(Exception("No se pudo enviar el correo. Intenta más tarde."))
+                    )
                 }
             } catch (e: Exception) {
                 _forgotPasswordResult.postValue(Result.failure(e))
@@ -50,11 +63,17 @@ class LoginViewModel (private val userRepository: UserRepository) : ViewModel() 
         }
     }
 
-    fun resetPassword(token: String, newPassword: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
+    fun resetPassword(
+        token: String,
+        newPassword: String,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
         viewModelScope.launch {
             try {
-                val response = userRepository.resetPassword(token, newPassword)
-                if (response.isSuccessful) {
+                val http: retrofit2.Response<com.example.proyectodegrado.data.model.ResetPasswordResponse> =
+                    userRepository.resetPassword(token, newPassword)
+                if (http.isSuccessful) {
                     onSuccess()
                 } else {
                     onError("No se pudo cambiar la contraseña. Intenta de nuevo.")
@@ -65,4 +84,3 @@ class LoginViewModel (private val userRepository: UserRepository) : ViewModel() 
         }
     }
 }
-

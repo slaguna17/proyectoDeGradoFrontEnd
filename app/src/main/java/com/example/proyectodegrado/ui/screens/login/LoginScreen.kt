@@ -32,25 +32,55 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.proyectodegrado.R
 import com.example.proyectodegrado.di.AppPreferences
+import com.example.proyectodegrado.di.DependencyProvider
 
 @Composable
 fun LoginScreen(navController: NavController, viewModel: LoginViewModel) {
-
-    // State Variables
-    val loginState by viewModel.loginState.observeAsState()
-    var isLoading by remember { mutableStateOf(false) }
+    // --- Contexto / preferencias
     val context = LocalContext.current
-    val appPrefs = remember { AppPreferences(context) }
-    var rememberMe by remember { mutableStateOf(false) }
+    val prefs = remember { AppPreferences(context) }
 
-    // Images
-    val logo = painterResource(R.drawable.logonobackground)
-
-    // Screen variables
-    var email by remember { mutableStateOf(appPrefs.getUserEmail() ?: "") }
+    // --- State UI
+    var email by remember { mutableStateOf(prefs.getUserEmail() ?: "") }
     var password by remember { mutableStateOf("") }
+    var rememberMe by remember { mutableStateOf(email.isNotBlank()) }
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMsg by remember { mutableStateOf<String?>(null) }
 
-    // Forgot password state
+    // --- Observa el estado del login y reacciona
+    val loginState by viewModel.loginState.observeAsState()
+
+    LaunchedEffect(loginState) {
+        loginState?.let { result ->
+            isLoading = false
+            if (result.isSuccess) {
+                val resp = result.getOrNull()!!
+                val user = resp.user
+                val userId = user.id
+
+                // 1) Recuerda email si el usuario marcó la casilla
+                if (rememberMe) prefs.saveUserEmail(email) else prefs.clearUserEmail()
+
+                // 2) Guarda userId y un nombre para mostrar
+                prefs.saveUserId(userId.toString())
+                prefs.saveUserName(user.username?.ifBlank { user.fullName })
+
+                // 3) Fija sesión en memoria; usa storeId guardado o 1 por defecto
+                val storeId = prefs.getStoreId()?.toIntOrNull() ?: 1
+                DependencyProvider.setCurrentSession(userId = userId, storeId = storeId)
+
+                // 4) Navega a Home
+                navController.navigate("home") {
+                    popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                    launchSingleTop = true
+                }
+            } else {
+                errorMsg = result.exceptionOrNull()?.message ?: "Error desconocido"
+            }
+        }
+    }
+
+    // --- Forgot password state
     val forgotResult by viewModel.forgotPasswordResult.observeAsState()
     var showForgotDialog by remember { mutableStateOf(false) }
     var forgotLoading by remember { mutableStateOf(false) }
@@ -58,12 +88,12 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel) {
     LaunchedEffect(forgotResult) {
         if (forgotLoading && forgotResult != null) {
             forgotLoading = false
-            // Si éxito, cierra diálogo
-            if (forgotResult?.isSuccess == true) {
-                showForgotDialog = false
-            }
+            if (forgotResult?.isSuccess == true) showForgotDialog = false
         }
     }
+
+    // --- UI ---
+    val logo = painterResource(R.drawable.logonobackground)
 
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -74,15 +104,15 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel) {
 
         Text(text = "¡Bienvenido!", fontSize = 28.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(4.dp))
-
         Text(text = "Ingresa a tu cuenta", fontSize = 28.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
-            label = { Text("Correo Electronico") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+            label = { Text("Correo electrónico") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+            enabled = !isLoading
         )
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -90,15 +120,18 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel) {
             value = password,
             onValueChange = { password = it },
             visualTransformation = PasswordVisualTransformation(),
-            label = { Text("Contraseña") }
+            label = { Text("Contraseña") },
+            enabled = !isLoading
         )
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(
             onClick = {
+                errorMsg = null
                 isLoading = true
-                viewModel.login(email, password)
-            }
+                viewModel.login(email.trim(), password)
+            },
+            enabled = email.isNotBlank() && password.isNotBlank() && !isLoading
         ) {
             if (isLoading) {
                 CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
@@ -107,26 +140,10 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel) {
             }
         }
 
-        loginState?.let { result ->
-            when {
-                result.isSuccess -> {
-                    isLoading = false
-                    Text("Login successful!")
-                    val context = LocalContext.current
-                    val userName = result.getOrNull()?.user?.username ?: "Usuario"
-                    AppPreferences(context).saveUserName(userName)
-                    if (rememberMe) {
-                        appPrefs.saveUserEmail(email)
-                    } else {
-                        appPrefs.clearUserEmail()
-                    }
-                    navController.navigate("home")
-                }
-                result.isFailure -> {
-                    isLoading = false
-                    Text("Login failed: ${result.exceptionOrNull()?.message}")
-                }
-            }
+        // Mensaje de error (si lo hay)
+        errorMsg?.let {
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(it, color = MaterialTheme.colorScheme.error)
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -134,13 +151,14 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Checkbox(
                 checked = rememberMe,
-                onCheckedChange = { rememberMe = it }
+                onCheckedChange = { rememberMe = it },
+                enabled = !isLoading
             )
             Text(text = "Recuérdame")
         }
         Spacer(modifier = Modifier.height(16.dp))
 
-        TextButton(onClick = { showForgotDialog = true }) {
+        TextButton(onClick = { showForgotDialog = true }, enabled = !isLoading) {
             Text(text = "¿Olvidaste tu contraseña?")
         }
         Spacer(modifier = Modifier.height(16.dp))
@@ -148,34 +166,37 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel) {
         Row {
             Text(text = "¿Eres nuevo? ")
             Text(
-                text = "Registrate",
+                text = "Regístrate",
                 fontWeight = FontWeight.Bold,
                 textDecoration = TextDecoration.Underline,
-                modifier = Modifier.clickable {
+                modifier = Modifier.clickable(enabled = !isLoading) {
                     navController.navigate("register")
                 }
             )
         }
 
-        //ForgotPassword
+        // --- Forgot Password Dialog ---
         if (showForgotDialog) {
             ForgotPasswordDialog(
                 show = showForgotDialog,
                 onDismiss = { showForgotDialog = false },
                 onSend = { emailInput ->
                     forgotLoading = true
-                    viewModel.sendPasswordReset(emailInput)
+                    viewModel.sendPasswordReset(emailInput.trim())
                 },
                 isLoading = forgotLoading,
                 message = forgotResult?.getOrNull()
             )
         }
 
+        // Mensaje de forgot, si no se muestra el diálogo
         forgotResult?.let {
             if (!showForgotDialog) {
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     it.getOrNull() ?: it.exceptionOrNull()?.message.orEmpty(),
-                    color = if (it.isSuccess) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                    color = if (it.isSuccess) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.error
                 )
             }
         }

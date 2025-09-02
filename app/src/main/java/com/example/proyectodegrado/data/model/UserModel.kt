@@ -44,7 +44,21 @@ data class RegisterResponse(
 )
 
 data class LoginRequest(val email: String, val password: String)
-data class LoginResponse(val token: String, val user: User)
+
+/** DTO LIGERO que realmente envía el endpoint de login */
+data class LoginUserDTO(
+    val id: Int,
+    val username: String?,
+    val email: String?,
+    val avatar: String? = null,
+    @SerializedName("full_name") val fullName: String? = null
+)
+
+/** La respuesta de login debe usar el DTO ligero */
+data class LoginResponse(
+    val token: String,
+    val user: LoginUserDTO
+)
 data class ForgotPasswordRequest(val email: String)
 data class ForgotPasswordResponse(val message: String)
 data class ResetPasswordRequest(@SerializedName("token") val token: String, @SerializedName("new_password") val newPassword: String)

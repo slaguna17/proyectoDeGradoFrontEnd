@@ -1,131 +1,121 @@
 package com.example.proyectodegrado.ui.screens.profile
 
 import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
-import com.example.proyectodegrado.ui.components.UploadImage
-import com.example.proyectodegrado.ui.components.UploadImageState
 import com.example.proyectodegrado.R
 
 @Composable
-fun ProfileScreen(
-    navController: NavController,
-    viewModel: ProfileViewModel
-) {
-    val user by viewModel.user.collectAsState()
-    val uploadState by viewModel.uploadState.collectAsState()
-    var fullName by remember { mutableStateOf(user?.fullName.orEmpty()) }
-    var email by remember { mutableStateOf(user?.email.orEmpty()) }
-    var phone by remember { mutableStateOf(user?.phone.orEmpty()) }
-    var isEditing by remember { mutableStateOf(false) }
-    var message by remember { mutableStateOf("") }
+fun ProfileScreen(viewModel: ProfileViewModel) {
+    // ÚNICO estado observado desde el VM
+    val ui by viewModel.ui.collectAsStateWithLifecycle()
 
-    // si cambia el user, refresca campos
-    LaunchedEffect(user?.id) {
-        fullName = user?.fullName.orEmpty()
-        email = user?.email.orEmpty()
-        phone = user?.phone.orEmpty()
+    LaunchedEffect(Unit) {
+        viewModel.loadMe()
     }
 
-    Column(
-        modifier = Modifier.fillMaxSize().padding(horizontal = 32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Spacer(Modifier.height(32.dp))
+    // Selector de imagen -> llama al VM
+    val pickImage = rememberLauncherForActivityResult(
+        ActivityResultContracts.GetContent()
+    ) { uri: Uri? -> viewModel.onPickAvatar(uri) }
 
-        // Avatar (URL real del backend con fallback a la key/url previa o placeholder local)
-        AsyncImage(
-            model = user?.avatarUrl ?: user?.avatar ?: R.drawable.lemon_drink,
-            contentDescription = "Avatar",
-            modifier = Modifier.size(120.dp).clip(CircleShape)
-        )
-        Spacer(Modifier.height(12.dp))
+    Scaffold { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(horizontal = 20.dp, vertical = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // ---------- Avatar ÚNICO ----------
+            Box(
+                modifier = Modifier
+                    .size(120.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                contentAlignment = Alignment.Center
+            ) {
+                AsyncImage(
+                    model = ui.avatarUrl ?: R.drawable.lemon_drink, // usa tu placeholder
+                    contentDescription = "Avatar",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.matchParentSize()
+                )
 
-        if (isEditing) {
-            // Picker/Upload a S3
-            UploadImage(
-                currentImageUrl = user?.avatarUrl ?: user?.avatar,
-                uploadState = uploadState,
-                onImageSelected = { uri: Uri? -> viewModel.handleAvatarSelection(uri) }
+                SmallFloatingActionButton(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .offset(x = 6.dp, y = 6.dp),
+                    onClick = { pickImage.launch("image/*") }
+                ) {
+                    Icon(Icons.Filled.Edit, contentDescription = "Cambiar avatar")
+                }
+            }
+
+            if (ui.error != null) {
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = ui.error!!,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+
+            Spacer(Modifier.height(20.dp))
+
+            // ---------- Campos ----------
+            OutlinedTextField(
+                value = ui.fullName,
+                onValueChange = viewModel::onFullNameChange,
+                label = { Text("Nombre completo") },
+                modifier = Modifier.fillMaxWidth()
             )
-            Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedButton(
-                    enabled = uploadState is UploadImageState.Idle,
-                    onClick = {
-                        viewModel.removeAvatar(
-                            onSuccess = { message = "Avatar removido" },
-                            onError = { msg -> message = msg }
-                        )
-                    }
-                ) { Text("Quitar avatar") }
+            Spacer(Modifier.height(10.dp))
+
+            OutlinedTextField(
+                value = ui.email,
+                onValueChange = viewModel::onEmailChange,
+                label = { Text("Correo electrónico") },
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+            )
+            Spacer(Modifier.height(10.dp))
+
+            OutlinedTextField(
+                value = ui.phone,
+                onValueChange = viewModel::onPhoneChange,
+                label = { Text("Teléfono") },
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
+            )
+
+            Spacer(Modifier.height(22.dp))
+
+            // ---------- Guardar ----------
+            Button(
+                onClick = { viewModel.save() },
+                enabled = ui.hasChanges && !ui.loading,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(if (ui.loading) "Guardando..." else "Guardar")
             }
-            Spacer(Modifier.height(16.dp))
-        }
-
-        OutlinedTextField(
-            value = fullName,
-            onValueChange = { fullName = it },
-            label = { Text("Nombre completo") },
-            enabled = isEditing,
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(Modifier.height(8.dp))
-        OutlinedTextField(
-            value = email,
-            onValueChange = { email = it },
-            label = { Text("Correo electrónico") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-            enabled = isEditing,
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(Modifier.height(8.dp))
-        OutlinedTextField(
-            value = phone,
-            onValueChange = { phone = it },
-            label = { Text("Teléfono") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-            enabled = isEditing,
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(Modifier.height(16.dp))
-
-        if (isEditing) {
-            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                Button(
-                    enabled = uploadState is UploadImageState.Idle,
-                    onClick = {
-                        viewModel.updateProfile(
-                            fullName, email, phone,
-                            onSuccess = { isEditing = false; message = "Datos actualizados correctamente" },
-                            onError = { msg -> message = msg }
-                        )
-                    }
-                ) { Text("Guardar") }
-                TextButton(onClick = {
-                    fullName = user?.fullName.orEmpty()
-                    email = user?.email.orEmpty()
-                    phone = user?.phone.orEmpty()
-                    isEditing = false
-                }) { Text("Cancelar") }
-            }
-        } else {
-            Button(onClick = { isEditing = true }) { Text("Editar") }
-        }
-
-        if (message.isNotBlank()) {
-            Spacer(Modifier.height(16.dp))
-            Text(message, color = MaterialTheme.colorScheme.primary)
         }
     }
 }

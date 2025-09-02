@@ -10,11 +10,27 @@ class UserRepository(
     private val userService: UserService,
     private val context: Context
 ) {
-    suspend fun login(email: String, password: String): Response<LoginResponse> =
-        userService.login(LoginRequest(email, password))
 
-    suspend fun registerUser(request: RegisterRequest): Response<RegisterResponse> =
-        userService.registerUser(request)
+    // -------------------- Auth --------------------
+
+    /** Devuelve retrofit2.Response para usar response.isSuccessful / body() / code() */
+    suspend fun login(email: String, password: String): Response<LoginResponse> {
+        return userService.login(LoginRequest(email, password))
+    }
+
+    suspend fun forgotPassword(email: String): Response<ForgotPasswordResponse> {
+        return userService.forgotPassword(ForgotPasswordRequest(email))
+    }
+
+    suspend fun resetPassword(token: String, newPassword: String): Response<ResetPasswordResponse> {
+        return userService.resetPassword(ResetPasswordRequest(token, newPassword))
+    }
+
+    // -------------------- Users --------------------
+
+    suspend fun registerUser(request: RegisterRequest): Response<RegisterResponse> {
+        return userService.registerUser(request)
+    }
 
     suspend fun getAllUsers(): List<User> = userService.getAllUsers()
 
@@ -22,15 +38,15 @@ class UserRepository(
 
     suspend fun getRoles(): List<Role> = userService.getRoles()
 
-    suspend fun forgotPassword(email: String): Response<ForgotPasswordResponse> =
-        userService.forgotPassword(ForgotPasswordRequest(email))
+    /** Conveniencia: trae el usuario usando el id guardado en preferencias (o null si no hay) */
+    suspend fun getCurrentUser(): User? =
+        getCurrentUserId()?.let { id -> userService.getUser(id) }
 
-    suspend fun resetPassword(token: String, newPassword: String): Response<ResetPasswordResponse> =
-        userService.resetPassword(ResetPasswordRequest(token, newPassword))
-
-    suspend fun getCurrentUser(): User? = getCurrentUserId()?.let { userService.getUser(it) }
-
-    /** Actualiza perfil; opcionalmente cambia avatar con avatarKey o lo elimina con removeImage */
+    /**
+     * Actualiza el perfil del usuario actual. Puedes pasar avatarKey (KEY de S3)
+     * o indicar removeImage=true para borrar el avatar en backend.
+     * Devuelve true/false según HTTP 2xx.
+     */
     suspend fun updateUserProfile(
         fullName: String,
         email: String,
@@ -39,15 +55,25 @@ class UserRepository(
         removeImage: Boolean = false
     ): Boolean {
         val userId = getCurrentUserId() ?: return false
-        val req = mutableMapOf<String, Any?>(
+
+        // NOTA: El servicio espera Map<String, Any?> (en la interfaz ya está con @JvmSuppressWildcards)
+        val body = mutableMapOf<String, Any?>(
             "full_name" to fullName,
             "email" to email,
             "phone" to phone
         )
-        if (avatarKey != null) req["avatar_key"] = avatarKey
-        if (removeImage) req["removeImage"] = true
-        return try { userService.updateUser(userId, req).isSuccessful } catch (_: Exception) { false }
+        if (avatarKey != null) body["avatar_key"] = avatarKey
+        if (removeImage)      body["removeImage"] = true
+
+        return try {
+            userService.updateUser(userId, body).isSuccessful
+        } catch (_: Exception) {
+            false
+        }
     }
 
-    private fun getCurrentUserId(): Int? = AppPreferences(context).getUserId()?.toIntOrNull()
+    // -------------------- Helpers --------------------
+
+    private fun getCurrentUserId(): Int? =
+        AppPreferences(context).getUserId()?.toIntOrNull()
 }

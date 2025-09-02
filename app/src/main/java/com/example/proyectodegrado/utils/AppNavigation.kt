@@ -16,7 +16,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
@@ -48,6 +47,7 @@ import com.example.proyectodegrado.ui.screens.store.StoreScreen
 import com.example.proyectodegrado.ui.screens.workers.CreateWorkerScreen
 import com.example.proyectodegrado.ui.screens.workers.WorkersScreen
 import kotlinx.coroutines.launch
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,7 +67,9 @@ fun AppNavigation() {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     var currentTitle by rememberSaveable { mutableStateOf("Inicio") }
-    val currentUser = profileViewModel.user.collectAsState().value
+
+    // Leemos el UiState del perfil para el avatar del Drawer
+    val profileUi by profileViewModel.ui.collectAsStateWithLifecycle()
 
     LaunchedEffect(navController) {
         navController.currentBackStackEntryFlow.collect { backStackEntry ->
@@ -80,34 +82,36 @@ fun AppNavigation() {
         gesturesEnabled = drawerState.isOpen,
         drawerContent = {
             DrawerContent(
-                onItemSelected = { screenLabel ->
-                    val route = when (screenLabel) {
-                        "Inicio" -> "home"
-                        "Productos" -> "products"
-                        "Categorías" -> "categories"
-                        "Tienda" -> "store"
-                        "Empleados" -> "workers"
-                        "Horarios" -> "schedule"
-                        "Pronósticos" -> "forecast"
-                        "Caja" -> "cash"
-                        "Proveedores" -> "providers"
-                        "Código de barras" -> "barcode"
-                        "Ajustes" -> "settings"
-                        "profile" -> "profile"
+                avatarUrl = profileUi.avatarUrl,
+                onItemSelected = { label ->
+                    val route = when (label) {
+                        "Inicio"            -> "home"
+                        "Productos"         -> "products"
+                        "Categorías"        -> "categories"
+                        "Tienda"            -> "store"
+                        "Empleados"         -> "workers"
+                        "Horarios"          -> "schedule"
+                        "Pronósticos"       -> "forecast"
+                        "Caja"              -> "cash"
+                        "Proveedores"       -> "providers"
+                        "Código de barras"  -> "barcode"
+                        "Ajustes"           -> "settings"
+                        "profile"           -> "profile" // atajo para tu botón/avatar
                         else -> null
                     }
                     scope.launch {
                         drawerState.close()
                         route?.let {
                             navController.navigate(it) {
-                                popUpTo(navController.graph.startDestinationId) { saveState = true }
+                                popUpTo(navController.graph.startDestinationId) {
+                                    saveState = true
+                                }
                                 launchSingleTop = true
                                 restoreState = true
                             }
                         }
                     }
-                },
-                avatarUrl = currentUser?.avatarUrl ?: currentUser?.avatar
+                }
             )
         }
     ) {
@@ -141,55 +145,51 @@ fun AppNavigation() {
                     .padding(innerPadding)
                     .fillMaxSize()
             ) {
-                composable("login") { LoginScreen(navController = navController, viewModel = loginViewModel) }
-                composable("register") { RegisterScreen(navController = navController, viewModel = registerViewModel) }
-                composable("home") { HomeScreen() }
-                composable("categories") { CategoriesScreen(navController= navController, viewModel = categoryViewModel) }
-                composable("products") { AllProductsScreen(navController = navController, viewModel = productViewModel) }
+                composable("login")    { LoginScreen(navController, loginViewModel) }
+                composable("register") { RegisterScreen(navController, registerViewModel) }
+                composable("home")     { HomeScreen() }
+                composable("categories"){ CategoriesScreen(navController, categoryViewModel) }
+                composable("products") { AllProductsScreen(navController, productViewModel) }
 
                 composable(
                     route = "products/{categoryId}",
                     arguments = listOf(navArgument("categoryId") { type = NavType.IntType })
                 ) { backStackEntry ->
                     val categoryId = backStackEntry.arguments?.getInt("categoryId") ?: -1
-                    ProductsByCategoryScreen(
-                        navController = navController,
-                        viewModel = productViewModel,
-                        categoryId = categoryId
-                    )
+                    ProductsByCategoryScreen(navController, productViewModel, categoryId)
                 }
 
-                composable("store") { StoreScreen(navController = navController, viewModel = storeViewModel) }
+                composable("store")   { StoreScreen(navController, storeViewModel) }
                 composable("workers") { WorkersScreen(navController = navController, viewModel = workersViewModel) }
-                composable("registerEmployee") { CreateWorkerScreen(navController = navController, viewModel = workersViewModel) }
-                composable("schedule") { ScheduleScreen(navController = navController, viewModel = scheduleViewModel) }
-                composable("forecast") { ForecastScreen(navController = navController) }
+                composable("registerEmployee") { CreateWorkerScreen(navController, workersViewModel) }
+                composable("schedule"){ ScheduleScreen(navController, scheduleViewModel) }
+                composable("forecast"){ ForecastScreen(navController) }
 
-                // ✅ NUEVO: destino simple "cash" (sin args).
-                // Toma userId/storeId de la sesión (o 1/1 si no hay).
+                // Toma userId/storeId desde la sesión
                 composable("cash") {
                     val storeId = DependencyProvider.getCurrentStoreId()
                     val userId  = DependencyProvider.getCurrentUserId()
                     CashScreen(storeId = storeId, userId = userId)
                 }
-
-                // (Opcional) Mantén también la variante con argumentos si en algún flujo los pasas explícitos:
                 composable(
                     route = "cash/{storeId}/{userId}",
                     arguments = listOf(
                         navArgument("storeId") { type = NavType.IntType },
                         navArgument("userId") { type = NavType.IntType }
                     )
-                ) { backStackEntry ->
-                    val storeId = backStackEntry.arguments!!.getInt("storeId")
-                    val userId = backStackEntry.arguments!!.getInt("userId")
-                    CashScreen(storeId = storeId, userId = userId)
+                ) { be ->
+                    CashScreen(
+                        storeId = be.arguments!!.getInt("storeId"),
+                        userId  = be.arguments!!.getInt("userId")
+                    )
                 }
 
-                composable("providers") { ProvidersScreen(navController = navController, viewModel = providerViewModel) }
-                composable("barcode") { BarcodeScreen(navController = navController) }
-                composable("settings") { SettingsScreen(navController = navController) }
-                composable("profile") { ProfileScreen(navController = navController, viewModel = profileViewModel) }
+                composable("providers") { ProvidersScreen(navController, providerViewModel) }
+                composable("barcode")   { BarcodeScreen(navController) }
+                composable("settings")  { SettingsScreen(navController) }
+
+                // ProfileScreen ya no necesita navController
+                composable("profile")   { ProfileScreen(viewModel = profileViewModel) }
             }
         }
     }

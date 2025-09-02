@@ -1,4 +1,3 @@
-// src/data/repository/ImageRepository.kt
 package com.example.proyectodegrado.data.repository
 
 import android.content.Context

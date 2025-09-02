@@ -20,15 +20,28 @@ object DependencyProvider {
     private lateinit var applicationContext: Context
     fun initialize(context: Context) {
         applicationContext = context.applicationContext
+        // ← Primea la sesión desde prefs si estaban guardadas
+        val uid = preferences.getUserId()?.toIntOrNull()
+        val sid = preferences.getStoreId()?.toIntOrNull()
+        if (uid != null) session.userId = uid
+        if (sid != null) session.storeId = sid
     }
 
     // --- Sesión (simple) ---
     private data class Session(var userId: Int? = null, var storeId: Int? = null)
     private val session = Session()
+
     fun setCurrentSession(userId: Int, storeId: Int) {
         session.userId = userId
         session.storeId = storeId
+        preferences.saveUserId(userId.toString())
+        preferences.saveStoreId(storeId.toString())
     }
+
+    private val preferences by lazy { AppPreferences(applicationContext) }
+
+    fun getCurrentStoreId(): Int = session.storeId ?: 1
+    fun getCurrentUserId(): Int = session.userId ?: 1
 
     // --- API Services (unificados con RetrofitClient) ---
     private val userService: UserService by lazy { RetrofitClient.createService(UserService::class.java) }
@@ -86,7 +99,7 @@ object DependencyProvider {
         WorkersViewModel(workerRepository, storeRepository, scheduleRepository)
 
     fun provideProfileViewModel(): ProfileViewModel =
-        ProfileViewModel(userRepository, imageRepository)
+        ProfileViewModel(userRepository, imageRepository, preferences)
 
     fun provideCashViewModel(
         storeId: Int? = null,
@@ -97,6 +110,4 @@ object DependencyProvider {
         return CashViewModel(cashRepository, sid, uid)
     }
 
-    fun getCurrentStoreId(): Int = session.storeId ?: 1
-    fun getCurrentUserId(): Int = session.userId ?: 1
 }

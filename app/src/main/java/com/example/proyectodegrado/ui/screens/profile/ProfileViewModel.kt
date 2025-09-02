@@ -3,107 +3,114 @@ package com.example.proyectodegrado.ui.screens.profile
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.proyectodegrado.data.model.ImageUploadResult
 import com.example.proyectodegrado.data.model.User
-import com.example.proyectodegrado.data.repository.UserRepository
 import com.example.proyectodegrado.data.repository.ImageRepository
-import com.example.proyectodegrado.ui.components.UploadImageState
+import com.example.proyectodegrado.data.repository.UserRepository
+import com.example.proyectodegrado.di.AppPreferences
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import com.example.proyectodegrado.data.model.ImageUploadResult
 
 class ProfileViewModel(
-    private val userRepository: UserRepository,
-    private val imageRepository: ImageRepository  // <- nuevo
+    private val userRepo: UserRepository,
+    private val imageRepo: ImageRepository,
+    private val prefs: AppPreferences
 ) : ViewModel() {
 
-    private val _user = MutableStateFlow<User?>(null)
-    val user: StateFlow<User?> = _user
+    data class UiState(
+        val loading: Boolean = false,
+        val error: String? = null,
+        val fullName: String = "",
+        val email: String = "",
+        val phone: String = "",
+        // Para mostrar imagen en UI (http/https o content:// para preview local)
+        val avatarUrl: String? = null,
+        // KEY S3 pendiente de guardar
+        val avatarKey: String? = null,
+        // Para habilitar/deshabilitar el botón Guardar
+        val hasChanges: Boolean = false
+    )
 
-    private val _uploadState = MutableStateFlow<UploadImageState>(UploadImageState.Idle)
-    val uploadState: StateFlow<UploadImageState> = _uploadState
+    private val _ui = MutableStateFlow(UiState())
+    val ui: StateFlow<UiState> = _ui.asStateFlow()
 
-    /** Key temporal cuando el usuario selecciona un nuevo avatar */
-    private val _pendingAvatarKey = MutableStateFlow<String?>(null)
-    val pendingAvatarKey: StateFlow<String?> = _pendingAvatarKey
+    init { loadMe() }
 
-    init { loadUser() }
-
-    private fun loadUser() {
-        viewModelScope.launch { _user.value = userRepository.getCurrentUser() }
-    }
-
-    fun handleAvatarSelection(uri: Uri?) {
-        if (uri == null) return
-        val id = _user.value?.id
-        if (id == null) {
-            _uploadState.value = UploadImageState.Error("No se puede cambiar el avatar sin un ID de usuario.")
-            return
-        }
-
-        viewModelScope.launch {
-            _uploadState.value = UploadImageState.Uploading
-            // ✨ CAMBIO: Usar el método unificado 'uploadImage'.
-            when (val result = imageRepository.uploadImage(uri, "users", id, "avatar")) {
-                is ImageUploadResult.Success -> {
-                    _pendingAvatarKey.value = result.imageKey
-                    // Actualizamos el perfil inmediatamente con la nueva clave.
-                    updateProfileWithNewAvatar(result.imageKey)
+    // ---------- Carga perfil ----------
+    fun loadMe() = viewModelScope.launch {
+        _ui.update { it.copy(loading = true, error = null) }
+        try {
+            val user: User? = userRepo.getCurrentUser()
+            if (user != null) {
+                _ui.update {
+                    it.copy(
+                        loading = false,
+                        fullName = user.fullName ?: "",
+                        email = user.email ?: "",
+                        phone = user.phone ?: "",
+                        // Si backend devuelve una URL completa, se usa; si es key, mostramos placeholder
+                        avatarUrl = user.avatar?.takeIf { url -> url.startsWith("http") },
+                        avatarKey = null,
+                        hasChanges = false
+                    )
                 }
-                is ImageUploadResult.Error -> {
-                    _uploadState.value = UploadImageState.Error(result.message)
-                }
-            }
-        }
-    }
-
-    private fun updateProfileWithNewAvatar(avatarKey: String) {
-        viewModelScope.launch {
-            val currentUser = _user.value ?: return@launch
-            val success = userRepository.updateUserProfile(
-                fullName = currentUser.fullName,
-                email = currentUser.email,
-                phone = currentUser.phone,
-                avatarKey = avatarKey,
-                removeImage = false
-            )
-            if (success) {
-                _pendingAvatarKey.value = null
-                loadUser() // Recargar el usuario para mostrar la nueva imagen
             } else {
-                _uploadState.value = UploadImageState.Error("No se pudo guardar el nuevo avatar.")
+                _ui.update { it.copy(loading = false, error = "No se pudo cargar el usuario") }
             }
-            _uploadState.value = UploadImageState.Idle
+        } catch (e: Exception) {
+            _ui.update { it.copy(loading = false, error = e.message ?: "Error al cargar perfil") }
         }
     }
 
-    fun removeAvatar(onSuccess: () -> Unit, onError: (String) -> Unit) {
-        viewModelScope.launch {
-            val ok = userRepository.updateUserProfile(
-                fullName = _user.value?.fullName ?: "",
-                email = _user.value?.email ?: "",
-                phone = _user.value?.phone ?: "",
-                avatarKey = null,
-                removeImage = true
-            )
-            if (ok) { loadUser(); onSuccess() } else onError("No se pudo eliminar el avatar")
+    // ---------- Binding de campos ----------
+    fun onFullNameChange(v: String) = _ui.update { it.copy(fullName = v, hasChanges = true) }
+    fun onEmailChange(v: String)    = _ui.update { it.copy(email = v, hasChanges = true) }
+    fun onPhoneChange(v: String)    = _ui.update { it.copy(phone = v, hasChanges = true) }
+
+    // ---------- Elegir avatar (sube a S3 con presign PUT) ----------
+    fun onPickAvatar(uri: Uri?) = viewModelScope.launch {
+        if (uri == null) return@launch
+        val uid = prefs.getUserId()?.toIntOrNull()
+        if (uid == null) {
+            _ui.update { it.copy(error = "No hay usuario en sesión") }
+            return@launch
+        }
+        // Preview inmediato (Coil acepta content://)
+        _ui.update { it.copy(avatarUrl = uri.toString(), loading = true, error = null) }
+
+        when (val r = imageRepo.uploadImage(uri, entityType = "users", entityId = uid, fileKind = "avatar")) {
+            is ImageUploadResult.Success ->
+                _ui.update { it.copy(loading = false, avatarKey = r.imageKey, hasChanges = true) }
+            is ImageUploadResult.Error   ->
+                _ui.update { it.copy(loading = false, error = r.message) }
         }
     }
 
-    fun updateProfile(fullName: String, email: String, phone: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
-        viewModelScope.launch {
-            val ok = userRepository.updateUserProfile(
-                fullName = fullName,
-                email = email,
-                phone = phone,
-                avatarKey = _pendingAvatarKey.value,
-                removeImage = false
-            )
-            if (ok) {
-                _pendingAvatarKey.value = null
-                loadUser()
-                onSuccess()
-            } else onError("Error actualizando datos")
+    // ---------- Quitar avatar ----------
+    fun removeAvatar() = viewModelScope.launch {
+        _ui.update { it.copy(avatarUrl = null, avatarKey = null, hasChanges = true) }
+    }
+
+    // ---------- Guardar ----------
+    fun save(onDone: () -> Unit = {}) = viewModelScope.launch {
+        val st = _ui.value
+        _ui.update { it.copy(loading = true, error = null) }
+        val ok = userRepo.updateUserProfile(
+            fullName   = st.fullName,
+            email      = st.email,
+            phone      = st.phone,
+            avatarKey  = st.avatarKey,        // si hay KEY nueva, el backend la guarda
+            removeImage = (st.avatarUrl == null && st.avatarKey == null) // quitar avatar
+        )
+        if (ok) {
+            // Refrescamos para que venga avatarUrl definitiva (si backend devuelve URL)
+            loadMe()
+            onDone()
+        } else {
+            _ui.update { it.copy(loading = false, error = "No se pudo guardar") }
         }
     }
 }
