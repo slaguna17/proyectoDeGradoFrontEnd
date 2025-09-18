@@ -15,7 +15,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -24,14 +23,12 @@ import com.example.proyectodegrado.R
 
 @Composable
 fun ProfileScreen(viewModel: ProfileViewModel) {
-    // ÚNICO estado observado desde el VM
     val ui by viewModel.ui.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
         viewModel.loadMe()
     }
 
-    // Selector de imagen -> llama al VM
     val pickImage = rememberLauncherForActivityResult(
         ActivityResultContracts.GetContent()
     ) { uri: Uri? -> viewModel.onPickAvatar(uri) }
@@ -53,7 +50,7 @@ fun ProfileScreen(viewModel: ProfileViewModel) {
                 contentAlignment = Alignment.Center
             ) {
                 AsyncImage(
-                    model = ui.avatarUrl ?: R.drawable.lemon_drink, // usa tu placeholder
+                    model = ui.avatarUrl ?: R.drawable.lemon_drink,
                     contentDescription = "Avatar",
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.matchParentSize()

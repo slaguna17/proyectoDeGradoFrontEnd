@@ -146,7 +146,7 @@ fun AppNavigation() {
                     .fillMaxSize()
             ) {
                 composable("login")    { LoginScreen(navController, loginViewModel) }
-                composable("register") { RegisterScreen(navController, registerViewModel) }
+                composable("register") { RegisterScreen(  registerViewModel, navController) }
                 composable("home")     { HomeScreen() }
                 composable("categories"){ CategoriesScreen(navController, categoryViewModel) }
                 composable("products") { AllProductsScreen(navController, productViewModel) }
