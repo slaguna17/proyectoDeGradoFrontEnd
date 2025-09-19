@@ -29,7 +29,7 @@ data class RegisterUi(
     val confirmPassword: String = "",
 
     val avatarPreview: Uri? = null,
-    val avatarKey: String? = null, // KEY subida a S3
+    val avatarKey: String? = null, // KEY upload to S3
 
     val loading: Boolean = false,
     val uploading: Boolean = false,
@@ -48,7 +48,6 @@ class RegisterViewModel(
     private val _roles = MutableStateFlow<List<Role>>(emptyList())
     val roles: StateFlow<List<Role>> = _roles
 
-    // Se emite cuando iniciamos sesión automáticamente después de registrar
     private val _authState = MutableLiveData<Result<LoginResponse>>()
     val authState: LiveData<Result<LoginResponse>> = _authState
 
@@ -82,7 +81,7 @@ class RegisterViewModel(
             when (val up = imageRepository.uploadImage(
                 imageUri = uri,
                 entityType = "users",
-                entityId = 0,           // usuario aún no existe → carpeta 0
+                entityId = 0,           //if users does not exist yet -> folder 0
                 fileKind = "avatar"
             )) {
                 is ImageUploadResult.Success ->
@@ -124,8 +123,8 @@ class RegisterViewModel(
                     dateOfBirth = u.dateOfBirth.ifBlank { "1900-01-01" },
                     phone = u.phone,
                     roleId = u.roleId!!,
-                    avatarKey = u.avatarKey, // KEY de S3 si se subió
-                    avatar = null           // no usamos URL directa
+                    avatarKey = u.avatarKey, //S3 Key if uploaded
+                    avatar = null
                 )
                 val resp = userRepository.registerUser(req)
                 if (resp.isSuccessful) {
@@ -159,6 +158,5 @@ class RegisterViewModel(
         }
     }
 
-    // Kotlin stdlib extension para brevedad
     private inline fun <T> MutableStateFlow<T>.update(block: (T) -> T) { value = block(value) }
 }

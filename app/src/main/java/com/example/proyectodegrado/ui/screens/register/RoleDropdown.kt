@@ -1,4 +1,4 @@
-package com.example.proyectodegrado.ui.components
+package com.example.proyectodegrado.ui.screens.register
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -31,7 +31,6 @@ fun RoleDropdown(
 ) {
     var expanded by remember { mutableStateOf(false) }
 
-    // Texto visible en el TextField según id seleccionado
     val selectedText = remember(roles, selectedRoleId) {
         roles.firstOrNull { it.id == selectedRoleId }?.name ?: ""
     }
@@ -62,17 +61,6 @@ fun RoleDropdown(
                     onClick = {
                         expanded = false
                         onRoleSelected(role.id)
-                    }
-                )
-            }
-
-            // Opción para "limpiar" selección (opcional)
-            if (roles.isNotEmpty()) {
-                DropdownMenuItem(
-                    text = { Text("— Sin rol —") },
-                    onClick = {
-                        expanded = false
-                        onRoleSelected(null)
                     }
                 )
             }

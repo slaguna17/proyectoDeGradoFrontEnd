@@ -20,7 +20,7 @@ import com.example.proyectodegrado.R
 @Composable
 fun DrawerContent(
     onItemSelected: (String) -> Unit,
-    avatarUrl: String? = null        // <- URL del avatar (puede ser null)
+    avatarUrl: String? = null        // <- Avatar URL (can be null)
 ) {
     val homeIcon = ImageVector.vectorResource(id = R.drawable.home)
     val productIcon = ImageVector.vectorResource(id = R.drawable.products)

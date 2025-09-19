@@ -36,11 +36,8 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.proyectodegrado.R
-import com.example.proyectodegrado.ui.components.RoleDropdown
 import java.text.SimpleDateFormat
 import java.util.*
-
-// preferencias / provider (mismo uso que en LoginScreen)
 import com.example.proyectodegrado.di.AppPreferences
 import com.example.proyectodegrado.di.DependencyProvider
 
@@ -52,14 +49,10 @@ fun RegisterScreen(
 ) {
     val ui by viewModel.ui.collectAsState()
     val roles by viewModel.roles.collectAsState()
-
     val context = LocalContext.current
     val prefs = remember { AppPreferences(context) }
-
-    // Observa el resultado de auto-login
     val authState by viewModel.authState.observeAsState()
 
-    // Reacciona al auto-login exitoso: guarda sesión y navega
     LaunchedEffect(authState) {
         authState?.let { result ->
             if (result.isSuccess) {
@@ -229,7 +222,7 @@ fun RegisterScreen(
             Text(ui.successMsg!!, color = MaterialTheme.colorScheme.primary)
         }
 
-        // Avatar (opcional)
+        // Avatar (optional)
         Box(
             modifier = Modifier
                 .size(110.dp)
@@ -265,7 +258,6 @@ fun RegisterScreen(
         Button(
             onClick = {
                 if (ui.uploading) return@Button
-                // YA NO navega aquí. Solo dispara register();
                 viewModel.register()
             },
             enabled = !ui.loading && !ui.uploading,

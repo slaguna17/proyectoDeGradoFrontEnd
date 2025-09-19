@@ -68,7 +68,7 @@ fun AppNavigation() {
     val scope = rememberCoroutineScope()
     var currentTitle by rememberSaveable { mutableStateOf("Inicio") }
 
-    // Leemos el UiState del perfil para el avatar del Drawer
+    // Read Profile UI State
     val profileUi by profileViewModel.ui.collectAsStateWithLifecycle()
 
     LaunchedEffect(navController) {
@@ -96,7 +96,7 @@ fun AppNavigation() {
                         "Proveedores"       -> "providers"
                         "Código de barras"  -> "barcode"
                         "Ajustes"           -> "settings"
-                        "profile"           -> "profile" // atajo para tu botón/avatar
+                        "profile"           -> "profile"
                         else -> null
                     }
                     scope.launch {
