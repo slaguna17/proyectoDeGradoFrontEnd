@@ -15,6 +15,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.example.proyectodegrado.data.model.Category
 import com.example.proyectodegrado.data.model.CategoryRequest
+import com.example.proyectodegrado.ui.components.RefreshableContainer
 import kotlinx.coroutines.launch
 
 @Composable
@@ -25,6 +26,7 @@ fun CategoriesScreen(
     val categories by viewModel.categories.collectAsStateWithLifecycle()
     val formState by viewModel.formState.collectAsStateWithLifecycle()
     val uploadState by viewModel.imageUploadUiState.collectAsStateWithLifecycle()
+    val loading by viewModel.loading.collectAsStateWithLifecycle()
 
     var showCreate by rememberSaveable { mutableStateOf(false) }
     var showEdit by rememberSaveable { mutableStateOf(false) }
@@ -39,7 +41,7 @@ fun CategoriesScreen(
         scope.launch { snackbarHostState.showSnackbar(message) }
     }
 
-    LaunchedEffect(Unit) {  viewModel.fetchCategories(onError = ::showSnackbar) }
+    LaunchedEffect(Unit) { viewModel.fetchCategories(onError = ::showSnackbar) }
 
     fun refresh() = viewModel.fetchCategories(onError = ::showSnackbar)
 
@@ -54,30 +56,37 @@ fun CategoriesScreen(
             }
         }
     ) { padding ->
-        if (categories.isEmpty()) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("No hay categorías. ¡Agrega una!")
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(categories, key = { it.id }) { cat ->
-                    CategoryItem(
-                        category = cat,
-                        navController = navController,
-                        onEdit = {
-                            viewModel.prepareFormForEdit(it)
-                            categoryToInteract = it
-                            showEdit = true
-                        },
-                        onDelete = {
-                            categoryToInteract = it
-                            showDelete = true
-                        }
-                    )
+        RefreshableContainer(
+            refreshing = loading,
+            onRefresh = { refresh() },
+            modifier = Modifier
+                .fillMaxSize()
+        ) {
+            if (categories.isEmpty() && !loading) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("No hay categorías. ¡Agrega una!")
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(categories, key = { it.id }) { cat ->
+                        CategoryItem(
+                            category = cat,
+                            navController = navController,
+                            onEdit = {
+                                viewModel.prepareFormForEdit(it)
+                                categoryToInteract = it
+                                showEdit = true
+                            },
+                            onDelete = {
+                                categoryToInteract = it
+                                showDelete = true
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -96,7 +105,7 @@ fun CategoriesScreen(
             onCreateClick = {
                 viewModel.createCategory(
                     onSuccess = { showCreate = false; refresh() },
-                    onError = { /* Manejar error con Snackbar */ }
+                    onError = { showSnackbar(it) }
                 )
             }
         )
@@ -116,7 +125,7 @@ fun CategoriesScreen(
                 viewModel.updateCategory(
                     id = categoryToInteract!!.id,
                     onSuccess = { showEdit = false; refresh() },
-                    onError = { /* Manejar error con Snackbar */ }
+                    onError = { showSnackbar(it) }
                 )
             }
         )
@@ -132,7 +141,7 @@ fun CategoriesScreen(
                 viewModel.deleteCategory(
                     id = categoryToInteract!!.id,
                     onSuccess = { showDelete = false; refresh() },
-                    onError = { /* Manejar error con Snackbar */ }
+                    onError = { showSnackbar(it) }
                 )
             }
         )

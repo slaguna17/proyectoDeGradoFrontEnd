@@ -47,7 +47,7 @@ fun CreateWorkerScreen(
 
     // Carga tiendas y horarios al entrar
     LaunchedEffect(Unit) {
-        viewModel.loadStoresAndSchedules()
+//        viewModel.loadStoresAndSchedules()
     }
 
     Column(

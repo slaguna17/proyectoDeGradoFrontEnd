@@ -33,19 +33,44 @@ class WorkersViewModel(
     private val _assignError = MutableStateFlow<String?>(null)
     val assignError: StateFlow<String?> = _assignError.asStateFlow()
 
+    // 🔹 Nuevo: estado de carga para Pull-to-Refresh
+    private val _loading = MutableStateFlow(false)
+    val loading: StateFlow<Boolean> = _loading.asStateFlow()
+
     private var selectedStoreId: Int? = null
 
+    /** Carga tiendas y turnos + lista de empleados (opcionalmente filtrada). */
+    fun refreshAll(storeId: Int? = selectedStoreId) {
+        viewModelScope.launch {
+            _loading.value = true
+            try {
+                // Carga catálogos en paralelo simple (secuencial está bien para este caso)
+                _stores.value = storeRepository.getAllStores()
+                _schedules.value = scheduleRepository.getAllSchedules()
+                // Luego la lista (filtrada)
+                filterByStore(storeId, toggleLoading = false)
+            } finally {
+                _loading.value = false
+            }
+        }
+    }
+
     // Filtrado por tienda
-    fun filterByStore(storeId: Int?) {
+    fun filterByStore(storeId: Int?, toggleLoading: Boolean = true) {
         selectedStoreId = storeId
         viewModelScope.launch {
-            val result = if (storeId != null) {
-                workerRepository.getEmployeesByStore(storeId)
-            } else {
-                workerRepository.getAllEmployees()
+            if (toggleLoading) _loading.value = true
+            try {
+                val result = if (storeId != null) {
+                    workerRepository.getEmployeesByStore(storeId)
+                } else {
+                    workerRepository.getAllEmployees()
+                }
+                Log.d("WORKERS", "Empleados recibidos: ${result.size} $result")
+                _employees.value = result.distinctBy { it.id }
+            } finally {
+                if (toggleLoading) _loading.value = false
             }
-            Log.d("WORKERS", "Empleados recibidos: ${result.size} $result")
-            _employees.value = result.distinctBy { it.id }
         }
     }
 
@@ -58,7 +83,7 @@ class WorkersViewModel(
         viewModelScope.launch {
             val result = workerRepository.registerWorker(request)
             if (result.isSuccess) {
-                filterByStore(null) // Recargar lista general después de registrar
+                refreshAll() // recarga todo para mantener coherencia
                 onSuccess()
             } else {
                 onError(result.exceptionOrNull()?.message ?: "Error registrando empleado")
@@ -85,9 +110,7 @@ class WorkersViewModel(
         _selectedWorkerContext.value = _selectedWorkerContext.value?.copy(formState = state)
     }
 
-    fun assignSchedule(
-        onSuccess: () -> Unit
-    ) {
+    fun assignSchedule(onSuccess: () -> Unit) {
         val context = _selectedWorkerContext.value ?: return
         val worker = context.worker
         val storeId = context.formState.storeId
@@ -106,7 +129,7 @@ class WorkersViewModel(
             val ok = workerRepository.assignSchedule(worker.id, storeId, scheduleId)
             if (ok) {
                 closeAssignScheduleDialog()
-                filterByStore(storeId)
+                refreshAll(storeId)
                 onSuccess()
             } else {
                 _assignError.value = "Error al asignar"
@@ -114,18 +137,10 @@ class WorkersViewModel(
         }
     }
 
-    // Cargar tiendas y turnos
-    fun loadStoresAndSchedules() {
-        viewModelScope.launch {
-            _stores.value = storeRepository.getAllStores()
-            _schedules.value = scheduleRepository.getAllSchedules()
-        }
-    }
-
     fun updateWorker(workerId: Int, name: String, email: String, phone: String, onSuccess: () -> Unit) {
         viewModelScope.launch {
             workerRepository.updateWorker(workerId, name, email, phone)
-            filterByStore(selectedStoreId) // actualiza la lista
+            refreshAll()
             onSuccess()
         }
     }
@@ -133,9 +148,8 @@ class WorkersViewModel(
     fun deleteWorker(workerId: Int, onSuccess: () -> Unit) {
         viewModelScope.launch {
             workerRepository.deleteWorker(workerId)
-            filterByStore(selectedStoreId)
+            refreshAll()
             onSuccess()
         }
     }
-
 }

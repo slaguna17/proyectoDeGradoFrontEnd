@@ -11,28 +11,28 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.proyectodegrado.ui.components.StoreDropdown
+import com.example.proyectodegrado.ui.components.RefreshableContainer
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable
 fun WorkersScreen(
     viewModel: WorkersViewModel,
     navController: NavController
 ) {
-    val employees by viewModel.employees.collectAsState()
-    val stores by viewModel.stores.collectAsState()
-    val schedules by viewModel.schedules.collectAsState()
-    val selectedWorkerContext by viewModel.selectedWorkerContext.collectAsState()
-    val assignError by viewModel.assignError.collectAsState()
+    val employees by viewModel.employees.collectAsStateWithLifecycle()
+    val stores by viewModel.stores.collectAsStateWithLifecycle()
+    val schedules by viewModel.schedules.collectAsStateWithLifecycle()
+    val selectedWorkerContext by viewModel.selectedWorkerContext.collectAsStateWithLifecycle()
+    val assignError by viewModel.assignError.collectAsStateWithLifecycle()
+    val loading by viewModel.loading.collectAsStateWithLifecycle()
 
     // Estados para editar/eliminar
     var workerToEdit by remember { mutableStateOf<com.example.proyectodegrado.data.model.Worker?>(null) }
     var workerToDelete by remember { mutableStateOf<com.example.proyectodegrado.data.model.Worker?>(null) }
     var selectedStoreId by remember { mutableStateOf<Int?>(null) }
 
-    // Cargar datos al inicio
-    LaunchedEffect(Unit) {
-        viewModel.loadStoresAndSchedules()
-        viewModel.filterByStore(null)
-    }
+    // Carga inicial (catálogos + lista)
+    LaunchedEffect(Unit) { viewModel.refreshAll() }
 
     Scaffold(
         floatingActionButton = {
@@ -41,77 +41,77 @@ fun WorkersScreen(
             ) { Icon(Icons.Default.PersonAdd, contentDescription = "Agregar empleado") }
         }
     ) { innerPadding ->
-        Column(
-            Modifier
+        RefreshableContainer(
+            refreshing = loading,
+            onRefresh = { viewModel.refreshAll(selectedStoreId) },
+            modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 32.dp, vertical = 16.dp)
         ) {
-            StoreDropdown(
-                stores = stores,
-                selectedStoreId = selectedStoreId,
-                onStoreSelected = {
-                    selectedStoreId = it
-                    viewModel.filterByStore(it)
-                }
-            )
-            Spacer(Modifier.height(12.dp))
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 32.dp, vertical = 16.dp)
+            ) {
+                StoreDropdown(
+                    stores = stores,
+                    selectedStoreId = selectedStoreId,
+                    onStoreSelected = {
+                        selectedStoreId = it
+                        viewModel.filterByStore(it)
+                    }
+                )
+                Spacer(Modifier.height(12.dp))
 
-            if (employees.isEmpty()) {
-                Text("No hay empleados en esta tienda.", style = MaterialTheme.typography.bodyMedium)
-            } else {
-                LazyColumn(modifier = Modifier.weight(1f)) {
-                    items(employees, key = { it.id }) { worker ->
-                        WorkerItem(
-                            worker = worker,
-                            onAssignClick = { viewModel.openAssignScheduleDialog(worker) },
-                            onEditClick = { workerToEdit = worker },
-                            onDeleteClick = { workerToDelete = worker }
-                        )
+                if (employees.isEmpty() && !loading) {
+                    Text("No hay empleados en esta tienda.", style = MaterialTheme.typography.bodyMedium)
+                } else {
+                    LazyColumn(modifier = Modifier.weight(1f)) {
+                        items(employees, key = { it.id }) { worker ->
+                            WorkerItem(
+                                worker = worker,
+                                onAssignClick = { viewModel.openAssignScheduleDialog(worker) },
+                                onEditClick = { workerToEdit = worker },
+                                onDeleteClick = { workerToDelete = worker }
+                            )
+                        }
                     }
                 }
             }
         }
 
-        // --- Dialogos ---
+        // --- Diálogos ---
         if (selectedWorkerContext != null) {
             AssignScheduleDialog(
                 stores = stores,
                 schedules = schedules,
                 formState = selectedWorkerContext!!.formState,
                 onFormStateChange = viewModel::updateAssignForm,
-                onConfirm = { viewModel.assignSchedule { /* Muestra snackbar o mensaje */ } },
+                onConfirm = { viewModel.assignSchedule { /* snackbar si quieres */ } },
                 onDismiss = { viewModel.closeAssignScheduleDialog() },
                 errorMessage = assignError
             )
         }
 
-        // Editar empleado
         workerToEdit?.let { worker ->
             EditWorkerDialog(
                 initialName = worker.fullName ?: "",
                 initialEmail = worker.email ?: "",
-                initialPhone = worker.phone?: "",
+                initialPhone = worker.phone ?: "",
                 onConfirm = { name, email, phone ->
-                    viewModel.updateWorker(worker.id, name, email, phone) {
-                        workerToEdit = null
-                    }
+                    viewModel.updateWorker(worker.id, name, email, phone) { workerToEdit = null }
                 },
                 onDismiss = { workerToEdit = null }
             )
         }
 
-        // Eliminar empleado
         workerToDelete?.let { worker ->
             DeleteWorkerDialog(
                 workerName = worker.fullName ?: worker.username,
                 onConfirm = {
-                    viewModel.deleteWorker(worker.id) {
-                        workerToDelete = null
-                    }
+                    viewModel.deleteWorker(worker.id) { workerToDelete = null }
                 },
                 onDismiss = { workerToDelete = null }
             )
         }
     }
 }
-

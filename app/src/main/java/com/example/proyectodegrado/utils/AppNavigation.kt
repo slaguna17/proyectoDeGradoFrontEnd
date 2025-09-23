@@ -48,25 +48,29 @@ import com.example.proyectodegrado.ui.screens.workers.CreateWorkerScreen
 import com.example.proyectodegrado.ui.screens.workers.WorkersScreen
 import kotlinx.coroutines.launch
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.remember
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
 
-    val loginViewModel = DependencyProvider.provideLoginViewModel()
-    val registerViewModel = DependencyProvider.provideRegisterViewModel()
-    val categoryViewModel = DependencyProvider.provideCategoryViewModel()
-    val productViewModel = DependencyProvider.provideProductViewModel()
-    val storeViewModel = DependencyProvider.provideStoreViewModel()
-    val providerViewModel = DependencyProvider.provideProviderViewModel()
-    val scheduleViewModel = DependencyProvider.provideScheduleViewModel()
-    val workersViewModel = DependencyProvider.provideWorkersViewModel()
-    val profileViewModel = DependencyProvider.provideProfileViewModel()
+    val loginViewModel = remember { DependencyProvider.provideLoginViewModel() }
+    val registerViewModel = remember { DependencyProvider.provideRegisterViewModel() }
+    val categoryViewModel = remember { DependencyProvider.provideCategoryViewModel() }
+    val productViewModel = remember { DependencyProvider.provideProductViewModel() }
+    val storeViewModel = remember { DependencyProvider.provideStoreViewModel() }
+    val providerViewModel = remember { DependencyProvider.provideProviderViewModel() }
+    val scheduleViewModel = remember { DependencyProvider.provideScheduleViewModel() }
+    val workersViewModel = remember { DependencyProvider.provideWorkersViewModel() }
+    val profileViewModel = remember { DependencyProvider.provideProfileViewModel() }
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     var currentTitle by rememberSaveable { mutableStateOf("Inicio") }
+
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
 
     // Read Profile UI State
     val profileUi by profileViewModel.ui.collectAsStateWithLifecycle()
@@ -79,7 +83,6 @@ fun AppNavigation() {
 
     ModalNavigationDrawer(
         drawerState = drawerState,
-        gesturesEnabled = drawerState.isOpen,
         drawerContent = {
             DrawerContent(
                 avatarUrl = profileUi.avatarUrl,
@@ -101,11 +104,10 @@ fun AppNavigation() {
                     }
                     scope.launch {
                         drawerState.close()
-                        route?.let {
-                            navController.navigate(it) {
-                                popUpTo(navController.graph.startDestinationId) {
-                                    saveState = true
-                                }
+                        val baseCurrent = currentRoute?.substringBefore("/")
+                        if (route != null && route != baseCurrent) {
+                            navController.navigate(route) {
+                                popUpTo(navController.graph.startDestinationId) { saveState = true }
                                 launchSingleTop = true
                                 restoreState = true
                             }
