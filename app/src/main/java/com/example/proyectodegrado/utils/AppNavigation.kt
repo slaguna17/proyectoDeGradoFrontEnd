@@ -49,6 +49,7 @@ import com.example.proyectodegrado.ui.screens.workers.WorkersScreen
 import kotlinx.coroutines.launch
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.remember
+import com.example.proyectodegrado.ui.screens.role.RoleScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,6 +61,7 @@ fun AppNavigation() {
     val categoryViewModel = remember { DependencyProvider.provideCategoryViewModel() }
     val productViewModel = remember { DependencyProvider.provideProductViewModel() }
     val storeViewModel = remember { DependencyProvider.provideStoreViewModel() }
+    val roleViewModel = remember { DependencyProvider.provideRoleViewModel() }
     val providerViewModel = remember { DependencyProvider.provideProviderViewModel() }
     val scheduleViewModel = remember { DependencyProvider.provideScheduleViewModel() }
     val workersViewModel = remember { DependencyProvider.provideWorkersViewModel() }
@@ -92,6 +94,7 @@ fun AppNavigation() {
                         "Productos"         -> "products"
                         "Categorías"        -> "categories"
                         "Tienda"            -> "store"
+                        "Roles"             -> "role"
                         "Empleados"         -> "workers"
                         "Horarios"          -> "schedule"
                         "Pronósticos"       -> "forecast"
@@ -162,8 +165,9 @@ fun AppNavigation() {
                 }
 
                 composable("store")   { StoreScreen(navController, storeViewModel) }
+                composable("role")   { RoleScreen(navController, roleViewModel) }
                 composable("workers") { WorkersScreen(navController = navController, viewModel = workersViewModel) }
-                composable("registerEmployee") { CreateWorkerScreen(navController, workersViewModel) }
+                composable("registerEmployee") { CreateWorkerScreen(navController = navController, workersViewModel = workersViewModel, registerViewModel = registerViewModel) }
                 composable("schedule"){ ScheduleScreen(navController, scheduleViewModel) }
                 composable("forecast"){ ForecastScreen(navController) }
 

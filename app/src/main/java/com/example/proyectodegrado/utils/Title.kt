@@ -7,6 +7,7 @@ fun determineTitle(route: String?, categoryName: String? = null): String {
         route?.startsWith("products/") == true -> categoryName ?: "Productos"
         route == "categories" -> "Categorías"
         route == "store" -> "Tienda"
+        route == "role" -> "Roles"
         route == "workers" -> "Empleados"
         route == "schedule" -> "Horarios"
         route == "forecast" -> "Pronósticos"

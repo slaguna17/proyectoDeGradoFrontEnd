@@ -10,6 +10,7 @@ import com.example.proyectodegrado.ui.screens.products.ProductViewModel
 import com.example.proyectodegrado.ui.screens.profile.ProfileViewModel
 import com.example.proyectodegrado.ui.screens.providers.ProvidersViewModel
 import com.example.proyectodegrado.ui.screens.register.RegisterViewModel
+import com.example.proyectodegrado.ui.screens.role.RoleViewModel
 import com.example.proyectodegrado.ui.screens.schedule.ScheduleViewModel
 import com.example.proyectodegrado.ui.screens.store.StoreViewModel
 import com.example.proyectodegrado.ui.screens.workers.WorkersViewModel
@@ -48,6 +49,7 @@ object DependencyProvider {
     private val productService: ProductService by lazy { RetrofitClient.createService(ProductService::class.java) }
     private val categoryService: CategoryService by lazy { RetrofitClient.createService(CategoryService::class.java) }
     private val storeService: StoreService by lazy { RetrofitClient.createService(StoreService::class.java) }
+    private val roleService: RoleService by lazy { RetrofitClient.createService(RoleService::class.java) }
     private val providerService: ProviderService by lazy { RetrofitClient.createService(ProviderService::class.java) }
     private val scheduleService: ScheduleService by lazy { RetrofitClient.createService(ScheduleService::class.java) }
     private val workerService: WorkerService by lazy { RetrofitClient.createService(WorkerService::class.java) }
@@ -59,6 +61,7 @@ object DependencyProvider {
     private val productRepository: ProductRepository by lazy { ProductRepository(productService) }
     private val categoryRepository: CategoryRepository by lazy { CategoryRepository(categoryService) }
     private val storeRepository: StoreRepository by lazy { StoreRepository(storeService) }
+    private val roleRepository: RoleRepository by lazy { RoleRepository(roleService) }
     private val providerRepository: ProviderRepository by lazy { ProviderRepository(providerService) }
     private val scheduleRepository: ScheduleRepository by lazy { ScheduleRepository(scheduleService) }
     private val workerRepository: WorkerRepository by lazy { WorkerRepository(workerService) }
@@ -88,6 +91,9 @@ object DependencyProvider {
 
     fun provideStoreViewModel(): StoreViewModel =
         StoreViewModel(storeRepository, imageRepository)
+
+    fun provideRoleViewModel(): RoleViewModel =
+        RoleViewModel(roleRepository)
 
     fun provideProviderViewModel(): ProvidersViewModel =
         ProvidersViewModel(providerRepository)
