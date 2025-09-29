@@ -18,7 +18,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -29,6 +31,7 @@ import com.example.proyectodegrado.ui.components.RefreshableContainer
 @Composable
 fun ProfileScreen(viewModel: ProfileViewModel) {
     val ui by viewModel.ui.collectAsStateWithLifecycle()
+    val accountPainter = rememberVectorPainter(Icons.Rounded.AccountCircle)
 
     // Carga inicial
     LaunchedEffect(Unit) { viewModel.loadMe() }
@@ -56,12 +59,12 @@ fun ProfileScreen(viewModel: ProfileViewModel) {
                 Box(
                     modifier = Modifier
                         .wrapContentSize()
-                        .padding(bottom = 12.dp), // separa del campo de texto
+                        .padding(bottom = 12.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     // Contenedor externo SIN clip (permite que el botón sobresalga)
                     Box(
-                        modifier = Modifier.size(140.dp), // más grande que el avatar
+                        modifier = Modifier.size(140.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         // Avatar adentro con clip circular
@@ -72,13 +75,18 @@ fun ProfileScreen(viewModel: ProfileViewModel) {
                                 .background(Color.White),
                             contentAlignment = Alignment.Center
                         ) {
-                            val avatarModel: Any? = ui.avatarUrl
+                            // PRIORIDAD: preview local -> URL remota
+                            val avatarModel: Any? = ui.avatarPreview ?: ui.avatarUrl
+
                             if (avatarModel != null) {
                                 AsyncImage(
                                     model = avatarModel,
                                     contentDescription = "Avatar",
                                     contentScale = ContentScale.Crop,
-                                    modifier = Modifier.matchParentSize()
+                                    modifier = Modifier.matchParentSize(),
+                                    placeholder = accountPainter,   // 👈 se muestra mientras carga
+                                    error = accountPainter,         // 👈 se muestra si falla
+                                    fallback = accountPainter       // opcional, si el model fuera null
                                 )
                             } else {
                                 Icon(
@@ -96,8 +104,8 @@ fun ProfileScreen(viewModel: ProfileViewModel) {
                             onClick = { pickImage.launch("image/*") },
                             modifier = Modifier
                                 .align(Alignment.BottomEnd)
-                                .offset(x = 6.dp, y = 6.dp), // empújalo un poco hacia afuera
-                            containerColor = MaterialTheme.colorScheme.surface, // opcional
+                                .offset(x = 6.dp, y = 6.dp),
+                            containerColor = MaterialTheme.colorScheme.surface,
                         ) {
                             Icon(Icons.Filled.Edit, contentDescription = "Cambiar foto")
                         }
@@ -149,7 +157,14 @@ fun ProfileScreen(viewModel: ProfileViewModel) {
                     enabled = ui.hasChanges && !ui.loading,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(if (ui.loading) "Guardando..." else "Guardar")
+                    if (ui.loading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text("Guardar")
+                    }
                 }
 
                 Spacer(Modifier.height(8.dp))

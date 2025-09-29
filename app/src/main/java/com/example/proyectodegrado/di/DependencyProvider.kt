@@ -105,7 +105,7 @@ object DependencyProvider {
         WorkersViewModel(workerRepository, storeRepository, scheduleRepository)
 
     fun provideProfileViewModel(): ProfileViewModel =
-        ProfileViewModel(userRepository, imageRepository, preferences)
+        ProfileViewModel(userRepository, imageRepository)
 
     fun provideCashViewModel(
         storeId: Int? = null,
