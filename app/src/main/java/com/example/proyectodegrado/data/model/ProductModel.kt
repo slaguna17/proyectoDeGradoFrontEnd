@@ -22,6 +22,8 @@ data class StoreInfoFromProduct(
     @SerializedName("pivot") val pivot: StoreProductPivot
 )
 
+data class StoreProductRequest(val storeId: Int, val productId: Int, val stock: Int)
+
 data class StoreProductPivot(
     @SerializedName("stock") val stock: Int
 )

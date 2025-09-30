@@ -17,6 +17,7 @@ import com.example.proyectodegrado.data.model.CreateProductFormState
 import com.example.proyectodegrado.data.model.Product
 import com.example.proyectodegrado.ui.components.UploadImage
 import com.example.proyectodegrado.ui.components.UploadImageState
+import com.example.proyectodegrado.ui.screens.products.StoreOption
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,7 +64,7 @@ private fun ProductDialogContent(
             }
             Spacer(Modifier.height(8.dp))
 
-            OutlinedTextField(value = formState.stock, onValueChange = onStockChange, label = { Text("Stock Inicial") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(value = formState.stock, onValueChange = onStockChange, label = { Text("Stock") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.fillMaxWidth())
             Spacer(Modifier.height(16.dp))
 
             val imageUrl = formState.localImageUri?.toString() ?: formState.imageUrl
@@ -163,4 +164,101 @@ fun DeleteProductDialog(
             }
         }
     )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AssignProductDialog(
+    show: Boolean,
+    onDismiss: () -> Unit,
+    productName: String,
+    availableStores: List<StoreOption>, // Usaremos la misma clase de datos del filtro
+    onAssign: (storeId: Int, stock: String) -> Unit
+) {
+    if (!show) return
+
+    var selectedStoreId by remember { mutableStateOf<Int?>(null) }
+    var stock by remember { mutableStateOf("0") }
+    var isDropdownExpanded by remember { mutableStateOf(false) }
+
+    val isFormValid = selectedStoreId != null && stock.isNotBlank() && stock.toIntOrNull() != null
+
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(shape = MaterialTheme.shapes.large, modifier = Modifier.padding(16.dp)) {
+            Column(
+                modifier = Modifier
+                    .padding(24.dp)
+                    .verticalScroll(rememberScrollState())
+            ) {
+                Text(
+                    text = "Asignar \"$productName\"",
+                    style = MaterialTheme.typography.headlineSmall
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = "Selecciona una tienda y define el stock inicial para añadir este producto.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Spacer(Modifier.height(24.dp))
+
+                // Dropdown para seleccionar la tienda
+                ExposedDropdownMenuBox(
+                    expanded = isDropdownExpanded,
+                    onExpandedChange = { isDropdownExpanded = it }
+                ) {
+                    val selectedStoreName = availableStores.find { it.id == selectedStoreId }?.name ?: ""
+                    OutlinedTextField(
+                        value = selectedStoreName,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Tienda") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = isDropdownExpanded) },
+                        modifier = Modifier.fillMaxWidth().menuAnchor()
+                    )
+                    ExposedDropdownMenu(
+                        expanded = isDropdownExpanded,
+                        onDismissRequest = { isDropdownExpanded = false }
+                    ) {
+                        availableStores.forEach { store ->
+                            DropdownMenuItem(
+                                text = { Text(store.name) },
+                                onClick = {
+                                    selectedStoreId = store.id
+                                    isDropdownExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+                Spacer(Modifier.height(16.dp))
+
+                // Campo para el stock
+                OutlinedTextField(
+                    value = stock,
+                    onValueChange = { stock = it },
+                    label = { Text("Stock Inicial") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(Modifier.height(24.dp))
+
+                // Botones de acción
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(onClick = onDismiss) {
+                        Text("Cancelar")
+                    }
+                    Spacer(Modifier.width(8.dp))
+                    Button(
+                        onClick = { onAssign(selectedStoreId!!, stock) },
+                        enabled = isFormValid
+                    ) {
+                        Text("Confirmar")
+                    }
+                }
+            }
+        }
+    }
 }

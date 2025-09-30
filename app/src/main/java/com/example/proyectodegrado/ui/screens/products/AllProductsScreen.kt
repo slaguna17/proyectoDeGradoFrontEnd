@@ -30,6 +30,7 @@ fun AllProductsScreen(
     val availableCategories by viewModel.availableCategories.collectAsStateWithLifecycle()
     val storeOptions by viewModel.stores.collectAsStateWithLifecycle()
     val selectedStoreId by viewModel.selectedStoreId.collectAsStateWithLifecycle()
+    var showAssignDialog by rememberSaveable { mutableStateOf(false) }
 
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -45,25 +46,30 @@ fun AllProductsScreen(
     val context = LocalContext.current
     val currentStoreForCrud = remember { AppPreferences(context).getStoreId()?.toIntOrNull() }
 
-    val refreshAllProducts: () -> Unit = {
+    val refreshProducts: () -> Unit = {
         isRefreshing = true
         errorMessage = null
-        viewModel.fetchAllProducts(
-            onSuccess = {
-                isRefreshing = false
-                isLoadingFirstTime = false
-            },
-            onError = { errorMsg ->
-                errorMessage = errorMsg
-                isRefreshing = false
-                isLoadingFirstTime = false
-            }
-        )
+        val onErrorCallback: (String) -> Unit = { errorMsg ->
+            errorMessage = errorMsg
+            isRefreshing = false
+            isLoadingFirstTime = false
+        }
+        val onSuccessCallback: () -> Unit = {
+            isRefreshing = false
+            isLoadingFirstTime = false
+        }
+
+        if (selectedStoreId != null) {
+            viewModel.fetchProductsByStore(selectedStoreId!!, onSuccessCallback, onErrorCallback)
+        } else {
+            viewModel.fetchAllProducts(onSuccessCallback, onErrorCallback)
+        }
     }
 
     // Cargar tiendas al entrar
     LaunchedEffect(Unit) {
         viewModel.fetchStores(onError = { msg -> errorMessage = msg })
+        if (availableCategories.isEmpty()) viewModel.fetchAvailableCategories()
     }
 
     // Usar la tienda de preferencias como preseleccionada si existe
@@ -73,14 +79,13 @@ fun AllProductsScreen(
         }
     }
 
-    // Cargar productos iniciales o cuando cambia la tienda seleccionada
+    // Cargar productos cuando cambia la tienda seleccionada
     LaunchedEffect(selectedStoreId) {
-        if (allProducts.isEmpty()) {
-            refreshAllProducts()
-        } else {
-            // Si ya había datos, solo refrescamos por cambio de tienda
-            refreshAllProducts()
-        }
+        refreshProducts()
+    }
+
+    LaunchedEffect(Unit) {
+        if (availableCategories.isEmpty()) viewModel.fetchAvailableCategories()
     }
 
     LaunchedEffect(errorMessage) {
@@ -108,8 +113,6 @@ fun AllProductsScreen(
             modifier = Modifier
                 .fillMaxSize()
         ) {
-
-            // --- NUEVO: Filtro por tienda ---
             StoreFilterBar(
                 stores = storeOptions,
                 selectedStoreId = selectedStoreId,
@@ -120,7 +123,7 @@ fun AllProductsScreen(
 
             RefreshableContainer(
                 refreshing = isRefreshing,
-                onRefresh = refreshAllProducts,
+                onRefresh = refreshProducts,
                 modifier = Modifier
                     .fillMaxSize()
             ) {
@@ -131,15 +134,27 @@ fun AllProductsScreen(
                             items(allProducts, key = { it.id }) { product ->
                                 ProductItem(
                                     product = product,
-                                    currentStoreId = selectedStoreId, // NUEVO: stock por tienda
+                                    currentStoreId = selectedStoreId,
                                     onEdit = {
                                         productToInteractWith = it
-                                        viewModel.prepareFormForEdit(it)
+                                        viewModel.prepareFormForEdit(it, selectedStoreId)
                                         showEditDialog = true
                                     },
                                     onDelete = {
                                         productToInteractWith = it
                                         showDeleteDialog = true
+                                    },
+                                    onAssignToStore = {
+                                        productToInteractWith = it
+                                        showAssignDialog = true
+                                    },
+                                    onRemoveFromStore = { productId, storeId ->
+                                        viewModel.removeProductFromStore(
+                                            productId = productId,
+                                            storeId = storeId,
+                                            onSuccess = { refreshProducts() },
+                                            onError = { errMsg -> errorMessage = errMsg }
+                                        )
                                     }
                                 )
                             }
@@ -165,10 +180,36 @@ fun AllProductsScreen(
                 if (currentStoreForCrud != null) {
                     viewModel.createProduct(
                         storeId = currentStoreForCrud,
-                        onSuccess = { showCreateDialog = false; refreshAllProducts() },
+                        onSuccess = { showCreateDialog = false; refreshProducts() },
                         onError = { errMsg -> errorMessage = errMsg }
                     )
                 }
+            }
+        )
+    }
+
+    if (showAssignDialog && productToInteractWith != null) {
+        val assignedStoreIds = productToInteractWith?.stores?.map { it.id }?.toSet() ?: emptySet()
+        val availableStoresForAssignment = storeOptions.filterNot { it.id in assignedStoreIds }
+
+        AssignProductDialog(
+            show = true,
+            onDismiss = { showAssignDialog = false },
+            productName = productToInteractWith!!.name,
+            availableStores = availableStoresForAssignment,
+            onAssign = { storeId, stock ->
+                viewModel.addProductToStore(
+                    productId = productToInteractWith!!.id,
+                    storeId = storeId,
+                    stock = stock.toIntOrNull() ?: 0,
+                    onSuccess = {
+                        showAssignDialog = false
+                        refreshProducts()
+                    },
+                    onError = { errMsg ->
+                        errorMessage = errMsg
+                    }
+                )
             }
         )
     }
@@ -186,7 +227,7 @@ fun AllProductsScreen(
                     viewModel.updateProduct(
                         id = productToInteractWith!!.id,
                         storeId = currentStoreForCrud,
-                        onSuccess = { showEditDialog = false; refreshAllProducts() },
+                        onSuccess = { showEditDialog = false; refreshProducts() },
                         onError = { /* Manejar error */ }
                     )
                 }
@@ -205,7 +246,7 @@ fun AllProductsScreen(
                         id = it.id,
                         onSuccess = {
                             showDeleteDialog = false
-                            refreshAllProducts()
+                            refreshProducts()
                         },
                         onError = { errMsg -> errorMessage = errMsg }
                     )

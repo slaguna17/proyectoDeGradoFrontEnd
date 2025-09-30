@@ -89,6 +89,7 @@ dependencies {
 
     // 6) Accompanist (solo si necesitas otras funcionalidades que no sean pull-refresh)
     implementation("com.google.accompanist:accompanist-permissions:0.30.1")
+    implementation("com.google.accompanist:accompanist-flowlayout:0.30.1")
 
     // 7) Retrofit + Gson + OkHttp
     implementation("com.squareup.retrofit2:retrofit:2.9.0")

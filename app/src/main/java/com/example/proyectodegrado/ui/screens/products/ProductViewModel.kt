@@ -77,12 +77,39 @@ class ProductViewModel(
         }
     }
 
-    fun fetchProductsByCategory(categoryId: Int, onSuccess: () -> Unit = {}, onError: (String) -> Unit = {}) {
+    fun fetchProductsByCategory(
+        categoryId: Int,
+        storeId: Int?, // Ahora acepta el ID de la tienda (puede ser nulo)
+        onSuccess: () -> Unit = {},
+        onError: (String) -> Unit = {}
+    ) {
         viewModelScope.launch {
             try {
-                _productsByCategory.value = productRepository.getProductsByCategory(categoryId)
+                val result = if (storeId != null) {
+                    // Si hay una tienda seleccionada, usa el endpoint de filtrado dual
+                    productRepository.getProductsByCategoryAndStore(categoryId, storeId)
+                } else {
+                    // Si se seleccionó "Todas", usa el endpoint de solo categoría
+                    productRepository.getProductsByCategory(categoryId)
+                }
+                _productsByCategory.value = result
                 onSuccess()
-            } catch (e: Exception) { onError("Error cargando productos por categoría: ${e.message}") }
+            } catch (e: Exception) {
+                _productsByCategory.value = emptyList()
+                onError("Error cargando productos: ${e.message}")
+            }
+        }
+    }
+
+    fun fetchProductsByStore(storeId: Int, onSuccess: () -> Unit = {}, onError: (String) -> Unit = {}) {
+        viewModelScope.launch {
+            try {
+                _products.value = productRepository.getProductsByStore(storeId)
+                onSuccess()
+            } catch (e: Exception) {
+                _products.value = emptyList() // Limpia la lista en caso de error
+                onError("Error cargando productos de la tienda: ${e.message}")
+            }
         }
     }
 
@@ -163,7 +190,10 @@ class ProductViewModel(
         }
     }
 
-    fun prepareFormForEdit(product: Product) {
+    fun prepareFormForEdit(product: Product, currentStoreId: Int?) {
+        val storeStock: Int? = currentStoreId?.let { sid ->
+            product.stores?.firstOrNull { it.id == sid }?.pivot?.stock
+        }
         _formState.value = CreateProductFormState(
             name = product.name,
             description = product.description,
@@ -172,18 +202,48 @@ class ProductViewModel(
             categoryId = product.categoryId,
             imageKey = product.image,
             imageUrl = product.imageUrl,
-            stock = product.stock?.toString() ?: "0",
+            stock = (storeStock ?: product.stock ?: 0).toString(),
             localImageUri = null
         )
         _imageUploadUiState.value = UploadImageState.Idle
     }
 
-    private fun fetchAvailableCategories() {
+    fun fetchAvailableCategories() {
         viewModelScope.launch {
             try {
                 _availableCategories.value = categoryRepository.getAllCategories()
             } catch (e: Exception) {
                 println("Error fetching categories for ViewModel: ${e.message}")
+            }
+        }
+    }
+
+    fun addProductToStore(productId: Int, storeId: Int, stock: Int, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val response = productRepository.addProductToStore(productId, storeId, stock)
+                if (response.isSuccessful) {
+                    onSuccess()
+                } else {
+                    onError("Error al asignar el producto a la tienda.")
+                }
+            } catch (e: Exception) {
+                onError("Error de red: ${e.message}")
+            }
+        }
+    }
+
+    fun removeProductFromStore(productId: Int, storeId: Int, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val response = productRepository.removeProductFromStore(productId, storeId)
+                if (response.isSuccessful) {
+                    onSuccess()
+                } else {
+                    onError("Error al quitar el producto de la tienda.")
+                }
+            } catch (e: Exception) {
+                onError("Error de red: ${e.message}")
             }
         }
     }

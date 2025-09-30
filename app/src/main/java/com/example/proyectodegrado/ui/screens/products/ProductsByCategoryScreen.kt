@@ -57,6 +57,7 @@ fun ProductsByCategoryScreen(
     var showCreateDialog by rememberSaveable { mutableStateOf(false) }
     var showEditDialog by rememberSaveable { mutableStateOf(false) }
     var showDeleteDialog by rememberSaveable { mutableStateOf(false) }
+    var showAssignDialog by rememberSaveable { mutableStateOf(false) }
     var productToInteractWith by remember { mutableStateOf<Product?>(null) }
 
     val onShowCreateDialog = {
@@ -71,8 +72,10 @@ fun ProductsByCategoryScreen(
     val refreshProducts: () -> Unit = {
         isRefreshing = true
         errorMessage = null
+        // --- MODIFICA ESTA LLAMADA ---
         viewModel.fetchProductsByCategory(
             categoryId = categoryId,
+            storeId = selectedStoreId, // <-- PASA EL ID DE LA TIENDA SELECCIONADA
             onSuccess = {
                 isRefreshing = false
                 isLoadingFirstTime = false
@@ -107,6 +110,12 @@ fun ProductsByCategoryScreen(
         }
     }
 
+    LaunchedEffect(Unit) {
+        viewModel.fetchStores(onError = { msg -> errorMessage = msg })
+        if (availableCategories.isEmpty()) viewModel.fetchAvailableCategories()
+    }
+
+
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
@@ -124,7 +133,6 @@ fun ProductsByCategoryScreen(
             modifier = Modifier
                 .fillMaxSize()
         ) {
-            // --- NUEVO: Filtro por tienda ---
             StoreFilterBar(
                 stores = storeOptions,
                 selectedStoreId = selectedStoreId,
@@ -146,15 +154,27 @@ fun ProductsByCategoryScreen(
                             items(productsByCategory, key = { it.id }) { product ->
                                 ProductItem(
                                     product = product,
-                                    currentStoreId = selectedStoreId, // NUEVO: stock por tienda
+                                    currentStoreId = selectedStoreId,
                                     onEdit = {
                                         productToInteractWith = it
-                                        viewModel.prepareFormForEdit(it)
+                                        viewModel.prepareFormForEdit(it, selectedStoreId)
                                         showEditDialog = true
                                     },
                                     onDelete = {
                                         productToInteractWith = it
                                         showDeleteDialog = true
+                                    },
+                                    onAssignToStore = {
+                                        productToInteractWith = it
+                                        showAssignDialog = true
+                                    },
+                                    onRemoveFromStore = { productId, storeId ->
+                                        viewModel.removeProductFromStore(
+                                            productId = productId,
+                                            storeId = storeId,
+                                            onSuccess = { refreshProducts() },
+                                            onError = { errMsg -> errorMessage = errMsg }
+                                        )
                                     }
                                 )
                             }
