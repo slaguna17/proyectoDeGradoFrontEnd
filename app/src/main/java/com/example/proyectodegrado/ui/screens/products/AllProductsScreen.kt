@@ -31,6 +31,9 @@ fun AllProductsScreen(
     val storeOptions by viewModel.stores.collectAsStateWithLifecycle()
     val selectedStoreId by viewModel.selectedStoreId.collectAsStateWithLifecycle()
     var showAssignDialog by rememberSaveable { mutableStateOf(false) }
+    var showRemoveAssignmentDialog by remember { mutableStateOf(false) }
+    var showAdjustStockDialog by remember { mutableStateOf(false) }
+    var assignmentToRemove by remember { mutableStateOf<Pair<Product, StoreOption>?>(null) }
 
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -135,6 +138,7 @@ fun AllProductsScreen(
                                 ProductItem(
                                     product = product,
                                     currentStoreId = selectedStoreId,
+                                    allStores = storeOptions,
                                     onEdit = {
                                         productToInteractWith = it
                                         viewModel.prepareFormForEdit(it, selectedStoreId)
@@ -148,13 +152,12 @@ fun AllProductsScreen(
                                         productToInteractWith = it
                                         showAssignDialog = true
                                     },
-                                    onRemoveFromStore = { productId, storeId ->
-                                        viewModel.removeProductFromStore(
-                                            productId = productId,
-                                            storeId = storeId,
-                                            onSuccess = { refreshProducts() },
-                                            onError = { errMsg -> errorMessage = errMsg }
-                                        )
+                                    onRemoveFromStore = { prod, storeId ->
+                                        val store = storeOptions.find { it.id == storeId }
+                                        if (store != null) {
+                                            assignmentToRemove = Pair(prod, store)
+                                            showRemoveAssignmentDialog = true
+                                        }
                                     }
                                 )
                             }
@@ -222,6 +225,10 @@ fun AllProductsScreen(
             onSkuChange = viewModel::onSkuChange, onDescriptionChange = viewModel::onDescriptionChange,
             onBrandChange = viewModel::onBrandChange, onCategorySelected = viewModel::onCategorySelected,
             onStockChange = viewModel::onStockChange, onImageSelected = viewModel::onImageSelected,
+            onAdjustStockClick = {
+                showEditDialog = false
+                showAdjustStockDialog = true
+            },
             onEditClick = {
                 if (currentStoreForCrud != null) {
                     viewModel.updateProduct(
@@ -251,6 +258,45 @@ fun AllProductsScreen(
                         onError = { errMsg -> errorMessage = errMsg }
                     )
                 }
+            }
+        )
+    }
+
+    if (showRemoveAssignmentDialog && assignmentToRemove != null) {
+        RemoveAssignmentDialog(
+            show = true,
+            onDismiss = { showRemoveAssignmentDialog = false },
+            productName = assignmentToRemove!!.first.name,
+            storeName = assignmentToRemove!!.second.name,
+            onConfirm = {
+                viewModel.removeProductFromStore(
+                    productId = assignmentToRemove!!.first.id,
+                    storeId = assignmentToRemove!!.second.id,
+                    onSuccess = { refreshProducts() },
+                    onError = { errMsg -> errorMessage = errMsg }
+                )
+            }
+        )
+    }
+
+    if (showAdjustStockDialog && productToInteractWith != null && currentStoreForCrud != null) {
+        AdjustStockDialog(
+            show = true,
+            onDismiss = { showAdjustStockDialog = false },
+            productName = productToInteractWith!!.name,
+            currentStock = formState.stock,
+            onConfirm = { newStock ->
+                // Reutilizamos la función que ya teníamos!
+                viewModel.addProductToStore(
+                    productId = productToInteractWith!!.id,
+                    storeId = currentStoreForCrud,
+                    stock = newStock.toIntOrNull() ?: 0,
+                    onSuccess = {
+                        showAdjustStockDialog = false
+                        refreshProducts() // Usando la función de refresco que ya tienes
+                    },
+                    onError = { errMsg -> errorMessage = errMsg }
+                )
             }
         )
     }

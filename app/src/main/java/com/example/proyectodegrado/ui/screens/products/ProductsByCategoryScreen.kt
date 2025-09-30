@@ -59,6 +59,9 @@ fun ProductsByCategoryScreen(
     var showDeleteDialog by rememberSaveable { mutableStateOf(false) }
     var showAssignDialog by rememberSaveable { mutableStateOf(false) }
     var productToInteractWith by remember { mutableStateOf<Product?>(null) }
+    var showRemoveAssignmentDialog by remember { mutableStateOf(false) }
+    var showAdjustStockDialog by remember { mutableStateOf(false) }
+    var assignmentToRemove by remember { mutableStateOf<Pair<Product, StoreOption>?>(null) }
 
     val onShowCreateDialog = {
         viewModel.resetForm()
@@ -168,14 +171,14 @@ fun ProductsByCategoryScreen(
                                         productToInteractWith = it
                                         showAssignDialog = true
                                     },
-                                    onRemoveFromStore = { productId, storeId ->
-                                        viewModel.removeProductFromStore(
-                                            productId = productId,
-                                            storeId = storeId,
-                                            onSuccess = { refreshProducts() },
-                                            onError = { errMsg -> errorMessage = errMsg }
-                                        )
-                                    }
+                                    onRemoveFromStore = { prod, storeId ->
+                                        val store = storeOptions.find { it.id == storeId }
+                                        if (store != null) {
+                                            assignmentToRemove = Pair(prod, store)
+                                            showRemoveAssignmentDialog = true
+                                        }
+                                    },
+                                    allStores = storeOptions
                                 )
                             }
                         }
@@ -216,6 +219,10 @@ fun ProductsByCategoryScreen(
             onSkuChange = viewModel::onSkuChange, onDescriptionChange = viewModel::onDescriptionChange,
             onBrandChange = viewModel::onBrandChange, onCategorySelected = viewModel::onCategorySelected,
             onStockChange = viewModel::onStockChange, onImageSelected = viewModel::onImageSelected,
+            onAdjustStockClick = {
+                showEditDialog = false
+                showAdjustStockDialog = true
+            },
             onEditClick = {
                 if (currentStoreForCrud != null) {
                     viewModel.updateProduct(
@@ -245,6 +252,28 @@ fun ProductsByCategoryScreen(
                         onError = { errMsg -> errorMessage = errMsg }
                     )
                 }
+            }
+        )
+    }
+
+    if (showAdjustStockDialog && productToInteractWith != null && currentStoreForCrud != null) {
+        AdjustStockDialog(
+            show = true,
+            onDismiss = { showAdjustStockDialog = false },
+            productName = productToInteractWith!!.name,
+            currentStock = formState.stock,
+            onConfirm = { newStock ->
+                // Reutilizamos la función que ya teníamos!
+                viewModel.addProductToStore(
+                    productId = productToInteractWith!!.id,
+                    storeId = currentStoreForCrud,
+                    stock = newStock.toIntOrNull() ?: 0,
+                    onSuccess = {
+                        showAdjustStockDialog = false
+                        refreshProducts() // Usando la función de refresco que ya tienes
+                    },
+                    onError = { errMsg -> errorMessage = errMsg }
+                )
             }
         )
     }

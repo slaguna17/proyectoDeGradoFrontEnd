@@ -28,11 +28,11 @@ import com.google.accompanist.flowlayout.FlowRow
 fun ProductItem(
     product: Product,
     currentStoreId: Int?,
+    allStores: List<StoreOption>,
     onEdit: (Product) -> Unit,
     onDelete: (Product) -> Unit,
-    // --- NUEVOS LAMBDAS ---
     onAssignToStore: (Product) -> Unit,
-    onRemoveFromStore: (productId: Int, storeId: Int) -> Unit
+    onRemoveFromStore: (product: Product, storeId: Int) -> Unit
 ) {
     Card(
         modifier = Modifier
@@ -43,7 +43,6 @@ fun ProductItem(
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Column {
-            // --- Encabezado con Imagen y Marca (sin cambios) ---
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -79,7 +78,6 @@ fun ProductItem(
                 }
             }
 
-            // --- Cuerpo con Detalles del Producto (sin cambios) ---
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(text = product.name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                 Text(text = "SKU: ${product.sku ?: "No definido"}", style = MaterialTheme.typography.labelMedium, color = Color.Gray)
@@ -93,17 +91,15 @@ fun ProductItem(
                 )
                 Spacer(Modifier.height(16.dp))
 
-                // --- SECCIÓN DE STOCK DINÁMICA ---
                 if (currentStoreId != null) {
-                    // VISTA PARA UNA TIENDA ESPECÍFICA
                     val stockForCurrentStore = product.stores?.firstOrNull { it.id == currentStoreId }?.pivot?.stock
                     StockInfoSingleStore(stock = stockForCurrentStore)
                 } else {
-                    // VISTA PARA "TODAS LAS TIENDAS"
                     StockInfoAllStores(
                         product = product,
+                        allStores = allStores,
                         onAssignToStore = onAssignToStore,
-                        onRemoveFromStore = onRemoveFromStore
+                        onRemoveFromStore = { storeId -> onRemoveFromStore(product, storeId) }
                     )
                 }
 
@@ -160,9 +156,12 @@ private fun StockInfoSingleStore(stock: Int?) {
 @Composable
 private fun StockInfoAllStores(
     product: Product,
+    allStores: List<StoreOption>,
     onAssignToStore: (Product) -> Unit,
-    onRemoveFromStore: (productId: Int, storeId: Int) -> Unit
+    onRemoveFromStore: (storeId: Int) -> Unit
 ) {
+    val assignedStoreIds = product.stores?.map { it.id }?.toSet() ?: emptySet()
+    val availableStores = allStores.filterNot { it.id in assignedStoreIds }
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("Stock por Tienda:", style = MaterialTheme.typography.titleSmall)
         if (product.stores.isNullOrEmpty()) {
@@ -180,7 +179,7 @@ private fun StockInfoAllStores(
                         label = { Text("${storeInfo.name}: ${storeInfo.pivot.stock}") },
                         trailingIcon = {
                             IconButton(
-                                onClick = { onRemoveFromStore(product.id, storeInfo.id) },
+                                onClick = { onRemoveFromStore(storeInfo.id) },
                                 modifier = Modifier.size(18.dp)
                             ) {
                                 Icon(Icons.Default.Delete, contentDescription = "Quitar de ${storeInfo.name}")
@@ -191,13 +190,23 @@ private fun StockInfoAllStores(
             }
         }
         Spacer(Modifier.height(8.dp))
-        Button(
-            onClick = { onAssignToStore(product) },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-            Spacer(Modifier.width(8.dp))
-            Text("Asignar a Tienda")
+
+        if (availableStores.isNotEmpty()) {
+            Button(
+                onClick = { onAssignToStore(product) },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("Asignar a Tienda")
+            }
+        } else {
+            Text(
+                text = "Asignado a todas las tiendas.",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
         }
     }
 }

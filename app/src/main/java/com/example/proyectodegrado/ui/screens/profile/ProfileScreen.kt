@@ -20,12 +20,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
-import com.example.proyectodegrado.R
 import com.example.proyectodegrado.ui.components.RefreshableContainer
 
 @Composable
@@ -62,12 +60,10 @@ fun ProfileScreen(viewModel: ProfileViewModel) {
                         .padding(bottom = 12.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    // Contenedor externo SIN clip (permite que el botón sobresalga)
                     Box(
                         modifier = Modifier.size(140.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        // Avatar adentro con clip circular
                         Box(
                             modifier = Modifier
                                 .size(120.dp)
@@ -75,7 +71,6 @@ fun ProfileScreen(viewModel: ProfileViewModel) {
                                 .background(Color.White),
                             contentAlignment = Alignment.Center
                         ) {
-                            // PRIORIDAD: preview local -> URL remota
                             val avatarModel: Any? = ui.avatarPreview ?: ui.avatarUrl
 
                             if (avatarModel != null) {
@@ -84,9 +79,9 @@ fun ProfileScreen(viewModel: ProfileViewModel) {
                                     contentDescription = "Avatar",
                                     contentScale = ContentScale.Crop,
                                     modifier = Modifier.matchParentSize(),
-                                    placeholder = accountPainter,   // 👈 se muestra mientras carga
-                                    error = accountPainter,         // 👈 se muestra si falla
-                                    fallback = accountPainter       // opcional, si el model fuera null
+                                    placeholder = accountPainter,
+                                    error = accountPainter,
+                                    fallback = accountPainter
                                 )
                             } else {
                                 Icon(
@@ -99,7 +94,6 @@ fun ProfileScreen(viewModel: ProfileViewModel) {
                             }
                         }
 
-                        // Botón flotante, FUERA del círculo (no se recorta)
                         SmallFloatingActionButton(
                             onClick = { pickImage.launch("image/*") },
                             modifier = Modifier

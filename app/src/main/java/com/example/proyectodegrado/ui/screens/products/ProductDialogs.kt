@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,6 +28,7 @@ private fun ProductDialogContent(
     formState: CreateProductFormState,
     uploadState: UploadImageState,
     availableCategories: List<Category>,
+    isEditMode: Boolean,
     onNameChange: (String) -> Unit,
     onSkuChange: (String) -> Unit,
     onDescriptionChange: (String) -> Unit,
@@ -35,9 +38,11 @@ private fun ProductDialogContent(
     onImageSelected: (Uri?) -> Unit,
     onDismiss: () -> Unit,
     onSubmit: () -> Unit,
+    onAdjustStockClick: () -> Unit,
     submitLabel: String
 ) {
     var expanded by remember { mutableStateOf(false) }
+    val isFormValid = formState.name.isNotBlank() && formState.categoryId != -1
 
     Surface(shape = MaterialTheme.shapes.medium, modifier = Modifier.padding(vertical = 16.dp)) {
         Column(Modifier.padding(16.dp).verticalScroll(rememberScrollState())) {
@@ -64,8 +69,20 @@ private fun ProductDialogContent(
             }
             Spacer(Modifier.height(8.dp))
 
-            OutlinedTextField(value = formState.stock, onValueChange = onStockChange, label = { Text("Stock") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(value = formState.stock, onValueChange = onStockChange, label = { Text(if (isEditMode) "Stock (No editable)" else "Stock Inicial") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.fillMaxWidth(), enabled = !isEditMode)
             Spacer(Modifier.height(16.dp))
+
+            if (isEditMode) {
+                OutlinedButton(
+                    onClick = onAdjustStockClick,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Default.Edit, contentDescription = "Ajustar Stock")
+                    Spacer(Modifier.width(8.dp))
+                    Text("Ajustar Stock Manualmente")
+                }
+                Spacer(Modifier.height(16.dp))
+            }
 
             val imageUrl = formState.localImageUri?.toString() ?: formState.imageUrl
             UploadImage(modifier = Modifier.align(Alignment.CenterHorizontally), currentImageUrl = imageUrl, uploadState = uploadState, onImageSelected = onImageSelected)
@@ -73,7 +90,7 @@ private fun ProductDialogContent(
 
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                 TextButton(onClick = onDismiss) { Text("Cancelar") }
-                Button(enabled = uploadState is UploadImageState.Idle && formState.name.isNotBlank(), onClick = onSubmit) { Text(submitLabel) }
+                Button(enabled = isFormValid && uploadState is UploadImageState.Idle, onClick = onSubmit) { Text(submitLabel) }
             }
         }
     }
@@ -98,11 +115,21 @@ fun CreateProductDialog(
     if (!show) return
     Dialog(onDismissRequest = onDismiss) {
         ProductDialogContent(
-            title = "Crear Producto", formState = formState, uploadState = imageUploadState,
-            availableCategories = availableCategories, onNameChange = onNameChange, onSkuChange = onSkuChange,
-            onDescriptionChange = onDescriptionChange, onBrandChange = onBrandChange,
-            onCategorySelected = onCategorySelected, onStockChange = onStockChange,
-            onImageSelected = onImageSelected, onDismiss = onDismiss, onSubmit = onCreateClick,
+            title = "Crear Producto",
+            formState = formState,
+            uploadState = imageUploadState,
+            availableCategories = availableCategories,
+            isEditMode = false,
+            onNameChange = onNameChange,
+            onSkuChange = onSkuChange,
+            onDescriptionChange = onDescriptionChange,
+            onBrandChange = onBrandChange,
+            onCategorySelected = onCategorySelected,
+            onStockChange = onStockChange,
+            onImageSelected = onImageSelected,
+            onDismiss = onDismiss,
+            onAdjustStockClick = {},
+            onSubmit = onCreateClick,
             submitLabel = "Crear"
         )
     }
@@ -122,16 +149,27 @@ fun EditProductDialog(
     onCategorySelected: (Int) -> Unit,
     onStockChange: (String) -> Unit,
     onImageSelected: (Uri?) -> Unit,
+    onAdjustStockClick: () -> Unit,
     onEditClick: () -> Unit
 ) {
     if (!show) return
     Dialog(onDismissRequest = onDismiss) {
         ProductDialogContent(
-            title = "Editar Producto", formState = formState, uploadState = imageUploadState,
-            availableCategories = availableCategories, onNameChange = onNameChange, onSkuChange = onSkuChange,
-            onDescriptionChange = onDescriptionChange, onBrandChange = onBrandChange,
-            onCategorySelected = onCategorySelected, onStockChange = onStockChange,
-            onImageSelected = onImageSelected, onDismiss = onDismiss, onSubmit = onEditClick,
+            title = "Editar Producto",
+            formState = formState,
+            uploadState = imageUploadState,
+            availableCategories = availableCategories,
+            isEditMode = true,
+            onAdjustStockClick = onAdjustStockClick,
+            onNameChange = onNameChange,
+            onSkuChange = onSkuChange,
+            onDescriptionChange = onDescriptionChange,
+            onBrandChange = onBrandChange,
+            onCategorySelected = onCategorySelected,
+            onStockChange = onStockChange,
+            onImageSelected = onImageSelected,
+            onDismiss = onDismiss,
+            onSubmit = onEditClick,
             submitLabel = "Guardar"
         )
     }
@@ -261,4 +299,81 @@ fun AssignProductDialog(
             }
         }
     }
+}
+
+@Composable
+fun RemoveAssignmentDialog(
+    show: Boolean,
+    onDismiss: () -> Unit,
+    productName: String,
+    storeName: String,
+    onConfirm: () -> Unit
+) {
+    if (!show) return
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Confirmar Acción") },
+        text = { Text("¿Estás seguro de que deseas quitar el producto \"$productName\" de la tienda \"$storeName\"?") },
+        confirmButton = {
+            Button(
+                onClick = {
+                    onConfirm()
+                    onDismiss()
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+            ) {
+                Text("Quitar")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar")
+            }
+        }
+    )
+}
+
+@Composable
+fun AdjustStockDialog(
+    show: Boolean,
+    onDismiss: () -> Unit,
+    productName: String,
+    currentStock: String,
+    onConfirm: (newStock: String) -> Unit
+) {
+    if (!show) return
+
+    var newStock by remember { mutableStateOf(currentStock) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Ajustar Stock de \"$productName\"") },
+        text = {
+            Column {
+                Text("Ingresa la nueva cantidad de unidades para este producto.")
+                Spacer(Modifier.height(16.dp))
+                OutlinedTextField(
+                    value = newStock,
+                    onValueChange = { newStock = it },
+                    label = { Text("Nueva Cantidad de Stock") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onConfirm(newStock) },
+                enabled = newStock.isNotBlank() && newStock.toIntOrNull() != null
+            ) {
+                Text("Confirmar Ajuste")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar")
+            }
+        }
+    )
 }
