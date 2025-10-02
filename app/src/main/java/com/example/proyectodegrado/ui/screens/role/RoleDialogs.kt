@@ -1,151 +1,79 @@
 package com.example.proyectodegrado.ui.screens.role
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.example.proyectodegrado.data.model.Permit
 import com.example.proyectodegrado.data.model.Role
-import com.example.proyectodegrado.data.model.RoleRequest
-import com.example.proyectodegrado.data.model.Schedule
-import com.example.proyectodegrado.data.model.ScheduleRequest
 
 @Composable
-private fun RoleDialogContent(
-    title: String,
-    name: String,
-    onNameChange: (String) -> Unit,
-    description: String,
-    onDescriptionChange: (String) -> Unit,
-    isAdmin: Boolean,
-    onAdminChange: (Boolean) -> Unit,
-    onDismiss: () -> Unit,
-    onSubmit: () -> Unit,
-    submitLabel: String
-) {
-    var showError by remember { mutableStateOf(false) }
-
-    Column(
-        Modifier
-            .padding(16.dp)
-            .widthIn(min = 320.dp, max = 400.dp)
-    ) {
-        Text(title, style = MaterialTheme.typography.titleLarge)
-        Spacer(Modifier.height(16.dp))
-        OutlinedTextField(
-            value = name,
-            onValueChange = {
-                onNameChange(it)
-                showError = false
-            },
-            label = { Text("Nombre del Rol") },
-            modifier = Modifier.fillMaxWidth(),
-            isError = showError && name.isBlank()
-        )
-        if (showError && name.isBlank()) {
-            Text(
-                text = "El nombre no puede estar vacío",
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(start = 16.dp)
-            )
-        }
-        Spacer(Modifier.height(8.dp))
-
-        OutlinedTextField(
-            value = description,
-            onValueChange = onDescriptionChange,
-            label = { Text("Descripción") },
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(Modifier.height(8.dp))
-
-        Checkbox(
-            checked = false,
-            onCheckedChange = onAdminChange,
-            modifier = Modifier.padding(1.dp),
-            enabled = true
-        )
-        Spacer(Modifier.height(8.dp))
-
-        Row(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End
-        ) {
-            TextButton(onClick = onDismiss) { Text("Cancelar") }
-            Spacer(Modifier.width(8.dp))
-
-            Button(onClick = {
-                if (name.isBlank()) {
-                    showError = true
-                } else {
-                    onSubmit()
-                }
-            }) { Text(submitLabel) }
-        }
-    }
-}
-
-@Composable
-fun CreateRoleDialog(
+fun CreateEditRoleDialog(
     show: Boolean,
     onDismiss: () -> Unit,
-    onConfirm: (RoleRequest) -> Unit
+    onSave: (name: String, description: String, isAdmin: Boolean) -> Unit,
+    role: Role?, // Rol a editar, o null si es nuevo
+    allPermits: List<Permit>,
+    selectedPermitIds: Set<Int>,
+    onPermitCheckedChange: (permitId: Int, isChecked: Boolean) -> Unit
 ) {
     if (!show) return
-    var name by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
-    var isAdmin by remember { mutableStateOf(false) }
+
+    var name by remember { mutableStateOf(role?.name ?: "") }
+    var description by remember { mutableStateOf(role?.description ?: "") }
+    var isAdmin by remember { mutableStateOf(role?.isAdmin ?: false) }
 
     Dialog(onDismissRequest = onDismiss) {
-        Surface(shape = MaterialTheme.shapes.medium) {
-            RoleDialogContent(
-                title = "Crear Turno",
-                name = name, onNameChange = { name = it },
-                description = description, onDescriptionChange = { description = it },
-                isAdmin = isAdmin, onAdminChange = { isAdmin = it },
-                onDismiss = onDismiss,
-                onSubmit = {
-                    onConfirm(RoleRequest(name, description, isAdmin))
-                },
-                submitLabel = "Crear"
-            )
+        Surface(shape = MaterialTheme.shapes.large) {
+            Column(modifier = Modifier.padding(24.dp)) {
+                Text(
+                    text = if (role == null) "Crear Nuevo Rol" else "Editar Rol",
+                    style = MaterialTheme.typography.headlineSmall
+                )
+                Spacer(Modifier.height(16.dp))
+                OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Nombre del Rol") }, modifier = Modifier.fillMaxWidth())
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(value = description, onValueChange = { description = it }, label = { Text("Descripción") }, modifier = Modifier.fillMaxWidth())
+                Spacer(Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(checked = isAdmin, onCheckedChange = { isAdmin = it })
+                    Text("Es Administrador")
+                }
+                Spacer(Modifier.height(16.dp))
+
+                Text("Permisos", style = MaterialTheme.typography.titleMedium)
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+                LazyColumn(modifier = Modifier.heightIn(max = 200.dp)) {
+                    items(allPermits, key = { it.id }) { permit ->
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                            Checkbox(
+                                checked = permit.id in selectedPermitIds,
+                                onCheckedChange = { isChecked -> onPermitCheckedChange(permit.id, isChecked) }
+                            )
+                            Text(text = permit.name, style = MaterialTheme.typography.bodyMedium)
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(24.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    TextButton(onClick = onDismiss) { Text("Cancelar") }
+                    Spacer(Modifier.width(8.dp))
+                    Button(onClick = { onSave(name, description, isAdmin) }, enabled = name.isNotBlank()) {
+                        Text("Guardar")
+                    }
+                }
+            }
         }
     }
 }
 
-@Composable
-fun EditRoleDialog(
-    show: Boolean,
-    role: Role?,
-    onDismiss: () -> Unit,
-    onConfirm: (RoleRequest) -> Unit
-) {
-    if (!show || role == null) return
-
-    var name by remember { mutableStateOf(role.name) }
-    var description by remember { mutableStateOf(role.description) }
-    var isAdmin by remember { mutableStateOf(role.isAdmin) }
-
-    Dialog(onDismissRequest = onDismiss) {
-        Surface(shape = MaterialTheme.shapes.medium) {
-            RoleDialogContent(
-                title = "Editar Turno",
-                name = name, onNameChange = { name = it },
-                description = description, onDescriptionChange = { description = it },
-                isAdmin = isAdmin, onAdminChange = { isAdmin = it },
-                onDismiss = onDismiss,
-                onSubmit = {
-                    onConfirm(RoleRequest(name, description, isAdmin))
-                },
-                submitLabel = "Guardar"
-            )
-        }
-    }
-}
 
 
 @Composable

@@ -1,5 +1,6 @@
 package com.example.proyectodegrado.data.api
 
+import com.example.proyectodegrado.data.model.Permit
 import com.example.proyectodegrado.data.model.Role
 import com.example.proyectodegrado.data.model.RoleRequest
 import com.example.proyectodegrado.data.model.RoleResponse
@@ -35,4 +36,10 @@ interface RoleService {
     //Assign Permits
     @POST("/api/roles/{id}/assignPermit")
     suspend fun assignPermits(@Body request: Array<Int>): Response<RoleResponse>
+
+    @GET("/api/roles/{id}/permits")
+    suspend fun getPermitsByRole(@Path("id") roleId: Int): List<Permit>
+
+    @POST("/api/roles/{id}/assignPermit")
+    suspend fun assignPermitsToRole(@Path("id") roleId: Int, @Body permitIds: Map<String, List<Int>>): Response<Unit>
 }

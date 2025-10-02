@@ -55,6 +55,7 @@ object DependencyProvider {
     private val workerService: WorkerService by lazy { RetrofitClient.createService(WorkerService::class.java) }
     private val cashService: CashService by lazy { RetrofitClient.createService(CashService::class.java) }
     private val imageApiService: ImageApiService by lazy { RetrofitClient.createService(ImageApiService::class.java) }
+    private val permitService: PermitService by lazy { RetrofitClient.createService(PermitService::class.java) }
 
     // --- Repositories ---
     private val userRepository: UserRepository by lazy { UserRepository(userService, applicationContext) }
@@ -66,9 +67,9 @@ object DependencyProvider {
     private val scheduleRepository: ScheduleRepository by lazy { ScheduleRepository(scheduleService) }
     private val workerRepository: WorkerRepository by lazy { WorkerRepository(workerService) }
     private val cashRepository: CashRepository by lazy { CashRepository(cashService) }
+    private val permitRepository: PermitRepository by lazy { PermitRepository(permitService) }
 
-    // ⚠️ Usa la MISMA firma que ya usas en el proyecto (api + context)
-    // Si tu ImageRepository tuviera otra firma, ajusta aquí.
+    // Use the same signature (api + context)
     private val imageRepository: ImageRepository by lazy {
         check(::applicationContext.isInitialized) {
             "DependencyProvider.initialize(context) debe llamarse antes de usar imageRepository."
@@ -93,7 +94,7 @@ object DependencyProvider {
         StoreViewModel(storeRepository, imageRepository)
 
     fun provideRoleViewModel(): RoleViewModel =
-        RoleViewModel(roleRepository)
+        RoleViewModel(roleRepository, permitRepository)
 
     fun provideProviderViewModel(): ProvidersViewModel =
         ProvidersViewModel(providerRepository)

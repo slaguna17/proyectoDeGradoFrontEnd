@@ -1,6 +1,7 @@
 package com.example.proyectodegrado.data.repository
 
 import com.example.proyectodegrado.data.api.RoleService
+import com.example.proyectodegrado.data.model.Permit
 import com.example.proyectodegrado.data.model.Role
 import com.example.proyectodegrado.data.model.RoleRequest
 import com.example.proyectodegrado.data.model.RoleResponse
@@ -35,5 +36,15 @@ class RoleRepository (private val roleService: RoleService) {
     //Assign Permits
     suspend fun assignPermits (request: Array<Int>): Response<RoleResponse> {
         return roleService.assignPermits(request)
+    }
+
+    suspend fun getPermitsByRole(roleId: Int): List<Permit> {
+        return roleService.getPermitsByRole(roleId)
+    }
+
+    suspend fun assignPermitsToRole(roleId: Int, permitIds: List<Int>): Response<Unit> {
+        // El backend espera un objeto JSON como {"permitIds": [1, 2, 3]}
+        val body = mapOf("permitIds" to permitIds)
+        return roleService.assignPermitsToRole(roleId, body)
     }
 }
