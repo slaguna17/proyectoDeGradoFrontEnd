@@ -62,7 +62,6 @@ fun AppNavigation() {
     val productViewModel = remember { DependencyProvider.provideProductViewModel() }
     val storeViewModel = remember { DependencyProvider.provideStoreViewModel() }
     val roleViewModel = remember { DependencyProvider.provideRoleViewModel() }
-    val providerViewModel = remember { DependencyProvider.provideProviderViewModel() }
     val scheduleViewModel = remember { DependencyProvider.provideScheduleViewModel() }
     val workersViewModel = remember { DependencyProvider.provideWorkersViewModel() }
     val profileViewModel = remember { DependencyProvider.provideProfileViewModel() }
@@ -150,9 +149,8 @@ fun AppNavigation() {
                     .padding(innerPadding)
                     .fillMaxSize()
             ) {
-                composable("login")    { LoginScreen(navController, loginViewModel) }
-                composable("register") { RegisterScreen(  registerViewModel, navController) }
-                composable("home")     { HomeScreen() }
+                composable("login") { LoginScreen(navController, loginViewModel) }
+                composable("home") { HomeScreen() }
                 composable("categories"){ CategoriesScreen(navController, categoryViewModel) }
                 composable("products") { AllProductsScreen(navController, productViewModel) }
 
@@ -169,9 +167,8 @@ fun AppNavigation() {
                 composable("workers") { WorkersScreen(navController = navController, viewModel = workersViewModel) }
                 composable("registerEmployee") { CreateWorkerScreen(navController = navController, workersViewModel = workersViewModel, registerViewModel = registerViewModel) }
                 composable("schedule"){ ScheduleScreen(navController, scheduleViewModel) }
-                composable("forecast"){ ForecastScreen(navController) }
 
-                // Toma userId/storeId desde la sesión
+                //  userId and storeId from session
                 composable("cash") {
                     val storeId = DependencyProvider.getCurrentStoreId()
                     val userId  = DependencyProvider.getCurrentUserId()
@@ -189,12 +186,7 @@ fun AppNavigation() {
                         userId  = be.arguments!!.getInt("userId")
                     )
                 }
-
-                composable("providers") { ProvidersScreen(navController, providerViewModel) }
-                composable("barcode")   { BarcodeScreen(navController) }
                 composable("settings")  { SettingsScreen(navController) }
-
-                // ProfileScreen ya no necesita navController
                 composable("profile")   { ProfileScreen(viewModel = profileViewModel) }
             }
         }

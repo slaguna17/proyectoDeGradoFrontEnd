@@ -10,12 +10,10 @@ fun determineTitle(route: String?, categoryName: String? = null): String {
         route == "role" -> "Roles"
         route == "workers" -> "Empleados"
         route == "schedule" -> "Horarios"
-        route == "forecast" -> "Pronósticos"
         route == "cash" || route?.startsWith("cash/") == true -> "Caja"
         route == "providers" -> "Proveedores"
-        route == "barcode" -> "Código de Barras"
         route == "settings" -> "Ajustes"
-        route == "login" || route == "register" -> ""
+        route == "login" -> ""
         route == "registerEmployee" -> "Nuevo Empleado"
         else -> "TuKiosco"
     }

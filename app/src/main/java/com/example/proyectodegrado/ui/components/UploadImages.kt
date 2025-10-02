@@ -72,6 +72,7 @@ fun UploadImage(
             modifier = Modifier
                 .size(imageSize)
                 .clip(CircleShape)
+                .border(2.dp, MaterialTheme.colorScheme.outline, CircleShape)
                 .clickable(onClick = launchPicker),
             contentAlignment = Alignment.Center
         ) {
@@ -80,6 +81,7 @@ fun UploadImage(
                 contentDescription = "Imagen del producto",
                 modifier = Modifier
                     .fillMaxSize()
+                    .padding(25.dp)
                     .background(Color.White),
                 contentScale = ContentScale.Crop,
                 placeholder = placeholderPainter,

@@ -41,46 +41,4 @@ class LoginViewModel(private val userRepository: UserRepository) : ViewModel() {
             }
         }
     }
-
-    fun sendPasswordReset(email: String) {
-        viewModelScope.launch {
-            try {
-                val http: retrofit2.Response<com.example.proyectodegrado.data.model.ForgotPasswordResponse> =
-                    userRepository.forgotPassword(email)
-
-                if (http.isSuccessful) {
-                    _forgotPasswordResult.postValue(
-                        Result.success(http.body()?.message ?: "Si el correo existe, te enviamos instrucciones.")
-                    )
-                } else {
-                    _forgotPasswordResult.postValue(
-                        Result.failure(Exception("No se pudo enviar el correo. Intenta más tarde."))
-                    )
-                }
-            } catch (e: Exception) {
-                _forgotPasswordResult.postValue(Result.failure(e))
-            }
-        }
-    }
-
-    fun resetPassword(
-        token: String,
-        newPassword: String,
-        onSuccess: () -> Unit,
-        onError: (String) -> Unit
-    ) {
-        viewModelScope.launch {
-            try {
-                val http: retrofit2.Response<com.example.proyectodegrado.data.model.ResetPasswordResponse> =
-                    userRepository.resetPassword(token, newPassword)
-                if (http.isSuccessful) {
-                    onSuccess()
-                } else {
-                    onError("No se pudo cambiar la contraseña. Intenta de nuevo.")
-                }
-            } catch (e: Exception) {
-                onError("Ocurrió un error: ${e.message}")
-            }
-        }
-    }
 }

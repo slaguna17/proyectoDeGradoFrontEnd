@@ -5,6 +5,8 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -12,6 +14,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -41,13 +45,11 @@ import java.util.*
 fun CreateWorkerScreen(
     navController: NavController,
     workersViewModel: WorkersViewModel,
-    registerViewModel: RegisterViewModel // reutilizamos el VM de Register para UI/validaciones/roles/avatar
+    registerViewModel: RegisterViewModel
 ) {
-    // ---- Estados del VM de registro (UI unificada con RegisterScreen) ----
+    // ---- State ----
     val ui by registerViewModel.ui.collectAsStateWithLifecycle()
     val roles by registerViewModel.roles.collectAsStateWithLifecycle()
-
-    // ---- Catálogos de empleados (tiendas/horarios) ----
     val stores by workersViewModel.stores.collectAsStateWithLifecycle()
     val schedules by workersViewModel.schedules.collectAsStateWithLifecycle()
 
@@ -55,21 +57,20 @@ fun CreateWorkerScreen(
     var selectedScheduleId by remember { mutableStateOf<Int?>(null) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    // Carga inicial: roles + catálogos de empleados
-    LaunchedEffect(Unit) {
-        registerViewModel.loadRoles()
-        workersViewModel.refreshAll()
-    }
+    // ---- DatePicker (Material 3) ----
+    var showDatePicker by remember { mutableStateOf(false) }
+    val birthText = ui.dateOfBirth
 
-    // ---- Image Picker (como en RegisterScreen) ----
+    // ---- Image Picker ----
     val pickImage = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         registerViewModel.onPickAvatar(uri)
         if (uri != null) registerViewModel.uploadAvatarIfNeeded()
     }
 
-    // ---- DatePicker (Material 3) ----
-    var showDatePicker by remember { mutableStateOf(false) }
-    val birthText = ui.dateOfBirth
+    LaunchedEffect(Unit) {
+        registerViewModel.loadRoles()
+        workersViewModel.refreshAll()
+    }
 
     // ---- UI ----
     Column(
@@ -83,18 +84,16 @@ fun CreateWorkerScreen(
         Image(
             painter = painterResource(id = R.drawable.logonobackground),
             contentDescription = "Logo",
-            modifier = Modifier.size(200.dp)
+            modifier = Modifier.size(150.dp).padding(top = 24.dp)
         )
-        Text("Nuevo Empleado", fontSize = 24.sp)
+        Text("Nuevo Empleado",  style = MaterialTheme.typography.headlineLarge)
 
         if (ui.uploading) {
             Spacer(Modifier.height(8.dp))
             LinearProgressIndicator(Modifier.fillMaxWidth())
         }
-
         Spacer(Modifier.height(16.dp))
 
-        // Campos (mismos que RegisterScreen)
         OutlinedTextField(
             value = ui.fullName,
             onValueChange = registerViewModel::onFullName,
@@ -124,25 +123,32 @@ fun CreateWorkerScreen(
             value = ui.phone,
             onValueChange = registerViewModel::onPhone,
             label = { Text("Teléfono") },
-            keyboardOptions = KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Phone),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(Modifier.height(10.dp))
 
-        // Fecha de nacimiento (abre DatePicker)
+        // DatePicker
         OutlinedTextField(
-            value = birthText,
+            value = ui.dateOfBirth,
             onValueChange = {},
             readOnly = true,
             label = { Text("Fecha de nacimiento") },
+            leadingIcon = { Icon(Icons.Default.DateRange, contentDescription = null) },
             trailingIcon = {
-                TextButton(onClick = { showDatePicker = true }) { Text("Elegir") }
+                IconButton(onClick = { showDatePicker = true }) {
+                    Icon(Icons.Default.ArrowDropDown, contentDescription = "Elegir fecha")
+                }
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(
+                    indication = null,
+                    interactionSource = remember { MutableInteractionSource() }
+                ) { showDatePicker = true }
         )
         if (showDatePicker) {
-            val today = remember { Date().time }
-            val datePickerState = rememberDatePickerState(initialSelectedDateMillis = today)
+            val datePickerState = rememberDatePickerState()
             DatePickerDialog(
                 onDismissRequest = { showDatePicker = false },
                 confirmButton = {
@@ -156,7 +162,6 @@ fun CreateWorkerScreen(
         }
         Spacer(Modifier.height(10.dp))
 
-        // Roles (usando tu componente)
         RoleDropdown(
             roles = roles,
             selectedRoleId = ui.roleId,
@@ -164,7 +169,6 @@ fun CreateWorkerScreen(
             modifier = Modifier.fillMaxWidth(),
             label = "Rol del empleado"
         )
-
         Spacer(Modifier.height(10.dp))
 
         OutlinedTextField(
@@ -185,19 +189,19 @@ fun CreateWorkerScreen(
         )
         Spacer(Modifier.height(16.dp))
 
-        // Selección de tienda y turno (propios de empleados)
         StoreDropdown(
             stores = stores,
             selectedStoreId = selectedStoreId,
             onStoreSelected = { selectedStoreId = it }
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(10.dp))
+
         ScheduleDropdown(
             schedules = schedules,
             selectedScheduleId = selectedScheduleId,
             onScheduleSelected = { selectedScheduleId = it }
         )
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(10.dp))
 
         // Errores
         (ui.error ?: errorMessage)?.let {
@@ -205,14 +209,16 @@ fun CreateWorkerScreen(
             Spacer(Modifier.height(8.dp))
         }
 
-        // Avatar + botón fuera del círculo (como ajustamos en Profile)
         Box(
             modifier = Modifier
                 .wrapContentSize()
                 .padding(bottom = 12.dp),
             contentAlignment = Alignment.Center
         ) {
-            Box(modifier = Modifier.size(140.dp), contentAlignment = Alignment.Center) {
+            Box(
+                modifier = Modifier.size(140.dp),
+                contentAlignment = Alignment.Center
+            ) {
                 Box(
                     modifier = Modifier
                         .size(120.dp)
@@ -229,29 +235,34 @@ fun CreateWorkerScreen(
                         )
                     } else {
                         Icon(
-                            imageVector = Icons.Filled.AccountCircle,
+                            imageVector = Icons.Default.AccountCircle,
                             contentDescription = "Avatar",
                             modifier = Modifier
                                 .fillMaxSize()
-                                .padding(8.dp)
+                                .padding(8.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
+
                 SmallFloatingActionButton(
                     onClick = { pickImage.launch("image/*") },
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
-                        .offset(x = 6.dp, y = 6.dp)
-                ) { Icon(Icons.Filled.Edit, contentDescription = "Cambiar foto") }
+                        .offset(x = 6.dp, y = 6.dp),
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    elevation = FloatingActionButtonDefaults.elevation(4.dp)
+                ) {
+                    Icon(Icons.Filled.Edit, contentDescription = "Cambiar foto")
+                }
             }
         }
+        Spacer(Modifier.height(18.dp))
 
-        // Botón Registrar
+        // Submit
         Button(
             onClick = {
                 errorMessage = null
-
-                // Validaciones adicionales (tienda/horario)
                 when {
                     ui.password != ui.confirmPassword -> {
                         errorMessage = "Las contraseñas no coinciden"; return@Button
@@ -267,7 +278,6 @@ fun CreateWorkerScreen(
                     }
                 }
 
-                // Construye el request que ya acepta tu repositorio de Workers
                 val req = RegisterWorkerRequest(
                     username = ui.username,
                     email = ui.email,
@@ -277,7 +287,6 @@ fun CreateWorkerScreen(
                     storeId = selectedStoreId!!,
                     scheduleId = selectedScheduleId!!,
                     roleId = ui.roleId!!
-                    // Si tu backend ya admite más campos (dateOfBirth, avatarKey), puedes extender el modelo.
                 )
 
                 workersViewModel.registerWorker(

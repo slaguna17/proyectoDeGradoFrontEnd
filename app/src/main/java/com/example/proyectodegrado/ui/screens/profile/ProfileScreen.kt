@@ -31,12 +31,13 @@ fun ProfileScreen(viewModel: ProfileViewModel) {
     val ui by viewModel.ui.collectAsStateWithLifecycle()
     val accountPainter = rememberVectorPainter(Icons.Rounded.AccountCircle)
 
-    // Carga inicial
     LaunchedEffect(Unit) { viewModel.loadMe() }
 
     val pickImage = rememberLauncherForActivityResult(
         ActivityResultContracts.GetContent()
-    ) { uri: Uri? -> viewModel.onPickAvatar(uri) }
+    ) {
+        uri: Uri? -> viewModel.onPickAvatar(uri)
+    }
 
     Scaffold { innerpadding ->
         RefreshableContainer(

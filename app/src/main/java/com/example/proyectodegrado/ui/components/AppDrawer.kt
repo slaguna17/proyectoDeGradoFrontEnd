@@ -28,12 +28,10 @@ fun DrawerContent(
     val settingsIcon = ImageVector.vectorResource(id = R.drawable.settings)
     val workersIcon = ImageVector.vectorResource(id = R.drawable.group)
     val scheduleIcon = ImageVector.vectorResource(id = R.drawable.schedule)
-    val forecastIcon = ImageVector.vectorResource(id = R.drawable.bar_chart)
     val storeIcon = ImageVector.vectorResource(id = R.drawable.store)
     val roleIcon = ImageVector.vectorResource(id = R.drawable.assignmentsvg)
     val balanceIcon = ImageVector.vectorResource(id = R.drawable.wallet)
     val providerIcon = ImageVector.vectorResource(id = R.drawable.truck)
-    val barcodeIcon = ImageVector.vectorResource(id = R.drawable.barcode_scanner)
 
     ModalDrawerSheet {
         Column(
@@ -83,10 +81,8 @@ fun DrawerContent(
             DrawerItem("Roles", roleIcon, onItemSelected)
             DrawerItem("Empleados", workersIcon, onItemSelected)
             DrawerItem("Horarios", scheduleIcon, onItemSelected)
-            DrawerItem("Pronósticos", forecastIcon, onItemSelected)
             DrawerItem("Caja", balanceIcon, onItemSelected)
             DrawerItem("Proveedores", providerIcon, onItemSelected)
-            DrawerItem("Código de barras", barcodeIcon, onItemSelected)
 
             Spacer(Modifier.weight(1f))
             HorizontalDivider()
