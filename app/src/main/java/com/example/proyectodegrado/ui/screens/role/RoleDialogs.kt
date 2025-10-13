@@ -1,8 +1,7 @@
 package com.example.proyectodegrado.ui.screens.role
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,10 +16,10 @@ fun CreateEditRoleDialog(
     show: Boolean,
     onDismiss: () -> Unit,
     onSave: (name: String, description: String, isAdmin: Boolean) -> Unit,
-    role: Role?, // Rol a editar, o null si es nuevo
+    role: Role?,
     allPermits: List<Permit>,
-    selectedPermitIds: Set<Int>,
-    onPermitCheckedChange: (permitId: Int, isChecked: Boolean) -> Unit
+    selectedPermitId: Int?,
+    onPermitSelected: (permitId: Int) -> Unit
 ) {
     if (!show) return
 
@@ -28,9 +27,16 @@ fun CreateEditRoleDialog(
     var description by remember { mutableStateOf(role?.description ?: "") }
     var isAdmin by remember { mutableStateOf(role?.isAdmin ?: false) }
 
+    // Re-Sync state
+    LaunchedEffect(role) {
+        name = role?.name ?: ""
+        description = role?.description ?: ""
+        isAdmin = role?.isAdmin ?: false
+    }
+
     Dialog(onDismissRequest = onDismiss) {
         Surface(shape = MaterialTheme.shapes.large) {
-            Column(modifier = Modifier.padding(24.dp)) {
+            Column(modifier = Modifier.width(IntrinsicSize.Max).padding(24.dp)) {
                 Text(
                     text = if (role == null) "Crear Nuevo Rol" else "Editar Rol",
                     style = MaterialTheme.typography.headlineSmall
@@ -49,13 +55,20 @@ fun CreateEditRoleDialog(
                 Text("Permisos", style = MaterialTheme.typography.titleMedium)
                 HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
-                LazyColumn(modifier = Modifier.heightIn(max = 200.dp)) {
-                    items(allPermits, key = { it.id }) { permit ->
-                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                            Checkbox(
-                                checked = permit.id in selectedPermitIds,
-                                onCheckedChange = { isChecked -> onPermitCheckedChange(permit.id, isChecked) }
+                Column(modifier = Modifier.heightIn(max = 200.dp)) {
+                    allPermits.forEach { permit ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onPermitSelected(permit.id) }
+                                .padding(vertical = 4.dp)
+                        ) {
+                            RadioButton(
+                                selected = (permit.id == selectedPermitId),
+                                onClick = { onPermitSelected(permit.id) }
                             )
+                            Spacer(Modifier.width(8.dp))
                             Text(text = permit.name, style = MaterialTheme.typography.bodyMedium)
                         }
                     }
@@ -73,8 +86,6 @@ fun CreateEditRoleDialog(
         }
     }
 }
-
-
 
 @Composable
 fun DeleteRoleDialog(

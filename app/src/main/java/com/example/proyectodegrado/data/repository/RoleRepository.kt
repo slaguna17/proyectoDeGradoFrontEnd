@@ -1,10 +1,12 @@
 package com.example.proyectodegrado.data.repository
 
 import com.example.proyectodegrado.data.api.RoleService
+import com.example.proyectodegrado.data.model.AssignPermitsRequest
+import com.example.proyectodegrado.data.model.CreateRoleResponse
+import com.example.proyectodegrado.data.model.GenericRoleResponse
 import com.example.proyectodegrado.data.model.Permit
 import com.example.proyectodegrado.data.model.Role
 import com.example.proyectodegrado.data.model.RoleRequest
-import com.example.proyectodegrado.data.model.RoleResponse
 import retrofit2.Response
 
 class RoleRepository (private val roleService: RoleService) {
@@ -19,32 +21,27 @@ class RoleRepository (private val roleService: RoleService) {
     }
 
     //Create new Role
-    suspend fun createRole(request: RoleRequest): Response<RoleResponse> {
+    suspend fun createRole(request: RoleRequest): CreateRoleResponse {
         return roleService.createRole(request)
     }
 
     //Update Role
-    suspend fun updateRole(roleId: Int, request: RoleRequest): Response<RoleResponse> {
+    suspend fun updateRole(roleId: Int, request: RoleRequest) {
         return roleService.updateRole(roleId,request)
     }
 
     //Delete Role
-    suspend fun deleteRole(roleId: Int): Response<RoleResponse> {
+    suspend fun deleteRole(roleId: Int){
         return roleService.deleteRole(roleId)
     }
 
     //Assign Permits
-    suspend fun assignPermits (request: Array<Int>): Response<RoleResponse> {
-        return roleService.assignPermits(request)
+    suspend fun assignPermitsToRole(roleId: Int, permitIds: List<Int>) {
+        val request = AssignPermitsRequest(permitIds = permitIds)
+        roleService.assignPermitsToRole(roleId, request)
     }
 
     suspend fun getPermitsByRole(roleId: Int): List<Permit> {
         return roleService.getPermitsByRole(roleId)
-    }
-
-    suspend fun assignPermitsToRole(roleId: Int, permitIds: List<Int>): Response<Unit> {
-        // El backend espera un objeto JSON como {"permitIds": [1, 2, 3]}
-        val body = mapOf("permitIds" to permitIds)
-        return roleService.assignPermitsToRole(roleId, body)
     }
 }

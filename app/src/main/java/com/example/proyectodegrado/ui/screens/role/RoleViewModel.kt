@@ -19,7 +19,7 @@ data class RoleScreenUiState(
     val error: String? = null,
     val isDialogShown: Boolean = false,
     val currentRoleInDialog: Role? = null,
-    val selectedPermitIdsInDialog: Set<Int> = emptySet()
+    val selectedPermitId: Int? = null
 )
 
 class RoleViewModel(
@@ -36,7 +36,7 @@ class RoleViewModel(
 
     fun loadInitialData() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
+            _uiState.update { it.copy(isLoading = true, error = null) }
             try {
                 val roles = roleRepository.getAllRoles()
                 val permits = permitRepository.getAllPermits()
@@ -48,8 +48,9 @@ class RoleViewModel(
     }
 
     fun openDialog(role: Role? = null) {
-        _uiState.update { it.copy(isLoading = true) }
-        if (role != null) { // Editando rol
+        _uiState.update { it.copy(isLoading = true, error = null) }
+        if (role != null) {
+            // --- UPDATE ---
             viewModelScope.launch {
                 try {
                     val assignedPermits = roleRepository.getPermitsByRole(role.id)
@@ -57,7 +58,7 @@ class RoleViewModel(
                         it.copy(
                             isDialogShown = true,
                             currentRoleInDialog = role,
-                            selectedPermitIdsInDialog = assignedPermits.map { p -> p.id }.toSet(),
+                            selectedPermitId = assignedPermits.firstOrNull()?.id,
                             isLoading = false
                         )
                     }
@@ -65,8 +66,16 @@ class RoleViewModel(
                     _uiState.update { it.copy(isLoading = false, error = e.message) }
                 }
             }
-        } else { // Creando rol
-            _uiState.update { it.copy(isDialogShown = true, currentRoleInDialog = null, selectedPermitIdsInDialog = emptySet(), isLoading = false) }
+        } else {
+            // --- CREATE ---
+            _uiState.update {
+                it.copy(
+                    isDialogShown = true,
+                    currentRoleInDialog = null,
+                    selectedPermitId = null,
+                    isLoading = false
+                )
+            }
         }
     }
 
@@ -74,34 +83,34 @@ class RoleViewModel(
         _uiState.update { it.copy(isDialogShown = false) }
     }
 
-    fun onPermitCheckedChange(permitId: Int, isChecked: Boolean) {
-        val currentSelection = _uiState.value.selectedPermitIdsInDialog.toMutableSet()
-        if (isChecked) currentSelection.add(permitId) else currentSelection.remove(permitId)
-        _uiState.update { it.copy(selectedPermitIdsInDialog = currentSelection) }
+    fun onPermitSelected(permitId: Int) {
+        _uiState.update { it.copy(selectedPermitId = permitId) }
+    }
+
+    fun onErrorShown() {
+        _uiState.update { it.copy(error = null) }
     }
 
     fun saveRole(name: String, description: String, isAdmin: Boolean) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
+            _uiState.update { it.copy(isLoading = true, error = null) }
             try {
-                val roleToSave = _uiState.value.currentRoleInDialog
-                val permitIds = _uiState.value.selectedPermitIdsInDialog.toList()
+                val roleToEdit = _uiState.value.currentRoleInDialog
+                val selectedPermit = _uiState.value.selectedPermitId
+                val permitIds = if (selectedPermit != null) listOf(selectedPermit) else emptyList()
                 val roleRequest = RoleRequest(name, description, isAdmin)
 
-                val roleId = if (roleToSave != null) {
-                    roleRepository.updateRole(roleToSave.id, roleRequest)
-                    roleToSave.id
+                if (roleToEdit != null) {
+                    // --- UPDATE ---
+                    roleRepository.updateRole(roleToEdit.id, roleRequest)
+                    roleRepository.assignPermitsToRole(roleToEdit.id, permitIds)
                 } else {
+                    // --- CREATE ---
                     val newRoleResponse = roleRepository.createRole(roleRequest)
-                    // Asumimos que la respuesta de creación devuelve el rol o su ID
-                    // Si no, necesitarás hacer un GET para obtener el ID
-                    // Por ahora, asumimos que el backend no lo devuelve y hacemos un GET por nombre.
-                    // ESTO REQUIERE QUE LOS NOMBRES DE ROLES SEAN ÚNICOS EN EL BACKEND
-                    roleRepository.getAllRoles().find { it.name == name }?.id
-                        ?: throw Exception("No se pudo obtener el ID del nuevo rol")
+                    val newRoleId = newRoleResponse.role.id
+                    roleRepository.assignPermitsToRole(newRoleId, permitIds)
                 }
 
-                roleRepository.assignPermitsToRole(roleId, permitIds)
                 closeDialog()
                 loadInitialData()
             } catch (e: Exception) {
@@ -112,11 +121,12 @@ class RoleViewModel(
 
     fun deleteRole(roleId: Int) {
         viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, error = null) }
             try {
                 roleRepository.deleteRole(roleId)
                 loadInitialData()
             } catch (e: Exception) {
-                _uiState.update { it.copy(error = e.message) }
+                _uiState.update { it.copy(isLoading = false, error = e.message) }
             }
         }
     }
