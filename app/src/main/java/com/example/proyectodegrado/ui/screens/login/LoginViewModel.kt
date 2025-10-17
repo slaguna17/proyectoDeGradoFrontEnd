@@ -4,41 +4,66 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.proyectodegrado.data.model.LoginResponse
 import com.example.proyectodegrado.data.repository.UserRepository
+import com.example.proyectodegrado.di.AppPreferences
+import com.example.proyectodegrado.di.DependencyProvider
 import kotlinx.coroutines.launch
-import retrofit2.Response
+import kotlinx.coroutines.withTimeout
 
-class LoginViewModel(private val userRepository: UserRepository) : ViewModel() {
+sealed interface LoginState {
+    object Idle : LoginState
+    object Loading : LoginState
+    object Success : LoginState
+    data class Error(val message: String) : LoginState
+}
 
-    private val _loginState = MutableLiveData<Result<LoginResponse>>()
-    val loginState: LiveData<Result<LoginResponse>> = _loginState
+class LoginViewModel(
+    private val userRepository: UserRepository,
+    private val prefs: AppPreferences
+) : ViewModel() {
 
-    private val _forgotPasswordResult = MutableLiveData<Result<String>>()
-    val forgotPasswordResult: LiveData<Result<String>> = _forgotPasswordResult
+    private val _loginState = MutableLiveData<LoginState>(LoginState.Idle)
+    val loginState: LiveData<LoginState> = _loginState
 
-    fun login(email: String, password: String) {
+    fun login(email: String, password: String, rememberMe: Boolean) {
         viewModelScope.launch {
+            _loginState.value = LoginState.Loading
             try {
-                val http: Response<LoginResponse> = userRepository.login(email, password)
+                val response = withTimeout(15000L) {
+                    userRepository.login(email, password)
+                }
+                val isAdmin = response.isAdmin
+                val user    = response.user
+                val storeId = prefs.getStoreId()?.toIntOrNull() ?: 1
+                val menu = response.menu
 
-                if (http.isSuccessful) {
-                    val body: LoginResponse? = http.body()
-                    if (body != null) {
-                        _loginState.postValue(Result.success(body))
-                    } else {
-                        _loginState.postValue(Result.failure(Exception("Respuesta vacía del servidor")))
-                    }
+                if (rememberMe) {
+                    DependencyProvider.saveCurrentSession(
+                        userId = user.id,
+                        storeId = storeId,
+                        isAdmin = isAdmin,
+                        userEmail = email,
+                        userName = user.username?.ifBlank { user.full_name },
+                        menu = menu
+                    )
                 } else {
-                    _loginState.postValue(
-                        Result.failure(
-                            Exception("HTTP ${http.code()} ${http.message()}")
-                        )
+                    DependencyProvider.clearCurrentSession()
+                    DependencyProvider.setTemporarySession(
+                        userId = user.id,
+                        storeId = storeId,
+                        isAdmin = isAdmin,
+                        menu = menu
                     )
                 }
+                _loginState.value = LoginState.Success
             } catch (e: Exception) {
-                _loginState.postValue(Result.failure(e))
+                _loginState.value = LoginState.Error(e.message ?: "Error desconocido")
             }
+        }
+    }
+    fun clearError() {
+        if (loginState.value is LoginState.Error) {
+            _loginState.value = LoginState.Idle
         }
     }
 }

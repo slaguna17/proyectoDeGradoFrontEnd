@@ -26,12 +26,12 @@ class RoleRepository (private val roleService: RoleService) {
     }
 
     //Update Role
-    suspend fun updateRole(roleId: Int, request: RoleRequest) {
+    suspend fun updateRole(roleId: Int, request: RoleRequest): Response<GenericRoleResponse> {
         return roleService.updateRole(roleId,request)
     }
 
     //Delete Role
-    suspend fun deleteRole(roleId: Int){
+    suspend fun deleteRole(roleId: Int): Response<GenericRoleResponse> {
         return roleService.deleteRole(roleId)
     }
 

@@ -24,6 +24,5 @@ fun shouldShowTopBar(route: String?): Boolean {
 }
 
 fun shouldShowBack(route: String?): Boolean {
-    // Muestra "atrás" en rutas dinámicas de productos, o donde lo necesites
     return route?.startsWith("products/") == true || route == "registerEmployee"
 }

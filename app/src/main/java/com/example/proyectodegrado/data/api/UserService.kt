@@ -5,9 +5,18 @@ import retrofit2.Response
 import retrofit2.http.*
 
 interface UserService {
-    @POST("/api/users/login")
-    suspend fun login(@Body request: LoginRequest): Response<LoginResponse>
 
+    // ---------- Auth ----------
+    @POST("/api/users/login")
+    suspend fun login(@Body request: LoginRequest): LoginResponse
+
+    @GET("/api/users/me")
+    suspend fun me(@Header("Authorization") bearer: String): MeResponse
+
+    @GET("/api/menu")
+    suspend fun menu(@Header("Authorization") bearer: String): MenuResponse
+
+    // ---------- Users ----------
     @GET("/api/users")
     suspend fun getAllUsers(@Query("signed") signed: Boolean = true): List<User>
 
@@ -30,5 +39,8 @@ interface UserService {
     suspend fun resetPassword(@Body request: ResetPasswordRequest): Response<ResetPasswordResponse>
 
     @PUT("/api/users/updateUser/{id}")
-    suspend fun updateUser(@Path("id") userId: Int, @Body fields: Map<String, @JvmSuppressWildcards Any?>): Response<Unit>
+    suspend fun updateUser(
+        @Path("id") userId: Int,
+        @Body fields: Map<String, @JvmSuppressWildcards Any?>
+    ): Response<Unit>
 }

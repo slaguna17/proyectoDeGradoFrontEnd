@@ -12,109 +12,157 @@ import com.example.proyectodegrado.ui.screens.providers.ProvidersViewModel
 import com.example.proyectodegrado.ui.screens.register.RegisterViewModel
 import com.example.proyectodegrado.ui.screens.role.RoleViewModel
 import com.example.proyectodegrado.ui.screens.schedule.ScheduleViewModel
+import com.example.proyectodegrado.ui.screens.session.SessionViewModel
 import com.example.proyectodegrado.ui.screens.store.StoreViewModel
 import com.example.proyectodegrado.ui.screens.workers.WorkersViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import com.example.proyectodegrado.data.model.MenuItemDTO
+
+data class SessionState(
+    val userId: Int? = null,
+    val storeId: Int? = null,
+    val isAdmin: Boolean = false,
+    val menu: List<MenuItemDTO> = emptyList()
+)
 
 object DependencyProvider {
 
-    // --- App context ---
     private lateinit var applicationContext: Context
+    private lateinit var preferences: AppPreferences
+
+    // Services
+    private lateinit var userService: UserService
+    private lateinit var productService: ProductService
+    private lateinit var categoryService: CategoryService
+    private lateinit var storeService: StoreService
+    private lateinit var roleService: RoleService
+    private lateinit var providerService: ProviderService
+    private lateinit var scheduleService: ScheduleService
+    private lateinit var workerService: WorkerService
+    private lateinit var cashService: CashService
+    private lateinit var imageApiService: ImageApiService
+    private lateinit var permitService: PermitService
+    private lateinit var userRepository: UserRepository
+
+    // Repositories
+    private lateinit var imageRepository: ImageRepository
+    private lateinit var productRepository: ProductRepository
+    private lateinit var categoryRepository: CategoryRepository
+    private lateinit var storeRepository: StoreRepository
+    private lateinit var roleRepository: RoleRepository
+    private lateinit var providerRepository: ProviderRepository
+    private lateinit var scheduleRepository: ScheduleRepository
+    private lateinit var workerRepository: WorkerRepository
+    private lateinit var cashRepository: CashRepository
+    private lateinit var permitRepository: PermitRepository
+
+
+    private val _sessionState = MutableStateFlow(SessionState())
+    val sessionState = _sessionState.asStateFlow()
+
     fun initialize(context: Context) {
         applicationContext = context.applicationContext
-        // ← Primea la sesión desde prefs si estaban guardadas
-        val uid = preferences.getUserId()?.toIntOrNull()
-        val sid = preferences.getStoreId()?.toIntOrNull()
-        if (uid != null) session.userId = uid
-        if (sid != null) session.storeId = sid
+        preferences = AppPreferences(applicationContext)
+
+        // Inicialización de Services
+        userService = RetrofitClient.createService(UserService::class.java)
+        productService = RetrofitClient.createService(ProductService::class.java)
+        categoryService = RetrofitClient.createService(CategoryService::class.java)
+        storeService = RetrofitClient.createService(StoreService::class.java)
+        roleService = RetrofitClient.createService(RoleService::class.java)
+        providerService = RetrofitClient.createService(ProviderService::class.java)
+        scheduleService = RetrofitClient.createService(ScheduleService::class.java)
+        workerService = RetrofitClient.createService(WorkerService::class.java)
+        cashService = RetrofitClient.createService(CashService::class.java)
+        imageApiService = RetrofitClient.createService(ImageApiService::class.java)
+        permitService = RetrofitClient.createService(PermitService::class.java)
+
+        // Inicialización de Repositories
+        userRepository = UserRepository(userService, applicationContext)
+        imageRepository = ImageRepository(imageApiService, applicationContext)
+        productRepository = ProductRepository(productService)
+        categoryRepository = CategoryRepository(categoryService)
+        storeRepository = StoreRepository(storeService)
+        roleRepository = RoleRepository(roleService)
+        providerRepository = ProviderRepository(providerService)
+        scheduleRepository = ScheduleRepository(scheduleService)
+        workerRepository = WorkerRepository(workerService)
+        cashRepository = CashRepository(cashService)
+        permitRepository = PermitRepository(permitService)
+
+        // Carga la sesión guardada al iniciar la app
+        val userId = preferences.getUserId()?.toIntOrNull()
+        val storeId = preferences.getStoreId()?.toIntOrNull()
+        if (userId != null && storeId != null) {
+            val isAdmin = preferences.getIsAdmin()
+            _sessionState.value = SessionState(userId, storeId, isAdmin, menu = emptyList())
+        }
     }
 
-    // --- Sesión (simple) ---
-    private data class Session(var userId: Int? = null, var storeId: Int? = null)
-    private val session = Session()
-
-    fun setCurrentSession(userId: Int, storeId: Int) {
-        session.userId = userId
-        session.storeId = storeId
+    // Saves session in App preferences
+    fun saveCurrentSession(
+        userId: Int,
+        storeId: Int,
+        isAdmin: Boolean,
+        userEmail: String,
+        userName: String?,
+        menu: List<MenuItemDTO>
+    ) {
+        _sessionState.value = SessionState(userId, storeId, isAdmin, menu)
         preferences.saveUserId(userId.toString())
         preferences.saveStoreId(storeId.toString())
+        preferences.saveIsAdmin(isAdmin)
+        preferences.saveUserEmail(userEmail)
+        preferences.saveUserName(userName)
     }
 
-    private val preferences by lazy { AppPreferences(applicationContext) }
+    // Temporary Session
+    fun setTemporarySession(
+        userId: Int,
+        storeId: Int,
+        isAdmin: Boolean,
+        menu: List<MenuItemDTO>
+    ) {
+        _sessionState.value = SessionState(userId, storeId, isAdmin, menu)
+    }
 
-    fun getCurrentStoreId(): Int = session.storeId ?: 1
-    fun getCurrentUserId(): Int = session.userId ?: 1
+    /**
+     * Limpia la sesión guardada en el dispositivo y en memoria.
+     * Se usa para "Cerrar Sesión" o al iniciar sesión sin "Recuérdame".
+     */
+    fun clearCurrentSession() {
+        preferences.clear()
+        _sessionState.value = SessionState()
+    }
 
-    // --- API Services (unificados con RetrofitClient) ---
-    private val userService: UserService by lazy { RetrofitClient.createService(UserService::class.java) }
-    private val productService: ProductService by lazy { RetrofitClient.createService(ProductService::class.java) }
-    private val categoryService: CategoryService by lazy { RetrofitClient.createService(CategoryService::class.java) }
-    private val storeService: StoreService by lazy { RetrofitClient.createService(StoreService::class.java) }
-    private val roleService: RoleService by lazy { RetrofitClient.createService(RoleService::class.java) }
-    private val providerService: ProviderService by lazy { RetrofitClient.createService(ProviderService::class.java) }
-    private val scheduleService: ScheduleService by lazy { RetrofitClient.createService(ScheduleService::class.java) }
-    private val workerService: WorkerService by lazy { RetrofitClient.createService(WorkerService::class.java) }
-    private val cashService: CashService by lazy { RetrofitClient.createService(CashService::class.java) }
-    private val imageApiService: ImageApiService by lazy { RetrofitClient.createService(ImageApiService::class.java) }
-    private val permitService: PermitService by lazy { RetrofitClient.createService(PermitService::class.java) }
-
-    // --- Repositories ---
-    private val userRepository: UserRepository by lazy { UserRepository(userService, applicationContext) }
-    private val productRepository: ProductRepository by lazy { ProductRepository(productService) }
-    private val categoryRepository: CategoryRepository by lazy { CategoryRepository(categoryService) }
-    private val storeRepository: StoreRepository by lazy { StoreRepository(storeService) }
-    private val roleRepository: RoleRepository by lazy { RoleRepository(roleService) }
-    private val providerRepository: ProviderRepository by lazy { ProviderRepository(providerService) }
-    private val scheduleRepository: ScheduleRepository by lazy { ScheduleRepository(scheduleService) }
-    private val workerRepository: WorkerRepository by lazy { WorkerRepository(workerService) }
-    private val cashRepository: CashRepository by lazy { CashRepository(cashService) }
-    private val permitRepository: PermitRepository by lazy { PermitRepository(permitService) }
-
-    // Use the same signature (api + context)
-    private val imageRepository: ImageRepository by lazy {
-        check(::applicationContext.isInitialized) {
-            "DependencyProvider.initialize(context) debe llamarse antes de usar imageRepository."
-        }
-        ImageRepository(imageApiService,applicationContext)
+    // Helpers
+    fun getCurrentStoreId(): Int = _sessionState.value.storeId ?: 1
+    fun getCurrentUserId(): Int = _sessionState.value.userId ?: 1
+    fun getCurrentMenu(): List<MenuItemDTO> = _sessionState.value.menu
+    fun updateMenu(newMenu: List<MenuItemDTO>) {
+        val s = _sessionState.value
+        _sessionState.value = s.copy(menu = newMenu)
     }
 
     // --- ViewModels ---
-    fun provideLoginViewModel(): LoginViewModel =
-        LoginViewModel(userRepository)
-
-    fun provideRegisterViewModel(): RegisterViewModel =
-        RegisterViewModel(userRepository, imageRepository)
-
-    fun provideProductViewModel(): ProductViewModel =
-        ProductViewModel(productRepository, categoryRepository, imageRepository, storeRepository)
-
-    fun provideCategoryViewModel(): CategoryViewModel =
-        CategoryViewModel(categoryRepository, imageRepository)
-
-    fun provideStoreViewModel(): StoreViewModel =
-        StoreViewModel(storeRepository, imageRepository)
-
-    fun provideRoleViewModel(): RoleViewModel =
-        RoleViewModel(roleRepository, permitRepository)
-
-    fun provideProviderViewModel(): ProvidersViewModel =
-        ProvidersViewModel(providerRepository)
-
-    fun provideScheduleViewModel(): ScheduleViewModel =
-        ScheduleViewModel(scheduleRepository)
-
-    fun provideWorkersViewModel(): WorkersViewModel =
-        WorkersViewModel(workerRepository, storeRepository, scheduleRepository)
-
-    fun provideProfileViewModel(): ProfileViewModel =
-        ProfileViewModel(userRepository, imageRepository)
-
+    fun provideSessionViewModel(): SessionViewModel = SessionViewModel(preferences)
+    fun provideLoginViewModel(): LoginViewModel = LoginViewModel(userRepository, preferences) // Ahora pasamos 'preferences'
+    fun provideRegisterViewModel(): RegisterViewModel = RegisterViewModel(userRepository, imageRepository)
+    fun provideProductViewModel(): ProductViewModel = ProductViewModel(productRepository, categoryRepository, imageRepository, storeRepository)
+    fun provideCategoryViewModel(): CategoryViewModel = CategoryViewModel(categoryRepository, imageRepository)
+    fun provideStoreViewModel(): StoreViewModel = StoreViewModel(storeRepository, imageRepository)
+    fun provideRoleViewModel(): RoleViewModel = RoleViewModel(roleRepository, permitRepository)
+    fun provideProviderViewModel(): ProvidersViewModel = ProvidersViewModel(providerRepository)
+    fun provideScheduleViewModel(): ScheduleViewModel = ScheduleViewModel(scheduleRepository)
+    fun provideWorkersViewModel(): WorkersViewModel = WorkersViewModel(workerRepository, storeRepository, scheduleRepository)
+    fun provideProfileViewModel(): ProfileViewModel = ProfileViewModel(userRepository, imageRepository)
     fun provideCashViewModel(
         storeId: Int? = null,
         userId: Int? = null
     ): CashViewModel {
-        val sid = storeId ?: session.storeId ?: 1
-        val uid = userId ?: session.userId ?: 1
+        val sid = storeId ?: _sessionState.value.storeId ?: 1
+        val uid = userId ?: _sessionState.value.userId ?: 1
         return CashViewModel(cashRepository, sid, uid)
     }
-
 }

@@ -16,7 +16,9 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -49,7 +51,9 @@ import com.example.proyectodegrado.ui.screens.workers.WorkersScreen
 import kotlinx.coroutines.launch
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.remember
+import com.example.proyectodegrado.data.model.MenuItemDTO
 import com.example.proyectodegrado.ui.screens.role.RoleScreen
+import com.example.proyectodegrado.ui.screens.session.SessionUiState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,6 +69,10 @@ fun AppNavigation() {
     val scheduleViewModel = remember { DependencyProvider.provideScheduleViewModel() }
     val workersViewModel = remember { DependencyProvider.provideWorkersViewModel() }
     val profileViewModel = remember { DependencyProvider.provideProfileViewModel() }
+    val sessionViewModel = remember { DependencyProvider.provideSessionViewModel() }
+    val providerViewModel = remember { DependencyProvider.provideProviderViewModel() }
+    val sessionState by sessionViewModel.uiState.collectAsStateWithLifecycle()
+    val dpSession by DependencyProvider.sessionState.collectAsState()
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -75,6 +83,12 @@ fun AppNavigation() {
 
     // Read Profile UI State
     val profileUi by profileViewModel.ui.collectAsStateWithLifecycle()
+
+    val routeAlias = mapOf(
+        "employees" to "workers",
+        "schedules" to "schedule",
+        "stores"    to "store"
+    )
 
     LaunchedEffect(navController) {
         navController.currentBackStackEntryFlow.collect { backStackEntry ->
@@ -87,35 +101,23 @@ fun AppNavigation() {
         drawerContent = {
             DrawerContent(
                 avatarUrl = profileUi.avatarUrl,
-                onItemSelected = { label ->
-                    val route = when (label) {
-                        "Inicio"            -> "home"
-                        "Productos"         -> "products"
-                        "Categorías"        -> "categories"
-                        "Tienda"            -> "store"
-                        "Roles"             -> "role"
-                        "Empleados"         -> "workers"
-                        "Horarios"          -> "schedule"
-                        "Pronósticos"       -> "forecast"
-                        "Caja"              -> "cash"
-                        "Proveedores"       -> "providers"
-                        "Código de barras"  -> "barcode"
-                        "Ajustes"           -> "settings"
-                        "profile"           -> "profile"
-                        else -> null
-                    }
+                onItemSelected = { routeId ->
                     scope.launch {
                         drawerState.close()
-                        val baseCurrent = currentRoute?.substringBefore("/")
-                        if (route != null && route != baseCurrent) {
-                            navController.navigate(route) {
+                        val target = routeAlias[routeId] ?: routeId
+
+                        val current = currentRoute?.substringBefore("/")
+                        if (target != current) {
+                            navController.navigate(target) {
                                 popUpTo(navController.graph.startDestinationId) { saveState = true }
                                 launchSingleTop = true
                                 restoreState = true
                             }
                         }
                     }
-                }
+                },
+                isAdmin = dpSession.isAdmin,
+                menu = dpSession.menu
             )
         }
     ) {
@@ -153,6 +155,7 @@ fun AppNavigation() {
                 composable("home") { HomeScreen() }
                 composable("categories"){ CategoriesScreen(navController, categoryViewModel) }
                 composable("products") { AllProductsScreen(navController, productViewModel) }
+                composable("providers") { ProvidersScreen(navController, providerViewModel) }
 
                 composable(
                     route = "products/{categoryId}",

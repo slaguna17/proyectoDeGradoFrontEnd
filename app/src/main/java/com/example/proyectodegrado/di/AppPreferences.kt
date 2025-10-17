@@ -54,4 +54,9 @@ class AppPreferences(context: Context) {
         sharedPreferences.edit().remove("user_id").apply()
     }
 
+    fun saveIsAdmin(isAdmin: Boolean) = sharedPreferences.edit().putBoolean("is_admin", isAdmin).apply()
+    fun getIsAdmin(): Boolean = sharedPreferences.getBoolean("is_admin", false)
+
+    fun clear() = sharedPreferences.edit().clear().apply()
+
 }

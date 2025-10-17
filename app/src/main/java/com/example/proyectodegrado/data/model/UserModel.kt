@@ -16,9 +16,7 @@ data class User(
     val phone: String,
     val status: String,
     @SerializedName("last_access") val lastAccess: String,
-    /** Puede ser key o URL externa según BD */
     val avatar: String?,
-    /** URL lista para mostrar (la genera el backend si pides ?signed=true) */
     @SerializedName("avatar_url") val avatarUrl: String?
 )
 
@@ -31,9 +29,7 @@ data class RegisterRequest(
     val phone: String,
     val status: String = "active",
     @SerializedName("last_access") val lastAccess: String = currentTime.toString(),
-    /** Preferir subir a S3 y mandar la KEY */
     @SerializedName("avatar_key") val avatarKey: String? = null,
-    /** (Opcional) Permitir URL externa */
     val avatar: String? = null,
     @SerializedName("role_id") val roleId: Int
 )
@@ -45,20 +41,36 @@ data class RegisterResponse(
 
 data class LoginRequest(val email: String, val password: String)
 
-/** DTO LIGERO que realmente envía el endpoint de login */
-data class LoginUserDTO(
-    val id: Int,
-    val username: String?,
-    val email: String?,
-    val avatar: String? = null,
-    @SerializedName("full_name") val fullName: String? = null
-)
-
-/** La respuesta de login debe usar el DTO ligero */
 data class LoginResponse(
     val token: String,
-    val user: LoginUserDTO
+    val user: UserSummary,
+    val roles: List<Role>,
+    val permits: List<Permit>,
+    val isAdmin: Boolean,
+    val menu: List<MenuItemDTO>
 )
+
+
+data class RoleDTO(
+    val id: Int,
+    val name: String,
+    val isAdmin: Boolean
+)
+
+data class PermitDTO(
+    val id: Int,
+    val name: String,
+    val description: String?
+)
+
+data class UserDTO(
+    val id: Int,
+    val username: String?,
+    @SerializedName("full_name") val fullName: String,
+    val roles: List<RoleDTO>? = emptyList(),
+    val isAdmin: Boolean
+)
+
 data class ForgotPasswordRequest(val email: String)
 data class ForgotPasswordResponse(val message: String)
 data class ResetPasswordRequest(@SerializedName("token") val token: String, @SerializedName("new_password") val newPassword: String)

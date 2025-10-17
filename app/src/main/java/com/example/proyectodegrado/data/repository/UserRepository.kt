@@ -4,6 +4,7 @@ import android.content.Context
 import com.example.proyectodegrado.data.api.UserService
 import com.example.proyectodegrado.data.model.*
 import com.example.proyectodegrado.di.AppPreferences
+import com.example.proyectodegrado.di.DependencyProvider
 import retrofit2.Response
 
 class UserRepository(
@@ -13,9 +14,16 @@ class UserRepository(
 
     // -------------------- Auth --------------------
 
-    /** Devuelve retrofit2.Response para usar response.isSuccessful / body() / code() */
-    suspend fun login(email: String, password: String): Response<LoginResponse> {
+    suspend fun login(email: String, password: String): LoginResponse {
         return userService.login(LoginRequest(email, password))
+    }
+
+    suspend fun me(bearer: String): MeResponse {
+        return userService.me(bearer)
+    }
+
+    suspend fun menu(bearer: String): MenuResponse {
+        return userService.menu(bearer)
     }
 
     suspend fun forgotPassword(email: String): Response<ForgotPasswordResponse> {
@@ -38,15 +46,9 @@ class UserRepository(
 
     suspend fun getRoles(): List<Role> = userService.getRoles()
 
-    /** Conveniencia: trae el usuario usando el id guardado en preferencias (o null si no hay) */
     suspend fun getCurrentUser(): User? =
         getCurrentUserId()?.let { id -> userService.getUser(id) }
 
-    /**
-     * Actualiza el perfil del usuario actual. Puedes pasar avatarKey (KEY de S3)
-     * o indicar removeImage=true para borrar el avatar en backend.
-     * Devuelve true/false según HTTP 2xx.
-     */
     suspend fun updateUserProfile(
         fullName: String,
         email: String,
@@ -56,7 +58,6 @@ class UserRepository(
     ): Boolean {
         val userId = getCurrentUserId() ?: return false
 
-        // NOTA: El servicio espera Map<String, Any?> (en la interfaz ya está con @JvmSuppressWildcards)
         val body = mutableMapOf<String, Any?>(
             "full_name" to fullName,
             "email" to email,
@@ -76,4 +77,10 @@ class UserRepository(
 
     private fun getCurrentUserId(): Int? =
         AppPreferences(context).getUserId()?.toIntOrNull()
+
+    suspend fun refreshMenuWithToken(token: String) {
+        val resp = menu("Bearer $token")
+        DependencyProvider.updateMenu(resp.menu)
+    }
+
 }
