@@ -13,7 +13,8 @@ data class Product(
     @SerializedName("brand") val brand: String,
     @SerializedName("category_id") val categoryId: Int,
     @SerializedName("stock") val stock: Int?, // Stock general, puede ser null
-    @SerializedName("stores") val stores: List<StoreInfoFromProduct>?
+    @SerializedName("stores") val stores: List<StoreInfoFromProduct>?,
+    val price: Double
 )
 
 data class StoreInfoFromProduct(

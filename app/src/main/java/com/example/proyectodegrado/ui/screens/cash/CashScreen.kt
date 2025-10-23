@@ -1,48 +1,43 @@
 package com.example.proyectodegrado.ui.screens.cash
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.ExtendedFloatingActionButton
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.proyectodegrado.data.model.CashMovement
 import com.example.proyectodegrado.data.repository.CashRepository
+import com.example.proyectodegrado.ui.components.RefreshableContainer // <-- 1. IMPORTAR
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CashScreen(
     storeId: Int,
     userId: Int,
-    repository: CashRepository = CashRepository(), // inyección manual simple
+    repository: CashRepository = CashRepository(),
 ) {
     val vm = remember {
         CashViewModel.provideFactory(repository, storeId, userId)
     }.let { factory ->
-        androidx.lifecycle.viewmodel.compose.viewModel<CashViewModel>(factory = factory)
+        viewModel<CashViewModel>(factory = factory)
     }
-
     val state by vm.state.collectAsState()
 
-    // Diálogos
+    // Dialogs
     if (state.showOpenDialog) {
         OpenCashDialog(
             onDismiss = vm::hideOpenDialog,
             onConfirm = { vm.openCashbox(it) }
-        )
-    }
-    if (state.showMovementDialog) {
-        MovementDialog(
-            onDismiss = vm::hideMovementDialog,
-            onConfirm = { direction, amount, category, notes ->
-                vm.createMovement(direction, amount, category, notes)
-            }
         )
     }
     if (state.showCloseDialog) {
@@ -55,63 +50,48 @@ fun CashScreen(
     }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Caja") },
-                actions = {
-                    IconButton(onClick = vm::refresh) { Icon(Icons.Default.Refresh, contentDescription = "Refrescar") }
-                }
-            )
-        },
         floatingActionButton = {
             if (!state.isOpen) {
-                FloatingActionButton(onClick = vm::showOpenDialog) { Text("Abrir") }
+                FloatingActionButton(onClick = vm::showOpenDialog) {
+                    Icon(Icons.Default.LockOpen, contentDescription = "Abrir Caja")
+                }
             } else {
                 ExtendedFloatingActionButton(
-                    onClick = vm::showMovementDialog,
-                    text = { Text("Movimiento") }
+                    text = { Text("Cerrar Caja") },
+                    icon = { Icon(Icons.Default.Close, contentDescription = "Cerrar Caja") },
+                    onClick = vm::showCloseDialog
                 )
             }
         }
-    ) { padding ->
-        Column(
-            Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) { innerpadding ->
+        RefreshableContainer(
+            refreshing = state.loading,
+            onRefresh = vm::refresh,
         ) {
-            if (state.loading) {
-                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-            }
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
 
-            state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                if (!state.isOpen && !state.loading) {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text("No hay caja abierta. Pulsa el botón para iniciar el día.")
+                    }
+                } else if (state.isOpen) {
+                    SummaryCard(
+                        opening = state.totals?.opening ?: 0.0,
+                        income = state.totals?.income ?: 0.0,
+                        expenses = state.totals?.expenses ?: 0.0,
+                        expected = state.totals?.expectedClosing ?: 0.0,
+                    )
 
-            // Resumen / sin sesión
-            if (!state.isOpen) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("No hay caja abierta. Pulsa \"Abrir\" para iniciar el día.")
-                }
-            } else {
-                SummaryCard(
-                    isOpen = state.isOpen,
-                    opening = state.totals?.opening ?: 0.0,
-                    sales = state.totals?.salesCash ?: 0.0,
-                    purchases = state.totals?.purchasesCash ?: 0.0,
-                    inManual = state.totals?.manualIn ?: 0.0,
-                    outManual = state.totals?.manualOut ?: 0.0,
-                    expected = state.totals?.expectedClosing ?: 0.0,
-                    closing = state.totals?.closingAmount
-                )
-
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    OutlinedButton(onClick = vm::showMovementDialog) { Text("Agregar movimiento") }
-                    Button(onClick = vm::showCloseDialog, enabled = state.isOpen) { Text("Cerrar caja") }
-                }
-
-                Text("Movimientos", style = MaterialTheme.typography.titleMedium)
-                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(state.movements) { m -> MovementRow(m) }
+                    Text("Movimientos del Día", style = MaterialTheme.typography.titleLarge)
+                    LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(state.movements, key = { it.id }) { m -> MovementRow(m) }
+                    }
                 }
             }
         }
@@ -120,30 +100,28 @@ fun CashScreen(
 
 @Composable
 private fun SummaryCard(
-    isOpen: Boolean,
     opening: Double,
-    sales: Double,
-    purchases: Double,
-    inManual: Double,
-    outManual: Double,
+    income: Double,
+    expenses: Double,
     expected: Double,
-    closing: Double?
 ) {
-    Card {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFFC8E6C9)
+        )) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(if (isOpen) "Caja abierta" else "Caja cerrada", fontWeight = FontWeight.Bold)
-            Text("Apertura: %.2f".format(opening))
-            Text("Ventas (efectivo): %.2f".format(sales))
-            Text("Compras (efectivo): %.2f".format(purchases))
-            Text("Ingresos manuales: %.2f".format(inManual))
-            Text("Egresos manuales: %.2f".format(outManual))
-            Divider()
-            Text("Cierre esperado: %.2f".format(expected), fontWeight = FontWeight.SemiBold)
-            closing?.let {
-                val diff = it - expected
-                Text("Cierre declarado: %.2f".format(it))
-                Text("Diferencia: %+.2f".format(diff))
-            }
+            Text("Resumen del Día", style = MaterialTheme.typography.titleLarge)
+            Divider(modifier = Modifier.padding(vertical = 4.dp))
+            Text("Monto de Apertura: %.2f BOB".format(opening))
+            Text("Total Ingresos: + %.2f BOB".format(income))
+            Text("Total Egresos: - %.2f BOB".format(expenses))
+            Divider(modifier = Modifier.padding(vertical = 4.dp))
+            Text(
+                text = "Balance Esperado: %.2f BOB".format(expected),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
         }
     }
 }
@@ -155,14 +133,26 @@ private fun MovementRow(m: CashMovement) {
             Modifier
                 .fillMaxWidth()
                 .padding(12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
-                Text(m.direction + (m.category?.let { " · $it" } ?: ""))
-                m.notes?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = m.notes ?: m.category ?: "Movimiento",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = "Tipo: ${m.originType ?: "Manual"}",
+                    style = MaterialTheme.typography.bodySmall
+                )
             }
-            val sign = if (m.direction == "OUT") -1 else 1
-            Text("%+.2f".format(sign * m.amount), fontWeight = FontWeight.SemiBold)
+            val sign = if (m.direction == "OUT") "-" else "+"
+            Text(
+                text = "$sign%.2f".format(m.amount),
+                style = MaterialTheme.typography.bodyLarge,
+                color = if (m.direction == "OUT") MaterialTheme.colorScheme.error else Color.White
+            )
         }
     }
 }

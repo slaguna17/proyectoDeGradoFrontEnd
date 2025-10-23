@@ -18,7 +18,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -32,17 +31,14 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.proyectodegrado.di.DependencyProvider
 import com.example.proyectodegrado.ui.components.DrawerContent
-import com.example.proyectodegrado.ui.screens.barcode.BarcodeScreen
 import com.example.proyectodegrado.ui.screens.cash.CashScreen
 import com.example.proyectodegrado.ui.screens.categories.CategoriesScreen
-import com.example.proyectodegrado.ui.screens.forecast.ForecastScreen
 import com.example.proyectodegrado.ui.screens.home.HomeScreen
 import com.example.proyectodegrado.ui.screens.login.LoginScreen
 import com.example.proyectodegrado.ui.screens.products.AllProductsScreen
 import com.example.proyectodegrado.ui.screens.products.ProductsByCategoryScreen
 import com.example.proyectodegrado.ui.screens.profile.ProfileScreen
 import com.example.proyectodegrado.ui.screens.providers.ProvidersScreen
-import com.example.proyectodegrado.ui.screens.register.RegisterScreen
 import com.example.proyectodegrado.ui.screens.schedule.ScheduleScreen
 import com.example.proyectodegrado.ui.screens.settings.SettingsScreen
 import com.example.proyectodegrado.ui.screens.store.StoreScreen
@@ -51,9 +47,10 @@ import com.example.proyectodegrado.ui.screens.workers.WorkersScreen
 import kotlinx.coroutines.launch
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.remember
-import com.example.proyectodegrado.data.model.MenuItemDTO
+import com.example.proyectodegrado.ui.screens.purchases.PurchasesScreen
 import com.example.proyectodegrado.ui.screens.role.RoleScreen
-import com.example.proyectodegrado.ui.screens.session.SessionUiState
+import com.example.proyectodegrado.ui.screens.sales.SalesScreen
+//import com.example.proyectodegrado.ui.screens.purchases.PurchasesScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -71,6 +68,7 @@ fun AppNavigation() {
     val profileViewModel = remember { DependencyProvider.provideProfileViewModel() }
     val sessionViewModel = remember { DependencyProvider.provideSessionViewModel() }
     val providerViewModel = remember { DependencyProvider.provideProviderViewModel() }
+    val salesViewModel = remember { DependencyProvider.provideSalesViewModel() }
     val sessionState by sessionViewModel.uiState.collectAsStateWithLifecycle()
     val dpSession by DependencyProvider.sessionState.collectAsState()
 
@@ -154,6 +152,8 @@ fun AppNavigation() {
                 composable("login") { LoginScreen(navController, loginViewModel) }
                 composable("home") { HomeScreen() }
                 composable("categories"){ CategoriesScreen(navController, categoryViewModel) }
+                composable("sales") { SalesScreen(navController) }
+                composable("purchases") { PurchasesScreen(navController) }
                 composable("products") { AllProductsScreen(navController, productViewModel) }
                 composable("providers") { ProvidersScreen(navController, providerViewModel) }
 

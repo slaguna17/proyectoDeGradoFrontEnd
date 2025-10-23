@@ -18,6 +18,8 @@ import com.example.proyectodegrado.ui.screens.workers.WorkersViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import com.example.proyectodegrado.data.model.MenuItemDTO
+import com.example.proyectodegrado.ui.screens.purchases.PurchasesViewModel
+import com.example.proyectodegrado.ui.screens.sales.SalesViewModel
 
 data class SessionState(
     val userId: Int? = null,
@@ -44,6 +46,8 @@ object DependencyProvider {
     private lateinit var imageApiService: ImageApiService
     private lateinit var permitService: PermitService
     private lateinit var userRepository: UserRepository
+    private lateinit var salesService: SalesService
+    private lateinit var purchasesService: PurchasesService
 
     // Repositories
     private lateinit var imageRepository: ImageRepository
@@ -56,7 +60,8 @@ object DependencyProvider {
     private lateinit var workerRepository: WorkerRepository
     private lateinit var cashRepository: CashRepository
     private lateinit var permitRepository: PermitRepository
-
+    private lateinit var salesRepository: SalesRepository
+    private lateinit var purchasesRepository: PurchasesRepository
 
     private val _sessionState = MutableStateFlow(SessionState())
     val sessionState = _sessionState.asStateFlow()
@@ -77,6 +82,8 @@ object DependencyProvider {
         cashService = RetrofitClient.createService(CashService::class.java)
         imageApiService = RetrofitClient.createService(ImageApiService::class.java)
         permitService = RetrofitClient.createService(PermitService::class.java)
+        salesService = RetrofitClient.createService(SalesService::class.java)
+        purchasesService = RetrofitClient.createService(PurchasesService::class.java)
 
         // Inicialización de Repositories
         userRepository = UserRepository(userService, applicationContext)
@@ -90,6 +97,8 @@ object DependencyProvider {
         workerRepository = WorkerRepository(workerService)
         cashRepository = CashRepository(cashService)
         permitRepository = PermitRepository(permitService)
+        salesRepository = SalesRepository(salesService)
+        purchasesRepository = PurchasesRepository(purchasesService)
 
         // Carga la sesión guardada al iniciar la app
         val userId = preferences.getUserId()?.toIntOrNull()
@@ -156,6 +165,12 @@ object DependencyProvider {
     fun provideProviderViewModel(): ProvidersViewModel = ProvidersViewModel(providerRepository)
     fun provideScheduleViewModel(): ScheduleViewModel = ScheduleViewModel(scheduleRepository)
     fun provideWorkersViewModel(): WorkersViewModel = WorkersViewModel(workerRepository, storeRepository, scheduleRepository)
+    fun provideSalesViewModel(): SalesViewModel {
+        return SalesViewModel(salesRepository, productRepository)
+    }
+    fun providePurchasesViewModel(): PurchasesViewModel {
+        return PurchasesViewModel(purchasesRepository, productRepository)
+    }
     fun provideProfileViewModel(): ProfileViewModel = ProfileViewModel(userRepository, imageRepository)
     fun provideCashViewModel(
         storeId: Int? = null,

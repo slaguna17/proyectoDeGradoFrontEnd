@@ -14,15 +14,15 @@ interface CashService {
 
     @POST("api/cashbox/open")
     suspend fun openCashbox(
-        @Body body: OpenCashboxRequest
-    ): Response<OpenCashboxResponse>
+        @Body body: OpenCashRequest
+    ): Response<OpenCashResponse>
 
     @POST("api/cashbox/close")
     suspend fun closeCashbox(
-        @Body body: CloseCashboxRequest
-    ): Response<CloseCashboxResponse>
+        @Body body: CloseCashRequest
+    ): Response<CloseCashResponse>
 
-    // --- Movimientos manuales ---
+    // --- Manual Movements ---
 
     @POST("api/cashbox/movements")
     suspend fun createMovement(

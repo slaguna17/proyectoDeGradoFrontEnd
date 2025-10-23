@@ -1,8 +1,10 @@
 package com.example.proyectodegrado.ui.screens.products
 
+import android.widget.GridLayout
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -79,7 +81,14 @@ fun ProductItem(
             }
 
             Column(modifier = Modifier.padding(16.dp)) {
-                Text(text = product.name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                Row (
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ){
+                    Text(text = product.name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                    Text(text = "Bs: ${product.price}", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                }
+
                 Text(text = "SKU: ${product.sku ?: "No definido"}", style = MaterialTheme.typography.labelMedium, color = Color.Gray)
                 Spacer(Modifier.height(8.dp))
                 Text(

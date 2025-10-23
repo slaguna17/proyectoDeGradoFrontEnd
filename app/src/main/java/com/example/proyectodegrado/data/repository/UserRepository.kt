@@ -14,8 +14,11 @@ class UserRepository(
 
     // -------------------- Auth --------------------
 
-    suspend fun login(email: String, password: String): LoginResponse {
-        return userService.login(LoginRequest(email, password))
+    suspend fun login(username: String, password: String): LoginResponse {
+        val resp = userService.login(LoginRequest(username, password))
+
+        AppPreferences(context).saveUserId(resp.user.id.toString())
+        return resp
     }
 
     suspend fun me(bearer: String): MeResponse {

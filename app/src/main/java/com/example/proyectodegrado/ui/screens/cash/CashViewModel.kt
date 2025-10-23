@@ -13,16 +13,12 @@ import java.time.LocalDate
 data class CashUiState(
     val loading: Boolean = false,
     val error: String? = null,
-
-    val currentSession: CashboxSession? = null,
+    val currentSession: CashSession? = null,
     val totals: CashTotals? = null,
     val movements: List<CashMovement> = emptyList(),
-
     val isOpen: Boolean = false,
-
     // dialogs
     val showOpenDialog: Boolean = false,
-    val showMovementDialog: Boolean = false,
     val showCloseDialog: Boolean = false
 )
 
@@ -90,25 +86,7 @@ class CashViewModel(
         }
     }
 
-    // --- Crear movimiento ---
-    fun createMovement(direction: String, amount: Double, category: String?, notes: String?) =
-        viewModelScope.launch {
-            val date = LocalDate.now().toString()
-            _state.value = _state.value.copy(loading = true, error = null)
-            when (val res = repo.createMovement(storeId, userId, direction, amount, category, notes, date)) {
-                is ApiResult.Success -> {
-                    // recargar movimientos y totales
-                    refresh()
-                    hideMovementDialog()
-                }
-                is ApiResult.Error -> _state.value = _state.value.copy(
-                    loading = false,
-                    error = res.message
-                )
-            }
-        }
-
-    // --- Cerrar caja ---
+    // --- Close cashbox ---
     fun closeCashbox(closingAmount: Double? = null, cashCount: List<CashCountItem>? = null) =
         viewModelScope.launch {
             val date = LocalDate.now().toString()
@@ -125,11 +103,9 @@ class CashViewModel(
             }
         }
 
-    // --- Diálogos ---
+    // --- Dialogs ---
     fun showOpenDialog()  { _state.value = _state.value.copy(showOpenDialog = true) }
     fun hideOpenDialog()  { _state.value = _state.value.copy(showOpenDialog = false) }
-    fun showMovementDialog() { _state.value = _state.value.copy(showMovementDialog = true) }
-    fun hideMovementDialog() { _state.value = _state.value.copy(showMovementDialog = false) }
     fun showCloseDialog() { _state.value = _state.value.copy(showCloseDialog = true) }
     fun hideCloseDialog() { _state.value = _state.value.copy(showCloseDialog = false) }
 

@@ -37,23 +37,19 @@ class LoginViewModel(
                 val storeId = prefs.getStoreId()?.toIntOrNull() ?: 1
                 val menu = response.menu
 
-                if (rememberMe) {
-                    DependencyProvider.saveCurrentSession(
-                        userId = user.id,
-                        storeId = storeId,
-                        isAdmin = isAdmin,
-                        userEmail = email,
-                        userName = user.username?.ifBlank { user.full_name },
-                        menu = menu
-                    )
-                } else {
-                    DependencyProvider.clearCurrentSession()
-                    DependencyProvider.setTemporarySession(
-                        userId = user.id,
-                        storeId = storeId,
-                        isAdmin = isAdmin,
-                        menu = menu
-                    )
+                DependencyProvider.saveCurrentSession(
+                    userId = user.id,
+                    storeId = storeId,
+                    isAdmin = isAdmin,
+                    userEmail = email, // Guardamos el email temporalmente
+                    userName = user.username?.ifBlank { user.full_name },
+                    menu = menu
+                )
+
+                // 2. Si "Recuérdame" NO está marcado, borramos solo el email guardado.
+                //    El resto de la sesión (como el ID) permanece.
+                if (!rememberMe) {
+                    prefs.clearUserEmail()
                 }
                 _loginState.value = LoginState.Success
             } catch (e: Exception) {
