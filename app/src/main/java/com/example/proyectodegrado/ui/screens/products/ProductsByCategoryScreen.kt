@@ -123,9 +123,12 @@ fun ProductsByCategoryScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             if (currentStoreForCrud != null) {
-                FloatingActionButton(onClick = {
-                    onShowCreateDialog
-                }) {
+                FloatingActionButton(
+                    onClick = {
+                        onShowCreateDialog
+                    },
+                    containerColor = MaterialTheme.colorScheme.primary
+                ) {
                     Icon(Icons.Default.Add, contentDescription = "Añadir Producto")
                 }
             }

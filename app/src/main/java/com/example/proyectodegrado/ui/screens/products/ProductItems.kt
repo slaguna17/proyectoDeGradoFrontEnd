@@ -1,6 +1,5 @@
 package com.example.proyectodegrado.ui.screens.products
 
-import android.widget.GridLayout
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -49,7 +48,7 @@ fun ProductItem(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(180.dp)
-                    .background(MaterialTheme.colorScheme.secondaryContainer)
+                    .background(Color.White)
             ) {
                 if (!product.image.isNullOrBlank()) {
                     AsyncImage(
@@ -63,7 +62,7 @@ fun ProductItem(
                         imageVector = Icons.Default.PhotoCamera,
                         contentDescription = "Sin imagen",
                         modifier = Modifier.size(64.dp).align(Alignment.Center),
-                        tint = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.5f)
+                        tint = Color.White
                     )
                 }
                 Surface(
@@ -98,7 +97,7 @@ fun ProductItem(
                     overflow = TextOverflow.Ellipsis,
                     lineHeight = 20.sp
                 )
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(8.dp))
 
                 if (currentStoreId != null) {
                     val stockForCurrentStore = product.stores?.firstOrNull { it.id == currentStoreId }?.pivot?.stock
@@ -111,10 +110,8 @@ fun ProductItem(
                         onRemoveFromStore = { storeId -> onRemoveFromStore(product, storeId) }
                     )
                 }
-
                 Spacer(Modifier.height(16.dp))
 
-                // --- BOTONES DE ACCIÓN PRINCIPALES ---
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                     OutlinedButton(
                         onClick = { onEdit(product) },
@@ -142,22 +139,17 @@ fun ProductItem(
 
 @Composable
 private fun StockInfoSingleStore(stock: Int?) {
-    Surface(
-        shape = RoundedCornerShape(10.dp),
-        color = MaterialTheme.colorScheme.secondaryContainer
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(text = "Stock en tienda", style = MaterialTheme.typography.labelLarge)
-            Text(
-                text = (stock ?: 0).toString(),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary
-            )
-        }
+        Text(text = "Stock en tienda", style = MaterialTheme.typography.bodyLarge)
+        Text(
+            text = (stock ?: 0).toString(),
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Bold
+        )
     }
 }
 

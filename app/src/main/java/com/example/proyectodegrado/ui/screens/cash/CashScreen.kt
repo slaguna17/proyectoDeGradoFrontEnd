@@ -1,6 +1,5 @@
 package com.example.proyectodegrado.ui.screens.cash
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -8,6 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material3.*
+import androidx.compose.material3.CardDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.proyectodegrado.data.model.CashMovement
 import com.example.proyectodegrado.data.repository.CashRepository
-import com.example.proyectodegrado.ui.components.RefreshableContainer // <-- 1. IMPORTAR
+import com.example.proyectodegrado.ui.components.RefreshableContainer
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,14 +52,15 @@ fun CashScreen(
     Scaffold(
         floatingActionButton = {
             if (!state.isOpen) {
-                FloatingActionButton(onClick = vm::showOpenDialog) {
+                FloatingActionButton(onClick = vm::showOpenDialog, containerColor = MaterialTheme.colorScheme.primary) {
                     Icon(Icons.Default.LockOpen, contentDescription = "Abrir Caja")
                 }
             } else {
                 ExtendedFloatingActionButton(
                     text = { Text("Cerrar Caja") },
                     icon = { Icon(Icons.Default.Close, contentDescription = "Cerrar Caja") },
-                    onClick = vm::showCloseDialog
+                    onClick = vm::showCloseDialog,
+                    containerColor = MaterialTheme.colorScheme.primary
                 )
             }
         }
@@ -128,7 +129,9 @@ private fun SummaryCard(
 
 @Composable
 private fun MovementRow(m: CashMovement) {
-    Card {
+    Card (
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary.copy(0.1f))
+    ){
         Row(
             Modifier
                 .fillMaxWidth()
@@ -138,7 +141,7 @@ private fun MovementRow(m: CashMovement) {
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = m.notes ?: m.category ?: "Movimiento",
+                    text = m.notes ?: m.category ?: "Tipo",
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -151,7 +154,7 @@ private fun MovementRow(m: CashMovement) {
             Text(
                 text = "$sign%.2f".format(m.amount),
                 style = MaterialTheme.typography.bodyLarge,
-                color = if (m.direction == "OUT") MaterialTheme.colorScheme.error else Color.White
+                color = if (m.direction == "OUT") MaterialTheme.colorScheme.error else Color(0xFF00bf8e)
             )
         }
     }

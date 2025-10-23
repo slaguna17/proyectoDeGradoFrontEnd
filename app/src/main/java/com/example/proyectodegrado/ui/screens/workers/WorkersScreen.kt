@@ -37,7 +37,8 @@ fun WorkersScreen(
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { navController.navigate("registerEmployee") }
+                onClick = { navController.navigate("registerEmployee") },
+                containerColor = MaterialTheme.colorScheme.primary
             ) { Icon(Icons.Default.PersonAdd, contentDescription = "Agregar empleado") }
         }
     ) { innerPadding ->

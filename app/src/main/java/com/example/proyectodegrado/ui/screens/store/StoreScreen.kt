@@ -84,10 +84,15 @@ fun StoreScreen(
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
-            FloatingActionButton(onClick = {
-                viewModel.resetForm()
-                showCreateDialog = true
-            }) { Icon(Icons.Default.Add, contentDescription = "Nueva Tienda") }
+            FloatingActionButton(
+                onClick = {
+                    viewModel.resetForm()
+                    showCreateDialog = true
+                },
+                containerColor = MaterialTheme.colorScheme.primary
+            ){
+                Icon(Icons.Default.Add, contentDescription = "Nueva Tienda")
+            }
         }
     ) {
         RefreshableContainer(

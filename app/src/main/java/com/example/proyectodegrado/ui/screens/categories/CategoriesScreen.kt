@@ -48,10 +48,13 @@ fun CategoriesScreen(
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
-            FloatingActionButton(onClick = {
-                viewModel.resetForm()
-                showCreate = true
-            }) {
+            FloatingActionButton(
+                onClick = {
+                    viewModel.resetForm()
+                    showCreate = true
+                },
+                containerColor = MaterialTheme.colorScheme.primary
+            ) {
                 Icon(Icons.Default.Add, contentDescription = "Agregar")
             }
         }

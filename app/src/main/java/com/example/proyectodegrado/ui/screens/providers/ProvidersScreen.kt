@@ -56,15 +56,18 @@ fun ProvidersScreen(
 
     Scaffold(
         floatingActionButton = {
-            FloatingActionButton(onClick = {
-                formName = ""
-                formAddress = ""
-                formEmail = ""
-                formPhone = ""
-                formContact = ""
-                formNotes = ""
-                showCreateDialog = true
-            }) {
+            FloatingActionButton(
+                onClick = {
+                    formName = ""
+                    formAddress = ""
+                    formEmail = ""
+                    formPhone = ""
+                    formContact = ""
+                    formNotes = ""
+                    showCreateDialog = true
+                },
+                containerColor = MaterialTheme.colorScheme.primary
+                ) {
                 Icon(Icons.Default.Add, contentDescription = "Crear Proveedor")
             }
         }
