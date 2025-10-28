@@ -35,6 +35,8 @@ private fun ProductDialogContent(
     onBrandChange: (String) -> Unit,
     onCategorySelected: (Int) -> Unit,
     onStockChange: (String) -> Unit,
+    onPurchasePriceChange: (String) -> Unit,
+    onSalePriceChange: (String) -> Unit,
     onImageSelected: (Uri?) -> Unit,
     onDismiss: () -> Unit,
     onSubmit: () -> Unit,
@@ -66,6 +68,27 @@ private fun ProductDialogContent(
                         DropdownMenuItem(text = { Text(category.name) }, onClick = { onCategorySelected(category.id); expanded = false })
                     }
                 }
+            }
+            Spacer(Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedTextField(
+                    value = formState.purchasePrice,
+                    onValueChange = onPurchasePriceChange,
+                    label = { Text("P. de Compra") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.weight(1f)
+                )
+                OutlinedTextField(
+                    value = formState.salePrice,
+                    onValueChange = onSalePriceChange,
+                    label = { Text("P. de Venta") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.weight(1f)
+                )
             }
             Spacer(Modifier.height(8.dp))
 
@@ -109,6 +132,8 @@ fun CreateProductDialog(
     onBrandChange: (String) -> Unit,
     onCategorySelected: (Int) -> Unit,
     onStockChange: (String) -> Unit,
+    onPurchasePriceChange: (String) -> Unit,
+    onSalePriceChange: (String) -> Unit,
     onImageSelected: (Uri?) -> Unit,
     onCreateClick: () -> Unit
 ) {
@@ -130,7 +155,9 @@ fun CreateProductDialog(
             onDismiss = onDismiss,
             onAdjustStockClick = {},
             onSubmit = onCreateClick,
-            submitLabel = "Crear"
+            submitLabel = "Crear",
+            onPurchasePriceChange = onPurchasePriceChange,
+            onSalePriceChange = onSalePriceChange,
         )
     }
 }
@@ -148,6 +175,8 @@ fun EditProductDialog(
     onBrandChange: (String) -> Unit,
     onCategorySelected: (Int) -> Unit,
     onStockChange: (String) -> Unit,
+    onPurchasePriceChange: (String) -> Unit,
+    onSalePriceChange: (String) -> Unit,
     onImageSelected: (Uri?) -> Unit,
     onAdjustStockClick: () -> Unit,
     onEditClick: () -> Unit
@@ -170,7 +199,9 @@ fun EditProductDialog(
             onImageSelected = onImageSelected,
             onDismiss = onDismiss,
             onSubmit = onEditClick,
-            submitLabel = "Guardar"
+            submitLabel = "Guardar",
+            onPurchasePriceChange = onPurchasePriceChange,
+            onSalePriceChange = onSalePriceChange,
         )
     }
 }

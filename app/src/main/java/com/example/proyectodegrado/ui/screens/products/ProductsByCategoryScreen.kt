@@ -202,6 +202,8 @@ fun ProductsByCategoryScreen(
             onSkuChange = viewModel::onSkuChange, onDescriptionChange = viewModel::onDescriptionChange,
             onBrandChange = viewModel::onBrandChange, onCategorySelected = viewModel::onCategorySelected,
             onStockChange = viewModel::onStockChange, onImageSelected = viewModel::onImageSelected,
+            onPurchasePriceChange = viewModel::onPurchasePriceChange,
+            onSalePriceChange = viewModel::onSalePriceChange,
             onCreateClick = {
                 if (currentStoreForCrud != null) {
                     viewModel.createProduct(
@@ -222,6 +224,8 @@ fun ProductsByCategoryScreen(
             onSkuChange = viewModel::onSkuChange, onDescriptionChange = viewModel::onDescriptionChange,
             onBrandChange = viewModel::onBrandChange, onCategorySelected = viewModel::onCategorySelected,
             onStockChange = viewModel::onStockChange, onImageSelected = viewModel::onImageSelected,
+            onPurchasePriceChange = viewModel::onPurchasePriceChange,
+            onSalePriceChange = viewModel::onSalePriceChange,
             onAdjustStockClick = {
                 showEditDialog = false
                 showAdjustStockDialog = true
@@ -266,14 +270,13 @@ fun ProductsByCategoryScreen(
             productName = productToInteractWith!!.name,
             currentStock = formState.stock,
             onConfirm = { newStock ->
-                // Reutilizamos la función que ya teníamos!
                 viewModel.addProductToStore(
                     productId = productToInteractWith!!.id,
                     storeId = currentStoreForCrud,
                     stock = newStock.toIntOrNull() ?: 0,
                     onSuccess = {
                         showAdjustStockDialog = false
-                        refreshProducts() // Usando la función de refresco que ya tienes
+                        refreshProducts()
                     },
                     onError = { errMsg -> errorMessage = errMsg }
                 )

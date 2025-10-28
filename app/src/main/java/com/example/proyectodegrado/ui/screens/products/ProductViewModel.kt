@@ -41,12 +41,14 @@ class ProductViewModel(
         fetchAvailableCategories()
     }
 
-    // --- Ayudantes para el formulario ---
+    // --- Form helpers ---
     fun onNameChange(v: String) = _formState.update { it.copy(name = v) }
     fun onDescriptionChange(v: String) = _formState.update { it.copy(description = v) }
     fun onSkuChange(v: String) = _formState.update { it.copy(sku = v) }
     fun onBrandChange(v: String) = _formState.update { it.copy(brand = v) }
     fun onStockChange(v: String) = _formState.update { it.copy(stock = v) }
+    fun onPurchasePriceChange(v: String) = _formState.update { it.copy(purchasePrice = v) }
+    fun onSalePriceChange(v: String) = _formState.update { it.copy(salePrice = v) }
     fun onCategorySelected(id: Int) = _formState.update { it.copy(categoryId = id) }
     fun onImageSelected(uri: Uri?) = _formState.update { it.copy(localImageUri = uri) }
 
@@ -132,13 +134,13 @@ class ProductViewModel(
                 sku = form.sku.takeIf { it.isNotBlank() },
                 name = form.name, description = form.description, imageKey = null, brand = form.brand,
                 categoryId = form.categoryId, storeId = storeId, stock = form.stock.toIntOrNull() ?: 0,
+                purchasePrice = form.purchasePrice.toDoubleOrNull() ?: 0.0,
+                salePrice = form.salePrice.toDoubleOrNull() ?: 0.0
             )
 
-            // --- CORRECCIÓN AQUÍ ---
             when (val creationResult = productRepository.createProduct(initialRequest)) {
                 is ApiResult.Success -> {
                     val newProduct = creationResult.data
-                    // La lógica de subida de imagen ahora va dentro del caso de éxito
                     val uri = form.localImageUri
                     if (uri != null) {
                         _imageUploadUiState.value = UploadImageState.Uploading
@@ -182,17 +184,16 @@ class ProductViewModel(
                 sku = form.sku.takeIf { it.isNotBlank() },
                 name = form.name, description = form.description, imageKey = finalImageKey, brand = form.brand,
                 categoryId = form.categoryId, storeId = storeId, stock = form.stock.toIntOrNull() ?: 0,
+                purchasePrice = form.purchasePrice.toDoubleOrNull() ?: 0.0,
+                salePrice = form.salePrice.toDoubleOrNull() ?: 0.0
             )
 
-            // --- CORRECCIÓN AQUÍ ---
-            // Asignamos la respuesta a la variable 'result'
             when (val result = productRepository.updateProduct(id, request)) {
                 is ApiResult.Success -> {
                     _imageUploadUiState.value = UploadImageState.Idle
                     resetForm()
                     onSuccess()
                 }
-                // Y ahora usamos 'result' en lugar de 'it'
                 is ApiResult.Error -> onError("Error al actualizar el producto: ${result.message}")
             }
         }
@@ -220,7 +221,9 @@ class ProductViewModel(
             imageKey = product.image,
             imageUrl = product.imageUrl,
             stock = (storeStock ?: product.stock ?: 0).toString(),
-            localImageUri = null
+            localImageUri = null,
+            purchasePrice = product.purchasePrice.toString(),
+            salePrice = product.salePrice.toString(),
         )
         _imageUploadUiState.value = UploadImageState.Idle
     }

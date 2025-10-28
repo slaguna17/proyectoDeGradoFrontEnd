@@ -113,7 +113,7 @@ fun ProductSelectionSection(
             items(products, key = { it.id }) { product ->
                 ListItem(
                     headlineContent = { Text(product.name) },
-                    supportingContent = { Text("Precio: %.2f BOB".format(product.price)) },
+                    supportingContent = { Text("Precio: %.2f BOB".format(product.salePrice)) },
                     trailingContent = {
                         IconButton(onClick = { onProductClick(product) }) {
                             Icon(Icons.Default.AddShoppingCart, contentDescription = "Agregar")

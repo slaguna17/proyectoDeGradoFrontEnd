@@ -182,6 +182,8 @@ fun AllProductsScreen(
             onSkuChange = viewModel::onSkuChange, onDescriptionChange = viewModel::onDescriptionChange,
             onBrandChange = viewModel::onBrandChange, onCategorySelected = viewModel::onCategorySelected,
             onStockChange = viewModel::onStockChange, onImageSelected = viewModel::onImageSelected,
+            onPurchasePriceChange = viewModel::onPurchasePriceChange,
+            onSalePriceChange = viewModel::onSalePriceChange,
             onCreateClick = {
                 if (currentStoreForCrud != null) {
                     viewModel.createProduct(
@@ -228,6 +230,8 @@ fun AllProductsScreen(
             onSkuChange = viewModel::onSkuChange, onDescriptionChange = viewModel::onDescriptionChange,
             onBrandChange = viewModel::onBrandChange, onCategorySelected = viewModel::onCategorySelected,
             onStockChange = viewModel::onStockChange, onImageSelected = viewModel::onImageSelected,
+            onPurchasePriceChange = viewModel::onPurchasePriceChange,
+            onSalePriceChange = viewModel::onSalePriceChange,
             onAdjustStockClick = {
                 showEditDialog = false
                 showAdjustStockDialog = true

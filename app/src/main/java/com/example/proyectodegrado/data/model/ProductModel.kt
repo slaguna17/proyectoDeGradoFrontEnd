@@ -12,9 +12,10 @@ data class Product(
     @SerializedName("image_url") val imageUrl: String?,
     @SerializedName("brand") val brand: String,
     @SerializedName("category_id") val categoryId: Int,
-    @SerializedName("stock") val stock: Int?, // Stock general, puede ser null
+    @SerializedName("stock") val stock: Int?,
     @SerializedName("stores") val stores: List<StoreInfoFromProduct>?,
-    val price: Double
+    @SerializedName("purchase_price") val purchasePrice: Double,
+    @SerializedName("sale_price") val salePrice: Double
 )
 
 data class StoreInfoFromProduct(
@@ -37,7 +38,9 @@ data class ProductRequest(
     @SerializedName("brand") val brand: String,
     @SerializedName("category_id") val categoryId: Int,
     @SerializedName("store_id") val storeId: Int,
-    @SerializedName("stock") val stock: Int
+    @SerializedName("stock") val stock: Int,
+    @SerializedName("purchase_price") val purchasePrice: Double,
+    @SerializedName("sale_price") val salePrice: Double
 )
 
 data class CreateProductFormState(
@@ -46,6 +49,8 @@ data class CreateProductFormState(
     val sku: String = "",
     val brand: String = "",
     val stock: String = "0",
+    val purchasePrice: String = "0.0",
+    val salePrice: String = "0.0",
     val expirationDate: String = "",
     val categoryId: Int = -1,
     val imageKey: String? = null,

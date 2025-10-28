@@ -82,10 +82,24 @@ fun ProductItem(
             Column(modifier = Modifier.padding(16.dp)) {
                 Row (
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top
                 ){
-                    Text(text = product.name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                    Text(text = "Bs: ${product.price}", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                    Text(text = product.name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                    Spacer(Modifier.width(8.dp))
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text(
+                            text = "Venta: Bs ${product.salePrice}",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = "Compra: Bs ${product.purchasePrice}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
                 }
 
                 Text(text = "SKU: ${product.sku ?: "No definido"}", style = MaterialTheme.typography.labelMedium, color = Color.Gray)

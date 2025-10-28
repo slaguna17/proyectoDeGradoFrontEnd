@@ -82,7 +82,7 @@ class SalesViewModel(
                 currentState.cartItems + CartItem(
                     productId = product.id,
                     name = product.name,
-                    unitPrice = product.price, // Asumiendo que el producto tiene un precio base
+                    unitPrice = product.salePrice, // Asumiendo que el producto tiene un precio base
                     quantity = 1
                 )
             }
