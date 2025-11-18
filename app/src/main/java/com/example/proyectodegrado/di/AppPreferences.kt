@@ -59,4 +59,12 @@ class AppPreferences(context: Context) {
 
     fun clear() = sharedPreferences.edit().clear().apply()
 
+    fun saveStoreName(storeName: String) {
+        sharedPreferences.edit().putString("store_name", storeName).apply()
+    }
+
+    fun getStoreName(): String? {
+        return sharedPreferences.getString("store_name", null)
+    }
+
 }

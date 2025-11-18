@@ -1,5 +1,6 @@
 package com.example.proyectodegrado.utils
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -9,6 +10,7 @@ import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -23,12 +25,15 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.proyectodegrado.di.AppPreferences
 import com.example.proyectodegrado.di.DependencyProvider
 import com.example.proyectodegrado.ui.components.DrawerContent
 import com.example.proyectodegrado.ui.screens.cash.CashScreen
@@ -50,12 +55,13 @@ import androidx.compose.runtime.remember
 import com.example.proyectodegrado.ui.screens.purchases.PurchasesScreen
 import com.example.proyectodegrado.ui.screens.role.RoleScreen
 import com.example.proyectodegrado.ui.screens.sales.SalesScreen
-//import com.example.proyectodegrado.ui.screens.purchases.PurchasesScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
+    val context = LocalContext.current
+    val appPrefs = remember { AppPreferences(context) }
 
     val loginViewModel = remember { DependencyProvider.provideLoginViewModel() }
     val registerViewModel = remember { DependencyProvider.provideRegisterViewModel() }
@@ -74,12 +80,14 @@ fun AppNavigation() {
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
+
     var currentTitle by rememberSaveable { mutableStateOf("Inicio") }
+    // Estado local para el nombre de la tienda
+    var currentStoreName by rememberSaveable { mutableStateOf(appPrefs.getStoreName()) }
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    // Read Profile UI State
     val profileUi by profileViewModel.ui.collectAsStateWithLifecycle()
 
     val routeAlias = mapOf(
@@ -88,9 +96,12 @@ fun AppNavigation() {
         "stores"    to "store"
     )
 
-    LaunchedEffect(navController) {
+    // Actualiza el título y el nombre de la tienda cada vez que cambia la navegación
+    LaunchedEffect(navBackStackEntry) {
         navController.currentBackStackEntryFlow.collect { backStackEntry ->
             currentTitle = determineTitle(backStackEntry.destination.route)
+            // Leemos de nuevo las preferencias por si cambiaron en la pantalla de Tiendas
+            currentStoreName = appPrefs.getStoreName()
         }
     }
 
@@ -126,7 +137,22 @@ fun AppNavigation() {
             topBar = {
                 if (shouldShowTopBar(currentRoute)) {
                     TopAppBar(
-                        title = { Text(currentTitle) },
+                        title = {
+                            Column {
+                                Text(
+                                    text = currentTitle,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                if (!currentStoreName.isNullOrBlank()) {
+                                    Text(
+                                        text = currentStoreName!!,
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        },
                         navigationIcon = {
                             if (shouldShowBack(currentRoute)) {
                                 IconButton(onClick = { navController.popBackStack() }) {
@@ -171,7 +197,6 @@ fun AppNavigation() {
                 composable("registerEmployee") { CreateWorkerScreen(navController = navController, workersViewModel = workersViewModel, registerViewModel = registerViewModel) }
                 composable("schedule"){ ScheduleScreen(navController, scheduleViewModel) }
 
-                //  userId and storeId from session
                 composable("cash") {
                     val storeId = DependencyProvider.getCurrentStoreId()
                     val userId  = DependencyProvider.getCurrentUserId()

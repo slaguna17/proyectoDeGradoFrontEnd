@@ -46,14 +46,11 @@ fun StoreScreen(
     var storeToDelete by remember { mutableStateOf<Store?>(null) }
 
     var isRefreshing by remember { mutableStateOf(false) }
-    // ✨ FIX 1: Obtenemos el CoroutineScope para lanzar el Snackbar.
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // ✨ FIX 2: Usamos un estado para el mensaje de error inicial si la lista está vacía.
     var initialLoadError by remember { mutableStateOf<String?>(null) }
 
-    // ✨ FIX 3: La función showSnackbar ahora lanza una corrutina.
     val showSnackbar: (String) -> Unit = { message ->
         scope.launch {
             snackbarHostState.showSnackbar(message)
@@ -62,13 +59,13 @@ fun StoreScreen(
 
     fun refreshStores(isInitialLoad: Boolean = false) {
         isRefreshing = true
-        if (isInitialLoad) initialLoadError = null // Limpiamos el error al intentar cargar de nuevo
+        if (isInitialLoad) initialLoadError = null
 
         viewModel.fetchStores(
             onSuccess = { isRefreshing = false },
             onError = { err ->
                 if (isInitialLoad && stores.isEmpty()) {
-                    initialLoadError = err // Guardamos el error solo si es la carga inicial y no hay datos
+                    initialLoadError = err
                 }
                 showSnackbar(err)
                 isRefreshing = false
@@ -76,7 +73,6 @@ fun StoreScreen(
         )
     }
 
-    // Cargamos los datos la primera vez que la pantalla es visible.
     LaunchedEffect(Unit) {
         refreshStores(isInitialLoad = true)
     }
@@ -100,14 +96,11 @@ fun StoreScreen(
             onRefresh = { refreshStores() },
             modifier = Modifier.fillMaxSize()
         ) {
-            // ✨ FIX 4: Lógica mejorada para el estado de carga y vacío.
             if (stores.isEmpty() && isRefreshing) {
-                // Muestra un indicador de carga solo si la lista está vacía y se está refrescando.
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
             } else if (stores.isEmpty()) {
-                // Si después de cargar sigue vacía, muestra el error o un mensaje por defecto.
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(
                         text = initialLoadError ?: "No hay tiendas. ¡Agrega una nueva!",
@@ -128,9 +121,9 @@ fun StoreScreen(
                             onSelect = {
                                 selectedStoreId = store.id.toString()
                                 preferences.saveStoreId(selectedStoreId)
+                                preferences.saveStoreName(store.name)
                             },
                             onEdit = {
-                                // Usamos el método del ViewModel para cargar los datos del formulario.
                                 viewModel.loadStoreForEdit(it)
                                 storeToEdit = it
                                 showEditDialog = true
@@ -146,14 +139,13 @@ fun StoreScreen(
         }
     }
 
-    // --- Crear ---
+    // --- Create ---
     if (showCreateDialog) {
         CreateStoreDialog(
             show = true,
             name = form.name, onNameChange = viewModel::onNameChange,
             address = form.address, onAddressChange = viewModel::onAddressChange,
             city = form.city, onCityChange = viewModel::onCityChange,
-            // ✨ CAMBIO: El logo para el diálogo ahora viene del Uri local en el formState.
             logo = form.localLogoUri?.toString() ?: "",
             onLogoChange = { /* No-op, handled by onPickLogo */ },
             history = form.history, onHistoryChange = viewModel::onHistoryChange,
@@ -170,7 +162,7 @@ fun StoreScreen(
         )
     }
 
-    // --- Editar ---
+    // --- Edit ---
     if (showEditDialog && storeToEdit != null) {
         EditStoreDialog(
             show = true,
@@ -197,7 +189,7 @@ fun StoreScreen(
         )
     }
 
-    // --- Eliminar ---
+    // --- Delete ---
     if (showDeleteDialog && storeToDelete != null) {
         DeleteStoreDialog(
             show = true,
