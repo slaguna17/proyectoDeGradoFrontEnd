@@ -17,6 +17,7 @@ fun determineTitle(route: String?, categoryName: String? = null): String {
         route == "settings" -> "Ajustes"
         route == "login" -> ""
         route == "registerEmployee" -> "Nuevo Empleado"
+        route == "whatsapp_sales" -> "Pedidos IA"
         else -> "TuKiosco"
     }
 }

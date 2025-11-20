@@ -55,6 +55,7 @@ import androidx.compose.runtime.remember
 import com.example.proyectodegrado.ui.screens.purchases.PurchasesScreen
 import com.example.proyectodegrado.ui.screens.role.RoleScreen
 import com.example.proyectodegrado.ui.screens.sales.SalesScreen
+import com.example.proyectodegrado.ui.screens.whatsapp_sales.WhatsappSalesScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -75,6 +76,7 @@ fun AppNavigation() {
     val sessionViewModel = remember { DependencyProvider.provideSessionViewModel() }
     val providerViewModel = remember { DependencyProvider.provideProviderViewModel() }
     val salesViewModel = remember { DependencyProvider.provideSalesViewModel() }
+    val whatsappSalesViewModel = remember { DependencyProvider.provideWhatsappSalesViewModel() }
     val sessionState by sessionViewModel.uiState.collectAsStateWithLifecycle()
     val dpSession by DependencyProvider.sessionState.collectAsState()
 
@@ -214,6 +216,8 @@ fun AppNavigation() {
                         userId  = be.arguments!!.getInt("userId")
                     )
                 }
+
+                composable("whatsapp_sales") { WhatsappSalesScreen(navController, whatsappSalesViewModel)}
                 composable("settings")  { SettingsScreen(navController) }
                 composable("profile")   { ProfileScreen(viewModel = profileViewModel) }
             }

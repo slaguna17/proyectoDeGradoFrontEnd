@@ -6,7 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Label
+import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Apartment
@@ -144,5 +144,6 @@ private fun String.asVector(): ImageVector = when (this) {
     "Handshake" -> Icons.Default.Handshake
     "BarChart" -> Icons.Default.BarChart
     "Settings" -> Icons.Default.Settings
+    "Whatsapp" -> Icons.Default.Chat
     else -> Icons.Default.Menu
 }

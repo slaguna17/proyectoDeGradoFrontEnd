@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import com.example.proyectodegrado.data.model.MenuItemDTO
 import com.example.proyectodegrado.ui.screens.purchases.PurchasesViewModel
 import com.example.proyectodegrado.ui.screens.sales.SalesViewModel
+import com.example.proyectodegrado.ui.screens.whatsapp_sales.WhatsappSalesViewModel
 
 data class SessionState(
     val userId: Int? = null,
@@ -48,6 +49,7 @@ object DependencyProvider {
     private lateinit var userRepository: UserRepository
     private lateinit var salesService: SalesService
     private lateinit var purchasesService: PurchasesService
+    private lateinit var shoppingCartService: ShoppingCartService
 
     // Repositories
     private lateinit var imageRepository: ImageRepository
@@ -62,6 +64,7 @@ object DependencyProvider {
     private lateinit var permitRepository: PermitRepository
     private lateinit var salesRepository: SalesRepository
     private lateinit var purchasesRepository: PurchasesRepository
+    private lateinit var shoppingCartRepository: ShoppingCartRepository
 
     private val _sessionState = MutableStateFlow(SessionState())
     val sessionState = _sessionState.asStateFlow()
@@ -84,6 +87,7 @@ object DependencyProvider {
         permitService = RetrofitClient.createService(PermitService::class.java)
         salesService = RetrofitClient.createService(SalesService::class.java)
         purchasesService = RetrofitClient.createService(PurchasesService::class.java)
+        shoppingCartService = RetrofitClient.createService(ShoppingCartService::class.java)
 
         // Inicialización de Repositories
         userRepository = UserRepository(userService, applicationContext)
@@ -99,6 +103,7 @@ object DependencyProvider {
         permitRepository = PermitRepository(permitService)
         salesRepository = SalesRepository(salesService)
         purchasesRepository = PurchasesRepository(purchasesService)
+        shoppingCartRepository = ShoppingCartRepository(shoppingCartService)
 
         // Carga la sesión guardada al iniciar la app
         val userId = preferences.getUserId()?.toIntOrNull()
@@ -179,5 +184,8 @@ object DependencyProvider {
         val sid = storeId ?: _sessionState.value.storeId ?: 1
         val uid = userId ?: _sessionState.value.userId ?: 1
         return CashViewModel(cashRepository, sid, uid)
+    }
+    fun provideWhatsappSalesViewModel(): WhatsappSalesViewModel {
+        return WhatsappSalesViewModel(shoppingCartRepository)
     }
 }
