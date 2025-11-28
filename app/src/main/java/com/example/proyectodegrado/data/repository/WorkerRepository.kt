@@ -3,9 +3,7 @@ package com.example.proyectodegrado.data.repository
 import com.example.proyectodegrado.data.api.WorkerService
 import com.example.proyectodegrado.data.model.*
 
-class WorkerRepository(
-    private val workerService: WorkerService
-) {
+class WorkerRepository(private val workerService: WorkerService) {
 
     suspend fun getAllEmployees(): List<Worker> {
         return try {
@@ -54,7 +52,6 @@ class WorkerRepository(
         return response.isSuccessful
     }
 
-    // NUEVO: Eliminar empleado
     suspend fun deleteWorker(workerId: Int): Boolean {
         val response = workerService.deleteWorker(workerId)
         return response.isSuccessful

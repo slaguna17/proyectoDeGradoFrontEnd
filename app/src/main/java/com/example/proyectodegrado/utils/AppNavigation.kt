@@ -84,7 +84,6 @@ fun AppNavigation() {
     val scope = rememberCoroutineScope()
 
     var currentTitle by rememberSaveable { mutableStateOf("Inicio") }
-    // Estado local para el nombre de la tienda
     var currentStoreName by rememberSaveable { mutableStateOf(appPrefs.getStoreName()) }
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -98,11 +97,9 @@ fun AppNavigation() {
         "stores"    to "store"
     )
 
-    // Actualiza el título y el nombre de la tienda cada vez que cambia la navegación
     LaunchedEffect(navBackStackEntry) {
         navController.currentBackStackEntryFlow.collect { backStackEntry ->
             currentTitle = determineTitle(backStackEntry.destination.route)
-            // Leemos de nuevo las preferencias por si cambiaron en la pantalla de Tiendas
             currentStoreName = appPrefs.getStoreName()
         }
     }

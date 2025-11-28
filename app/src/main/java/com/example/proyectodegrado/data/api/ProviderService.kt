@@ -2,9 +2,6 @@ package com.example.proyectodegrado.data.api
 import com.example.proyectodegrado.data.model.Provider
 import com.example.proyectodegrado.data.model.ProviderRequest
 import com.example.proyectodegrado.data.model.ProviderResponse
-import com.example.proyectodegrado.data.model.Store
-import com.example.proyectodegrado.data.model.StoreRequest
-import com.example.proyectodegrado.data.model.StoreResponse
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE

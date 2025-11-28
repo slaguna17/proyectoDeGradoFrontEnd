@@ -9,32 +9,19 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.*
 
 interface CashService {
-
-    // --- Caja ---
-
     @POST("api/cashbox/open")
-    suspend fun openCashbox(
-        @Body body: OpenCashRequest
-    ): Response<OpenCashResponse>
+    suspend fun openCashbox(@Body body: OpenCashRequest): Response<OpenCashResponse>
 
     @POST("api/cashbox/close")
-    suspend fun closeCashbox(
-        @Body body: CloseCashRequest
-    ): Response<CloseCashResponse>
+    suspend fun closeCashbox(@Body body: CloseCashRequest): Response<CloseCashResponse>
 
     // --- Manual Movements ---
-
     @POST("api/cashbox/movements")
-    suspend fun createMovement(
-        @Body body: CreateMovementRequest
-    ): Response<CreateMovementResponse>
+    suspend fun createMovement(@Body body: CreateMovementRequest): Response<CreateMovementResponse>
 
-    // --- Consultas de sesión ---
-
+    // --- Cash Session ---
     @GET("api/cashbox/current/{storeId}")
-    suspend fun getCurrent(
-        @Path("storeId") storeId: Int
-    ): Response<CurrentCashResponse>
+    suspend fun getCurrent(@Path("storeId") storeId: Int): Response<CurrentCashResponse>
 
     @GET("api/cashbox/sessions")
     suspend fun listSessions(
@@ -44,19 +31,13 @@ interface CashService {
     ): Response<SessionsListResponse>
 
     @GET("api/cashbox/sessions/{id}")
-    suspend fun getSession(
-        @Path("id") sessionId: Int
-    ): Response<SessionDetailResponse>
+    suspend fun getSession(@Path("id") sessionId: Int): Response<SessionDetailResponse>
 
     @GET("api/cashbox/sessions/{id}/movements")
-    suspend fun getSessionMovements(
-        @Path("id") sessionId: Int
-    ): Response<MovementsResponse>
+    suspend fun getSessionMovements(@Path("id") sessionId: Int): Response<MovementsResponse>
 }
 
-// --- Proveedor simple de Retrofit (sin Hilt) ---
 object CashApi {
-    // Cambia esto por tu base real. Para emulador Android hacia localhost usa 10.0.2.2
     private const val BASE_URL = "http://10.0.2.2:3000/"
 
     private val httpClient: OkHttpClient by lazy {

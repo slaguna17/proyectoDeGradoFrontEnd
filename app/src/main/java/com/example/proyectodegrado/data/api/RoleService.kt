@@ -10,27 +10,21 @@ import retrofit2.Response
 import retrofit2.http.*
 
 interface RoleService {
-    // Get all Roles
     @GET("/api/roles")
     suspend fun getAllRoles(): List<Role>
 
-    // Get specific Role
     @GET("/api/roles/{id}")
     suspend fun getRole(@Path("id") roleId: Int): Role
 
-    // Create new Role
     @POST("/api/roles/createRole")
     suspend fun createRole(@Body request: RoleRequest): CreateRoleResponse
 
-    // Update Role
     @PUT("/api/roles/updateRole/{id}")
     suspend fun updateRole(@Path("id") roleId: Int, @Body request: RoleRequest): Response<GenericRoleResponse>
 
-    // Delete Role
     @DELETE("/api/roles/deleteRole/{id}")
     suspend fun deleteRole(@Path("id") roleId: Int): Response<GenericRoleResponse>
 
-    // Get permits by role
     @GET("/api/roles/{id}/permits")
     suspend fun getPermitsByRole(@Path("id") roleId: Int): List<Permit>
 

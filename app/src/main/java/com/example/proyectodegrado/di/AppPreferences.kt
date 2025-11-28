@@ -27,7 +27,7 @@ class AppPreferences(context: Context) {
     }
 
     fun areNotificationsEnabled(): Boolean {
-        return sharedPreferences.getBoolean("notifications_enabled", true) // true por defecto
+        return sharedPreferences.getBoolean("notifications_enabled", true)
     }
 
     fun saveUserEmail(email: String) {

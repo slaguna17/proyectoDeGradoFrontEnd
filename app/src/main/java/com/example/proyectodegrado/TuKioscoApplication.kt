@@ -1,12 +1,12 @@
-package com.example.proyectodegrado // Asegúrate que el package sea el correcto
+package com.example.proyectodegrado
 
 import android.app.Application
-import com.example.proyectodegrado.di.DependencyProvider // Importa tu provider
+import com.example.proyectodegrado.di.DependencyProvider
 
 class TuKioskoApplication : Application() {
     override fun onCreate() {
         super.onCreate()
-        // Inicialize DependencyProvider here with context
+        // Initialize DependencyProvider here with context
         DependencyProvider.initialize(this)
         println("DependencyProvider inicializado.")
     }

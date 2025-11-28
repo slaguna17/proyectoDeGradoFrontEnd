@@ -2,7 +2,6 @@ package com.example.proyectodegrado.data.repository
 import com.example.proyectodegrado.data.api.StoreService
 import com.example.proyectodegrado.data.model.Store
 import com.example.proyectodegrado.data.model.StoreRequest
-import com.example.proyectodegrado.data.model.StoreResponse
 import retrofit2.Response
 
 class StoreRepository (private val storeService: StoreService) {

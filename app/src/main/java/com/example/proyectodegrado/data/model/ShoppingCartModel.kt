@@ -10,11 +10,9 @@ data class ShoppingCart(
     @SerializedName("total_estimated") val totalEstimated: Double,
     val status: String,
     @SerializedName("created_at") val createdAt: String,
-    // Aquí usamos la nueva clase ReservedCartItem
     var items: List<ReservedCartItem> = emptyList()
 )
 
-// Clase renombrada para evitar conflicto con el CartItem de ventas normales
 data class ReservedCartItem(
     val id: Int?,
     @SerializedName("product_id") val productId: Int,

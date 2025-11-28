@@ -73,7 +73,7 @@ object DependencyProvider {
         applicationContext = context.applicationContext
         preferences = AppPreferences(applicationContext)
 
-        // Inicialización de Services
+        // Services Initializations
         userService = RetrofitClient.createService(UserService::class.java)
         productService = RetrofitClient.createService(ProductService::class.java)
         categoryService = RetrofitClient.createService(CategoryService::class.java)
@@ -89,7 +89,7 @@ object DependencyProvider {
         purchasesService = RetrofitClient.createService(PurchasesService::class.java)
         shoppingCartService = RetrofitClient.createService(ShoppingCartService::class.java)
 
-        // Inicialización de Repositories
+        // Repository Initializations
         userRepository = UserRepository(userService, applicationContext)
         imageRepository = ImageRepository(imageApiService, applicationContext)
         productRepository = ProductRepository(productService)
@@ -105,7 +105,7 @@ object DependencyProvider {
         purchasesRepository = PurchasesRepository(purchasesService)
         shoppingCartRepository = ShoppingCartRepository(shoppingCartService)
 
-        // Carga la sesión guardada al iniciar la app
+        // Load saved session
         val userId = preferences.getUserId()?.toIntOrNull()
         val storeId = preferences.getStoreId()?.toIntOrNull()
         if (userId != null && storeId != null) {
@@ -141,10 +141,6 @@ object DependencyProvider {
         _sessionState.value = SessionState(userId, storeId, isAdmin, menu)
     }
 
-    /**
-     * Limpia la sesión guardada en el dispositivo y en memoria.
-     * Se usa para "Cerrar Sesión" o al iniciar sesión sin "Recuérdame".
-     */
     fun clearCurrentSession() {
         preferences.clear()
         _sessionState.value = SessionState()

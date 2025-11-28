@@ -113,10 +113,6 @@ data class MovementsResponse(
 )
 
 sealed class ApiResult<out T> {
-    // 2. Haz que la clase Success también sea genérica con "<T>"
-    //    y asegúrate de que 'data' sea de tipo T.
     data class Success<T>(val data: T): ApiResult<T>()
-
-    // 3. La clase Error no necesita ser genérica.
     data class Error(val message: String, val code: Int? = null): ApiResult<Nothing>()
 }

@@ -46,12 +46,9 @@ class ImageRepository(
         }
         val presignData = presignResponse.body()!!
 
-        // ✨ AQUÍ ESTÁ LA CORRECCIÓN CLAVE ✨
-        // Creamos un RequestBody que SÍ conoce su tamaño.
         val requestBody = object : RequestBody() {
             override fun contentType() = contentType.toMediaTypeOrNull()
 
-            // Esta función es la que soluciona el error 501.
             override fun contentLength(): Long {
                 return context.contentResolver.query(imageUri, null, null, null, null)?.use { cursor ->
                     val sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE)

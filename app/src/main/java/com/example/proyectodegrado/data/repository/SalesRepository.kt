@@ -9,7 +9,7 @@ import java.io.IOException
 
 class SalesRepository(private val salesService: SalesService) {
 
-    // Helper para manejar las respuestas de la API de forma consistente
+    // Helper
     private inline fun <reified T> responseHandler(
         block: () -> retrofit2.Response<T>
     ): ApiResult<T> {

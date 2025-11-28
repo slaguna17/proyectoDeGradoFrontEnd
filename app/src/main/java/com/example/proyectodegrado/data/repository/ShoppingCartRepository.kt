@@ -12,7 +12,7 @@ import java.io.IOException
 
 class ShoppingCartRepository(private val service: ShoppingCartService) {
 
-    // Helper responseHandler (se mantiene igual)
+    // Helper
     private inline fun <reified T> responseHandler(
         block: () -> retrofit2.Response<T>
     ): ApiResult<T> {

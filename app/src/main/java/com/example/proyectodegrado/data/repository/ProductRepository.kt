@@ -7,7 +7,6 @@ import java.io.IOException
 
 class ProductRepository(private val productService: ProductService) {
 
-    // Helper to handle API responses consistently
     private inline fun <reified T> responseHandler(
         block: () -> retrofit2.Response<T>
     ): ApiResult<T> {

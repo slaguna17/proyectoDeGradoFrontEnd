@@ -13,7 +13,6 @@ class UserRepository(
 ) {
 
     // -------------------- Auth --------------------
-
     suspend fun login(username: String, password: String): LoginResponse {
         val resp = userService.login(LoginRequest(username, password))
 

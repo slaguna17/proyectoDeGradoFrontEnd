@@ -10,7 +10,7 @@ class CashRepository(
     private val api: CashService = CashApi.service
 ) {
 
-    // Helper (sin cambios)
+    // Helper
     private inline fun <reified T> ResponseHandler(
         block: () -> retrofit2.Response<T>
     ): ApiResult<T> {
@@ -30,7 +30,6 @@ class CashRepository(
         }
     }
 
-    // --- Caja ---
     suspend fun openCashbox(storeId: Int, openingAmount: Double): ApiResult<CashSession> {
         val request = OpenCashRequest(storeId, openingAmount)
         return when (val res = ResponseHandler { api.openCashbox(request) }) {
@@ -46,7 +45,6 @@ class CashRepository(
         closingAmount: Double? = null,
         cashCount: List<CashCountItem>? = null
     ): ApiResult<CashSession> {
-        // Usamos el nombre correcto del request: CloseCashboxRequest
         val req = CloseCashRequest(storeId, userId, date, closingAmount, cashCount)
         return when (val res = ResponseHandler { api.closeCashbox(req) }) {
             is ApiResult.Success -> ApiResult.Success(res.data.session) // <-- CAMBIO: de .summary a .session
@@ -54,7 +52,6 @@ class CashRepository(
         }
     }
 
-    // --- Movimientos (sin cambios, ya que lo eliminamos del ViewModel de Caja) ---
     suspend fun createMovement(
         storeId: Int,
         userId: Int,
@@ -71,7 +68,6 @@ class CashRepository(
         }
     }
 
-    // --- Consultas (sin cambios) ---
     suspend fun getCurrent(storeId: Int): ApiResult<CurrentCashResponse> =
         ResponseHandler { api.getCurrent(storeId) }
 
