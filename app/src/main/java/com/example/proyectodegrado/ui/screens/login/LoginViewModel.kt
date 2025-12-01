@@ -72,9 +72,14 @@ class LoginViewModel(
             }
         }
     }
+
     fun clearError() {
         if (loginState.value is LoginState.Error) {
             _loginState.value = LoginState.Idle
         }
+    }
+
+    fun resetState() {
+        _loginState.value = LoginState.Idle
     }
 }

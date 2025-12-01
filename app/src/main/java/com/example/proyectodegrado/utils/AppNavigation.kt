@@ -1,11 +1,12 @@
 package com.example.proyectodegrado.utils
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -21,12 +22,14 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -44,18 +47,15 @@ import com.example.proyectodegrado.ui.screens.products.AllProductsScreen
 import com.example.proyectodegrado.ui.screens.products.ProductsByCategoryScreen
 import com.example.proyectodegrado.ui.screens.profile.ProfileScreen
 import com.example.proyectodegrado.ui.screens.providers.ProvidersScreen
-import com.example.proyectodegrado.ui.screens.schedule.ScheduleScreen
-import com.example.proyectodegrado.ui.screens.settings.SettingsScreen
-import com.example.proyectodegrado.ui.screens.store.StoreScreen
-import com.example.proyectodegrado.ui.screens.workers.CreateWorkerScreen
-import com.example.proyectodegrado.ui.screens.workers.WorkersScreen
-import kotlinx.coroutines.launch
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.runtime.remember
 import com.example.proyectodegrado.ui.screens.purchases.PurchasesScreen
 import com.example.proyectodegrado.ui.screens.role.RoleScreen
 import com.example.proyectodegrado.ui.screens.sales.SalesScreen
+import com.example.proyectodegrado.ui.screens.schedule.ScheduleScreen
+import com.example.proyectodegrado.ui.screens.store.StoreScreen
 import com.example.proyectodegrado.ui.screens.whatsapp_sales.WhatsappSalesScreen
+import com.example.proyectodegrado.ui.screens.workers.CreateWorkerScreen
+import com.example.proyectodegrado.ui.screens.workers.WorkersScreen
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,6 +64,7 @@ fun AppNavigation() {
     val context = LocalContext.current
     val appPrefs = remember { AppPreferences(context) }
 
+    // ViewModels
     val loginViewModel = remember { DependencyProvider.provideLoginViewModel() }
     val registerViewModel = remember { DependencyProvider.provideRegisterViewModel() }
     val categoryViewModel = remember { DependencyProvider.provideCategoryViewModel() }
@@ -77,8 +78,9 @@ fun AppNavigation() {
     val providerViewModel = remember { DependencyProvider.provideProviderViewModel() }
     val salesViewModel = remember { DependencyProvider.provideSalesViewModel() }
     val whatsappSalesViewModel = remember { DependencyProvider.provideWhatsappSalesViewModel() }
-    val sessionState by sessionViewModel.uiState.collectAsStateWithLifecycle()
+
     val dpSession by DependencyProvider.sessionState.collectAsState()
+    val profileUi by profileViewModel.ui.collectAsStateWithLifecycle()
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -89,15 +91,13 @@ fun AppNavigation() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    val profileUi by profileViewModel.ui.collectAsStateWithLifecycle()
-
     val routeAlias = mapOf(
         "employees" to "workers",
         "schedules" to "schedule",
-        "stores"    to "store"
+        "stores" to "store"
     )
 
-    LaunchedEffect(navBackStackEntry) {
+    LaunchedEffect(Unit) {
         navController.currentBackStackEntryFlow.collect { backStackEntry ->
             currentTitle = determineTitle(backStackEntry.destination.route)
             currentStoreName = appPrefs.getStoreName()
@@ -119,13 +119,38 @@ fun AppNavigation() {
                     avatarUrl = profileUi.avatarUrl,
                     onItemSelected = { routeId ->
                         scope.launch {
-                            drawerState.close()
-                            val target = routeAlias[routeId] ?: routeId
+                            if (routeId == "logout") {
+                                drawerState.close()
 
+                                loginViewModel.resetState()
+                                DependencyProvider.clearCurrentSession()
+
+                                Toast.makeText(
+                                    context,
+                                    "Sesión cerrada correctamente",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+
+                                navController.navigate("login") {
+                                    popUpTo(navController.graph.startDestinationId) {
+                                        inclusive = true
+                                    }
+                                    launchSingleTop = true
+                                }
+                                return@launch
+                            }
+
+
+                            drawerState.close()
+
+                            val target = routeAlias[routeId] ?: routeId
                             val current = currentRoute?.substringBefore("/")
+
                             if (target != current) {
                                 navController.navigate(target) {
-                                    popUpTo(navController.graph.startDestinationId) { saveState = true }
+                                    popUpTo(navController.graph.startDestinationId) {
+                                        saveState = true
+                                    }
                                     launchSingleTop = true
                                     restoreState = true
                                 }
@@ -138,12 +163,12 @@ fun AppNavigation() {
             }
         }
     ) {
-        val navBackStackEntry by navController.currentBackStackEntryAsState()
-        val currentRoute = navBackStackEntry?.destination?.route
+        val navBackStackEntry2 by navController.currentBackStackEntryAsState()
+        val currentRoute2 = navBackStackEntry2?.destination?.route
 
         Scaffold(
             topBar = {
-                if (shouldShowTopBar(currentRoute)) {
+                if (shouldShowTopBar(currentRoute2)) {
                     TopAppBar(
                         title = {
                             Column {
@@ -162,7 +187,7 @@ fun AppNavigation() {
                             }
                         },
                         navigationIcon = {
-                            if (shouldShowBack(currentRoute)) {
+                            if (shouldShowBack(currentRoute2)) {
                                 IconButton(onClick = { navController.popBackStack() }) {
                                     Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
                                 }
@@ -185,8 +210,8 @@ fun AppNavigation() {
             ) {
                 composable("login") { LoginScreen(navController, loginViewModel) }
                 composable("home") { HomeScreen() }
-                composable("categories"){ CategoriesScreen(navController, categoryViewModel) }
-                composable("sales") { SalesScreen(navController) }
+                composable("categories") { CategoriesScreen(navController, categoryViewModel) }
+                composable("sales") { SalesScreen(navController, salesViewModel) }
                 composable("purchases") { PurchasesScreen(navController) }
                 composable("products") { AllProductsScreen(navController, productViewModel) }
                 composable("providers") { ProvidersScreen(navController, providerViewModel) }
@@ -199,15 +224,23 @@ fun AppNavigation() {
                     ProductsByCategoryScreen(navController, productViewModel, categoryId)
                 }
 
-                composable("store")   { StoreScreen(navController, storeViewModel) }
-                composable("role")   { RoleScreen(navController, roleViewModel) }
-                composable("workers") { WorkersScreen(navController = navController, viewModel = workersViewModel) }
-                composable("registerEmployee") { CreateWorkerScreen(navController = navController, workersViewModel = workersViewModel, registerViewModel = registerViewModel) }
-                composable("schedule"){ ScheduleScreen(navController, scheduleViewModel) }
+                composable("store") { StoreScreen(navController, storeViewModel) }
+                composable("role") { RoleScreen(navController, roleViewModel) }
+                composable("workers") {
+                    WorkersScreen(navController = navController, viewModel = workersViewModel)
+                }
+                composable("registerEmployee") {
+                    CreateWorkerScreen(
+                        navController = navController,
+                        workersViewModel = workersViewModel,
+                        registerViewModel = registerViewModel
+                    )
+                }
+                composable("schedule") { ScheduleScreen(navController, scheduleViewModel) }
 
                 composable("cash") {
                     val storeId = DependencyProvider.getCurrentStoreId()
-                    val userId  = DependencyProvider.getCurrentUserId()
+                    val userId = DependencyProvider.getCurrentUserId()
                     CashScreen(storeId = storeId, userId = userId)
                 }
                 composable(
@@ -219,13 +252,15 @@ fun AppNavigation() {
                 ) { be ->
                     CashScreen(
                         storeId = be.arguments!!.getInt("storeId"),
-                        userId  = be.arguments!!.getInt("userId")
+                        userId = be.arguments!!.getInt("userId")
                     )
                 }
 
-                composable("whatsapp_sales") { WhatsappSalesScreen(navController, whatsappSalesViewModel)}
-                composable("settings")  { SettingsScreen(navController) }
-                composable("profile")   { ProfileScreen(viewModel = profileViewModel) }
+                composable("whatsapp_sales") {
+                    WhatsappSalesScreen(navController, whatsappSalesViewModel)
+                }
+
+                composable("profile") { ProfileScreen(viewModel = profileViewModel) }
             }
         }
     }

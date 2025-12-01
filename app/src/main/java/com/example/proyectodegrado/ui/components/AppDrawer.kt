@@ -21,7 +21,13 @@ import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -79,41 +85,53 @@ fun DrawerContent(
                     text = "TuKiosco",
                     style = MaterialTheme.typography.titleLarge
                 )
-                IconButton(onClick = { onItemSelected("profile") }) {
-                    if (!avatarUrl.isNullOrBlank()) {
-                        AsyncImage(
-                            model = avatarUrl,
-                            contentDescription = "Avatar",
-                            modifier = Modifier
-                                .size(40.dp)
-                                .clip(CircleShape),
-                            contentScale = ContentScale.Crop
-                        )
-                    } else {
-                        Icon(
-                            imageVector = Icons.Filled.AccountCircle,
-                            contentDescription = "Avatar",
-                            modifier = Modifier.size(40.dp)
-                        )
-                    }
-                }
-            }
-            HorizontalDivider()
-            LazyColumn(modifier = Modifier.weight(1f)) {
-                items(menu, key = { it.id }) { item ->
-                    DrawerItem(
-                        label = item.label,
-                        icon = item.icon.asVector(), // mapea string -> icono
-                        onClick = { onItemSelected(item.id) } // <-- usa el id del backend
+                if (!avatarUrl.isNullOrBlank()) {
+                    AsyncImage(
+                        model = avatarUrl,
+                        contentDescription = "Avatar",
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Filled.AccountCircle,
+                        contentDescription = "Avatar",
+                        modifier = Modifier.size(40.dp)
                     )
                 }
             }
 
-            // Dibuja la sección final del menú (Ajustes y Salir)
+            HorizontalDivider()
+
+            LazyColumn(
+                modifier = Modifier.weight(1f)
+            ) {
+                items(visibleMenuItems, key = { item -> "local_${item.route}" }) { item ->
+                    DrawerItem(
+                        label = item.label,
+                        icon = item.icon,
+                        onClick = { onItemSelected(item.route) }
+                    )
+                }
+                items(menu, key = { dto -> "remote_${dto.id}" }) { item ->
+                    DrawerItem(
+                        label = item.label,
+                        icon = item.icon.asVector(),
+                        onClick = { onItemSelected(item.id) }
+                    )
+                }
+            }
+
             HorizontalDivider()
             Spacer(modifier = Modifier.height(8.dp))
-            DrawerItem("Ajustes", ImageVector.vectorResource(id = R.drawable.settings)) { onItemSelected("settings") }
-            // Aquí podrías añadir un botón de "Cerrar Sesión" también
+            DrawerItem(
+                label = "Cerrar sesión",
+                icon = Icons.Default.Logout
+            ) {
+                onItemSelected("logout")
+            }
         }
     }
 }
@@ -130,7 +148,6 @@ fun DrawerItem(label: String, icon: ImageVector, onClick: () -> Unit) {
     )
 }
 
-// icon mapping
 private fun String.asVector(): ImageVector = when (this) {
     "Home" -> Icons.Default.Home
     "Package" -> Icons.Default.Inventory
