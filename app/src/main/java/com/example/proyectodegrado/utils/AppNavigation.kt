@@ -104,29 +104,38 @@ fun AppNavigation() {
         }
     }
 
+    LaunchedEffect(currentRoute) {
+        if (currentRoute == "login" || currentRoute == "register") {
+            drawerState.close()
+        }
+    }
+
     ModalNavigationDrawer(
         drawerState = drawerState,
+        gesturesEnabled = currentRoute != "login" && currentRoute != "register",
         drawerContent = {
-            DrawerContent(
-                avatarUrl = profileUi.avatarUrl,
-                onItemSelected = { routeId ->
-                    scope.launch {
-                        drawerState.close()
-                        val target = routeAlias[routeId] ?: routeId
+            if (currentRoute != "login" && currentRoute != "register") {
+                DrawerContent(
+                    avatarUrl = profileUi.avatarUrl,
+                    onItemSelected = { routeId ->
+                        scope.launch {
+                            drawerState.close()
+                            val target = routeAlias[routeId] ?: routeId
 
-                        val current = currentRoute?.substringBefore("/")
-                        if (target != current) {
-                            navController.navigate(target) {
-                                popUpTo(navController.graph.startDestinationId) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
+                            val current = currentRoute?.substringBefore("/")
+                            if (target != current) {
+                                navController.navigate(target) {
+                                    popUpTo(navController.graph.startDestinationId) { saveState = true }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
                             }
                         }
-                    }
-                },
-                isAdmin = dpSession.isAdmin,
-                menu = dpSession.menu
-            )
+                    },
+                    isAdmin = dpSession.isAdmin,
+                    menu = dpSession.menu
+                )
+            }
         }
     ) {
         val navBackStackEntry by navController.currentBackStackEntryAsState()
