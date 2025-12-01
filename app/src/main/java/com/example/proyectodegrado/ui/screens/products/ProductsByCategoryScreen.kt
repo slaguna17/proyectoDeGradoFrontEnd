@@ -115,7 +115,6 @@ fun ProductsByCategoryScreen(
         if (availableCategories.isEmpty()) viewModel.fetchAvailableCategories()
     }
 
-
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {

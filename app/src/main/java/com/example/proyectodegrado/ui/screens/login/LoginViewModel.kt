@@ -9,6 +9,10 @@ import com.example.proyectodegrado.di.AppPreferences
 import com.example.proyectodegrado.di.DependencyProvider
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
+import retrofit2.HttpException
+import java.io.IOException
+import java.net.SocketTimeoutException
+
 
 sealed interface LoginState {
     object Idle : LoginState
@@ -51,7 +55,20 @@ class LoginViewModel(
                 }
                 _loginState.value = LoginState.Success
             } catch (e: Exception) {
-                _loginState.value = LoginState.Error(e.message ?: "Error desconocido")
+                val userMessage = when (e) {
+                    is HttpException -> {
+                        when (e.code()) {
+                            401 -> "Credenciales inválidas"
+                            in 500..599 -> "Error en el servidor. Intenta nuevamente más tarde."
+                            else -> "Error al iniciar sesión (${e.code()})"
+                        }
+                    }
+                    is SocketTimeoutException -> "Tiempo de espera agotado. Intenta nuevamente."
+                    is IOException -> "No se pudo conectar con el servidor. Revisa tu conexión a internet."
+                    else -> e.message ?: "Error desconocido"
+                }
+
+                _loginState.value = LoginState.Error(userMessage)
             }
         }
     }
