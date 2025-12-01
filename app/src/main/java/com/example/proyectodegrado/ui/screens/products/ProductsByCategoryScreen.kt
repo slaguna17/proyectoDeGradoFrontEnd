@@ -29,7 +29,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import com.example.proyectodegrado.data.model.CreateProductFormState
 import com.example.proyectodegrado.data.model.Product
 import com.example.proyectodegrado.di.AppPreferences
 import com.example.proyectodegrado.ui.components.RefreshableContainer
@@ -92,7 +91,9 @@ fun ProductsByCategoryScreen(
 
     LaunchedEffect(Unit) {
         viewModel.fetchStores(onError = { msg -> errorMessage = msg })
+        if (availableCategories.isEmpty()) viewModel.fetchAvailableCategories()
     }
+
     LaunchedEffect(currentStoreForCrud) {
         if (selectedStoreId == null && currentStoreForCrud != null) {
             viewModel.setSelectedStore(currentStoreForCrud)
@@ -110,19 +111,12 @@ fun ProductsByCategoryScreen(
         }
     }
 
-    LaunchedEffect(Unit) {
-        viewModel.fetchStores(onError = { msg -> errorMessage = msg })
-        if (availableCategories.isEmpty()) viewModel.fetchAvailableCategories()
-    }
-
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             if (currentStoreForCrud != null) {
                 FloatingActionButton(
-                    onClick = {
-                        onShowCreateDialog
-                    },
+                    onClick = { onShowCreateDialog },
                     containerColor = MaterialTheme.colorScheme.primary
                 ) {
                     Icon(Icons.Default.Add, contentDescription = "Añadir Producto")
@@ -205,7 +199,7 @@ fun ProductsByCategoryScreen(
                     viewModel.createProduct(
                         storeId = currentStoreForCrud,
                         onSuccess = { showCreateDialog = false; refreshProducts() },
-                        onError = { /* Manejar error */ }
+                        onError = { errMsg -> errorMessage = errMsg }
                     )
                 }
             }

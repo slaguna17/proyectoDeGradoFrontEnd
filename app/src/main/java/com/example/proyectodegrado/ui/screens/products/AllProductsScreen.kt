@@ -239,7 +239,7 @@ fun AllProductsScreen(
                         id = productToInteractWith!!.id,
                         storeId = currentStoreForCrud,
                         onSuccess = { showEditDialog = false; refreshProducts() },
-                        onError = { /* Manejar error */ }
+                        onError = { errMsg -> errorMessage = errMsg }
                     )
                 }
             }
