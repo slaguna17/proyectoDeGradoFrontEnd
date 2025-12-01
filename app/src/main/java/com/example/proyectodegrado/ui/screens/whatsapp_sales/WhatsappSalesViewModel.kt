@@ -81,12 +81,27 @@ class WhatsappSalesViewModel(
                     loadCarts(storeId)
                 }
                 is ApiResult.Error -> {
+                    val friendly = mapFinalizeSaleError(result.message)
                     _uiState.update {
-                        it.copy(isLoading = false, errorMessage = "Error al cobrar: ${result.message}")
+                        it.copy(
+                            isLoading = false,
+                            errorMessage = friendly
+                        )
                     }
                 }
             }
         }
+    }
+
+    private fun mapFinalizeSaleError(serverMessage: String?): String {
+        if (serverMessage?.contains(
+                "There is not an opened cashbox session",
+                ignoreCase = true
+            ) == true
+        ) {
+            return "No hay una caja abierta. Debes abrir una caja para registrar la venta."
+        }
+        return serverMessage ?: "Ocurrió un error al cobrar el pedido."
     }
 
     fun deleteCart(cartId: Int, storeId: Int) {

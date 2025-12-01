@@ -50,7 +50,11 @@ class SalesViewModel(
                     }
                 }
                 is ApiResult.Error -> {
-                    _uiState.update { it.copy(errorMessage = "Error al cargar productos: ${result.message}") }
+                    _uiState.update {
+                        it.copy(
+                            errorMessage = "Error al cargar productos: ${result.message}"
+                        )
+                    }
                 }
             }
         }
@@ -62,10 +66,14 @@ class SalesViewModel(
                 currentState.allProducts
             } else {
                 currentState.allProducts.filter {
-                    it.name.contains(query, ignoreCase = true) || it.sku?.contains(query, ignoreCase = true) == true
+                    it.name.contains(query, ignoreCase = true) ||
+                            it.sku?.contains(query, ignoreCase = true) == true
                 }
             }
-            currentState.copy(searchQuery = query, filteredProducts = filtered)
+            currentState.copy(
+                searchQuery = query,
+                filteredProducts = filtered
+            )
         }
     }
 
@@ -103,7 +111,9 @@ class SalesViewModel(
 
     fun removeCartItem(productId: Int) {
         _uiState.update { currentState ->
-            currentState.copy(cartItems = currentState.cartItems.filterNot { it.productId == productId })
+            currentState.copy(
+                cartItems = currentState.cartItems.filterNot { it.productId == productId }
+            )
         }
     }
 
@@ -116,7 +126,18 @@ class SalesViewModel(
     }
 
     fun clearCart() {
-        _uiState.update { it.copy(cartItems = emptyList(), saleSuccess = false, errorMessage = null, notes = "") }
+        _uiState.update {
+            it.copy(
+                cartItems = emptyList(),
+                saleSuccess = false,
+                errorMessage = null,
+                notes = ""
+            )
+        }
+    }
+
+    fun clearError() {
+        _uiState.update { it.copy(errorMessage = null) }
     }
 
     fun registerSale() {
@@ -148,9 +169,26 @@ class SalesViewModel(
                     _uiState.update { it.copy(isRegistering = false, saleSuccess = true) }
                 }
                 is ApiResult.Error -> {
-                    _uiState.update { it.copy(isRegistering = false, errorMessage = "Error: ${result.message}") }
+                    val friendly = mapRegisterSaleError(result.message)
+                    _uiState.update {
+                        it.copy(
+                            isRegistering = false,
+                            errorMessage = friendly
+                        )
+                    }
                 }
             }
         }
+    }
+
+    private fun mapRegisterSaleError(serverMessage: String?): String {
+        if (serverMessage?.contains(
+                "There is not an opened cashbox session",
+                ignoreCase = true
+            ) == true
+        ) {
+            return "No hay una caja abierta. Debes abrir una caja para registrar la venta."
+        }
+        return serverMessage ?: "Ocurrió un error al registrar la venta."
     }
 }

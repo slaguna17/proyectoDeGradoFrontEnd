@@ -26,11 +26,16 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -55,56 +60,76 @@ fun PurchasesScreen(
     val state by viewModel.uiState.collectAsState()
     val total = state.cartItems.sumOf { it.unitPrice * it.quantity }
 
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(state.errorMessage) {
+        state.errorMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.clearError()
+        }
+    }
+
     if (state.purchaseSuccess) {
         PurchaseSuccessDialog(
             onDismiss = { viewModel.clearCart() }
         )
     }
 
-    Column(Modifier.fillMaxSize()) {
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { padding ->
         Column(
-            modifier = Modifier
-                .weight(1f)
-                .padding(horizontal = 16.dp)
+            Modifier
+                .fillMaxSize()
+                .padding(padding)
         ) {
-            if (state.cartItems.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("Agrega productos para iniciar las compras")
-                }
-            } else {
-                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(state.cartItems, key = { it.productId }) { item ->
-                        CartItemRow(
-                            item = item,
-                            onQuantityChange = { newQuantity ->
-                                viewModel.updateCartItemQuantity(item.productId, newQuantity)
-                            },
-                            onRemove = { viewModel.removeCartItem(item.productId) }
-                        )
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 16.dp)
+            ) {
+                if (state.cartItems.isEmpty()) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("Agrega productos para iniciar las compras")
+                    }
+                } else {
+                    LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(state.cartItems, key = { it.productId }) { item ->
+                            CartItemRow(
+                                item = item,
+                                onQuantityChange = { newQuantity ->
+                                    viewModel.updateCartItemQuantity(
+                                        item.productId,
+                                        newQuantity
+                                    )
+                                },
+                                onRemove = { viewModel.removeCartItem(item.productId) }
+                            )
+                        }
                     }
                 }
             }
+
+            Divider(modifier = Modifier.padding(vertical = 8.dp))
+
+            ProductSelectionSection(
+                products = state.filteredProducts,
+                searchQuery = state.searchQuery,
+                onQueryChange = viewModel::onSearchQueryChanged,
+                onProductClick = { viewModel.addProductToCart(it) }
+            )
+
+            CheckoutSection(
+                total = total,
+                notes = state.notes,
+                onNotesChange = viewModel::onNotesChanged,
+                onFinalizePurchase = { viewModel.registerPurchase() },
+                isRegistering = state.isRegistering
+            )
         }
-
-        Divider(modifier = Modifier.padding(vertical = 8.dp))
-
-        ProductSelectionSection(
-            products = state.filteredProducts,
-            searchQuery = state.searchQuery,
-            onQueryChange = viewModel::onSearchQueryChanged,
-            onProductClick = { viewModel.addProductToCart(it) }
-        )
-
-        CheckoutSection(
-            total = total,
-            notes = state.notes,
-            onNotesChange = viewModel::onNotesChanged,
-            onFinalizePurchase = { viewModel.registerPurchase() },
-            isRegistering = state.isRegistering
-        )
     }
 }
 

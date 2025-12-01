@@ -8,8 +8,10 @@ import androidx.compose.material.icons.filled.AddShoppingCart
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -34,56 +36,75 @@ fun SalesScreen(
     val state by viewModel.uiState.collectAsState()
     val total = state.cartItems.sumOf { it.unitPrice * it.quantity }
 
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(state.errorMessage) {
+        state.errorMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.clearError()
+        }
+    }
+
     if (state.saleSuccess) {
         SaleSuccessDialog(
             onDismiss = { viewModel.clearCart() }
         )
     }
 
-    Column(Modifier.fillMaxSize()) {
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { padding ->
         Column(
-            modifier = Modifier
-                .weight(1f)
-                .padding(horizontal = 16.dp)
+            Modifier
+                .fillMaxSize()
         ) {
-            if (state.cartItems.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("Agrega productos para iniciar la venta")
-                }
-            } else {
-                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(state.cartItems, key = { it.productId }) { item ->
-                        CartItemRow(
-                            item = item,
-                            onQuantityChange = { newQuantity ->
-                                viewModel.updateCartItemQuantity(item.productId, newQuantity)
-                            },
-                            onRemove = { viewModel.removeCartItem(item.productId) }
-                        )
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 16.dp)
+            ) {
+                if (state.cartItems.isEmpty()) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("Agrega productos para iniciar la venta")
+                    }
+                } else {
+                    LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(state.cartItems, key = { it.productId }) { item ->
+                            CartItemRow(
+                                item = item,
+                                onQuantityChange = { newQuantity ->
+                                    viewModel.updateCartItemQuantity(
+                                        item.productId,
+                                        newQuantity
+                                    )
+                                },
+                                onRemove = { viewModel.removeCartItem(item.productId) }
+                            )
+                        }
                     }
                 }
             }
+
+            Divider(modifier = Modifier.padding(vertical = 8.dp))
+
+            ProductSelectionSection(
+                products = state.filteredProducts,
+                searchQuery = state.searchQuery,
+                onQueryChange = viewModel::onSearchQueryChanged,
+                onProductClick = { viewModel.addProductToCart(it) }
+            )
+
+            CheckoutSection(
+                total = total,
+                notes = state.notes,
+                onNotesChange = viewModel::onNotesChanged,
+                onFinalizeSale = { viewModel.registerSale() },
+                isRegistering = state.isRegistering
+            )
         }
-
-        Divider(modifier = Modifier.padding(vertical = 8.dp))
-
-        ProductSelectionSection(
-            products = state.filteredProducts,
-            searchQuery = state.searchQuery,
-            onQueryChange = viewModel::onSearchQueryChanged,
-            onProductClick = { viewModel.addProductToCart(it) }
-        )
-
-        CheckoutSection(
-            total = total,
-            notes = state.notes,
-            onNotesChange = viewModel::onNotesChanged,
-            onFinalizeSale = { viewModel.registerSale() },
-            isRegistering = state.isRegistering
-        )
     }
 }
 
@@ -94,10 +115,11 @@ fun ProductSelectionSection(
     onQueryChange: (String) -> Unit,
     onProductClick: (Product) -> Unit
 ) {
-    Column(modifier = Modifier
-        .fillMaxWidth()
-        .height(250.dp)
-        .padding(16.dp)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(250.dp)
+            .padding(horizontal = 16.dp)
     ) {
         OutlinedTextField(
             value = searchQuery,
@@ -110,10 +132,15 @@ fun ProductSelectionSection(
             items(products, key = { it.id }) { product ->
                 ListItem(
                     headlineContent = { Text(product.name) },
-                    supportingContent = { Text("Precio: %.2f BOB".format(product.salePrice)) },
+                    supportingContent = {
+                        Text("Precio: %.2f BOB".format(product.salePrice))
+                    },
                     trailingContent = {
                         IconButton(onClick = { onProductClick(product) }) {
-                            Icon(Icons.Default.AddShoppingCart, contentDescription = "Agregar")
+                            Icon(
+                                Icons.Default.AddShoppingCart,
+                                contentDescription = "Agregar"
+                            )
                         }
                     }
                 )
@@ -128,9 +155,14 @@ fun CartItemRow(
     onQuantityChange: (Int) -> Unit,
     onRemove: () -> Unit
 ) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    Card(modifier = Modifier
+        .fillMaxWidth()
+        .padding(horizontal = 16.dp)
+    ) {
         Row(
-            modifier = Modifier.padding(8.dp),
+            modifier = Modifier
+                .padding(8.dp)
+                .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {

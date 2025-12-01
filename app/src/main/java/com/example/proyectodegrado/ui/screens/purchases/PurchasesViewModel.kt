@@ -28,6 +28,7 @@ data class PurchasesUiState(
     val purchaseSuccess: Boolean = false,
     val errorMessage: String? = null
 )
+
 class PurchasesViewModel (
     private val purchasesRepository: PurchasesRepository,
     private val productRepository: ProductRepository
@@ -50,7 +51,9 @@ class PurchasesViewModel (
                     }
                 }
                 is ApiResult.Error -> {
-                    _uiState.update { it.copy(errorMessage = "Error al cargar productos: ${result.message}") }
+                    _uiState.update {
+                        it.copy(errorMessage = "Error al cargar productos: ${result.message}")
+                    }
                 }
             }
         }
@@ -62,7 +65,8 @@ class PurchasesViewModel (
                 currentState.allProducts
             } else {
                 currentState.allProducts.filter {
-                    it.name.contains(query, ignoreCase = true) || it.sku?.contains(query, ignoreCase = true) == true
+                    it.name.contains(query, ignoreCase = true) ||
+                            it.sku?.contains(query, ignoreCase = true) == true
                 }
             }
             currentState.copy(searchQuery = query, filteredProducts = filtered)
@@ -103,7 +107,9 @@ class PurchasesViewModel (
 
     fun removeCartItem(productId: Int) {
         _uiState.update { currentState ->
-            currentState.copy(cartItems = currentState.cartItems.filterNot { it.productId == productId })
+            currentState.copy(
+                cartItems = currentState.cartItems.filterNot { it.productId == productId }
+            )
         }
     }
 
@@ -116,7 +122,18 @@ class PurchasesViewModel (
     }
 
     fun clearCart() {
-        _uiState.update { it.copy(cartItems = emptyList(), purchaseSuccess = false, errorMessage = null, notes = "") }
+        _uiState.update {
+            it.copy(
+                cartItems = emptyList(),
+                purchaseSuccess = false,
+                errorMessage = null,
+                notes = ""
+            )
+        }
+    }
+
+    fun clearError() {
+        _uiState.update { it.copy(errorMessage = null) }
     }
 
     fun registerPurchase() {
@@ -144,12 +161,31 @@ class PurchasesViewModel (
             )
             when (val result = purchasesRepository.createPurchase(purchaseRequest)) {
                 is ApiResult.Success -> {
-                    _uiState.update { it.copy(isRegistering = false, purchaseSuccess = true) }
+                    _uiState.update {
+                        it.copy(isRegistering = false, purchaseSuccess = true)
+                    }
                 }
                 is ApiResult.Error -> {
-                    _uiState.update { it.copy(isRegistering = false, errorMessage = "Error: ${result.message}") }
+                    val friendly = mapRegisterPurchaseError(result.message)
+                    _uiState.update {
+                        it.copy(
+                            isRegistering = false,
+                            errorMessage = friendly
+                        )
+                    }
                 }
             }
         }
+    }
+
+    private fun mapRegisterPurchaseError(serverMessage: String?): String {
+        if (serverMessage?.contains(
+                "There is not an opened cashbox session",
+                ignoreCase = true
+            ) == true
+        ) {
+            return "No hay una caja abierta. Debes abrir una caja para registrar la compra."
+        }
+        return serverMessage ?: "Ocurrió un error al registrar la compra."
     }
 }
