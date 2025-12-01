@@ -21,19 +21,10 @@ data class ProfileUiState(
     val email: String = "",
     val phone: String = "",
 
-    // URL remota que viene ya resuelta por el backend
     val avatarUrl: String? = null,
-
-    // Preview local cuando el usuario elige una nueva imagen
     val avatarPreview: Uri? = null,
-
-    // KEY devuelta por la subida a S3 (para enviar al backend en save())
     val avatarKey: String? = null,
-
-    // Flag para indicar que el usuario quiere eliminar su avatar
     val removeImage: Boolean = false,
-
-    // Para habilitar/deshabilitar el botón Guardar
     val hasChanges: Boolean = false
 )
 
@@ -49,15 +40,13 @@ class ProfileViewModel(
         loadMe()
     }
 
-    // ---------- Cargar perfil ----------
+    // ---------- Load Profile ----------
     fun loadMe() = viewModelScope.launch {
         _ui.update { it.copy(loading = true, error = null) }
         try {
-            // getCurrentUser() usa el ID de prefs y tu UserService con signed=true por defecto
-            val user: User? = userRepo.getCurrentUser() // :contentReference[oaicite:4]{index=4} :contentReference[oaicite:5]{index=5}
+            val user: User? = userRepo.getCurrentUser()
             if (user != null) {
-                // Preferimos avatarUrl; si viene null, usamos avatar (puede ya ser URL)
-                val resolved = user.avatarUrl ?: user.avatar // :contentReference[oaicite:6]{index=6}
+                val resolved = user.avatarUrl ?: user.avatar
                 _ui.update {
                     it.copy(
                         loading = false,
@@ -86,7 +75,6 @@ class ProfileViewModel(
 
     fun onPickAvatar(uri: Uri?) {
         if (uri == null) return
-        // Preview inmediato y limpiamos estados previos
         _ui.update {
             it.copy(
                 avatarPreview = uri,
@@ -109,16 +97,12 @@ class ProfileViewModel(
         }
     }
 
-    // ---------- Subir imagen a S3 (obtiene KEY) ----------
     private fun uploadAvatar(localUri: Uri) = viewModelScope.launch {
         when (val res = imageRepo.uploadImage(
             imageUri = localUri,
             entityType = "users",
-            entityId = userRepo // usamos el helper del repo para el ID
-                .run { // no expone publicamente getCurrentUserId(), así que sube a carpeta 0 o ajusta tu ImageRepository
-                    // Si tu ImageRepository no requiere entityId real, puedes dejar 0
-                    0
-                },
+            entityId = userRepo
+                .run { 0 },
             fileKind = "avatar"
         )) {
             is ImageUploadResult.Success -> {
@@ -130,18 +114,16 @@ class ProfileViewModel(
         }
     }
 
-    // ---------- Guardar ----------
+    // ---------- Save ----------
     fun save(onDone: () -> Unit = {}, onError: (String) -> Unit = {}) = viewModelScope.launch {
         val st = _ui.value
         _ui.update { it.copy(loading = true, error = null) }
 
         try {
-            // 1) Resolver qué avatarKey enviar
             val keyToSend: String? = when {
                 st.removeImage -> null
                 st.avatarKey != null -> st.avatarKey
                 st.avatarPreview != null -> {
-                    // Sube ahora (bloquea save hasta terminar)
                     when (val up = imageRepo.uploadImage(
                         imageUri = st.avatarPreview,
                         entityType = "users",
@@ -156,10 +138,9 @@ class ProfileViewModel(
                         }
                     }
                 }
-                else -> null // no tocar avatar
+                else -> null
             }
 
-            // 2) Actualiza el perfil en backend
             val ok = userRepo.updateUserProfile(
                 fullName = st.fullName,
                 email = st.email,
@@ -169,7 +150,6 @@ class ProfileViewModel(
             )
 
             if (ok) {
-                // 3) Recargar para traer la URL final (resuelta por backend)
                 loadMe()
                 onDone()
             } else {

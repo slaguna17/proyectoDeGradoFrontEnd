@@ -69,20 +69,17 @@ fun AllProductsScreen(
         }
     }
 
-    // Cargar tiendas al entrar
     LaunchedEffect(Unit) {
         viewModel.fetchStores(onError = { msg -> errorMessage = msg })
         if (availableCategories.isEmpty()) viewModel.fetchAvailableCategories()
     }
 
-    // Usar la tienda de preferencias como preseleccionada si existe
     LaunchedEffect(currentStoreForCrud) {
         if (selectedStoreId == null && currentStoreForCrud != null) {
             viewModel.setSelectedStore(currentStoreForCrud)
         }
     }
 
-    // Cargar productos cuando cambia la tienda seleccionada
     LaunchedEffect(selectedStoreId) {
         refreshProducts()
     }
@@ -293,14 +290,13 @@ fun AllProductsScreen(
             productName = productToInteractWith!!.name,
             currentStock = formState.stock,
             onConfirm = { newStock ->
-                // Reutilizamos la función que ya teníamos!
                 viewModel.addProductToStore(
                     productId = productToInteractWith!!.id,
                     storeId = currentStoreForCrud,
                     stock = newStock.toIntOrNull() ?: 0,
                     onSuccess = {
                         showAdjustStockDialog = false
-                        refreshProducts() // Usando la función de refresco que ya tienes
+                        refreshProducts()
                     },
                     onError = { errMsg -> errorMessage = errMsg }
                 )

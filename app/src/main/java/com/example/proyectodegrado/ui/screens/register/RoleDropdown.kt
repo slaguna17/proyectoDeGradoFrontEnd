@@ -11,15 +11,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import com.example.proyectodegrado.data.model.Role
 
-/**
- * Dropdown de roles con Material3.
- *
- * @param roles            Lista de roles a mostrar (id + name).
- * @param selectedRoleId   Id del rol actualmente seleccionado (nullable).
- * @param onRoleSelected   Callback con el id seleccionado (nullable).
- * @param modifier         Modificador opcional.
- * @param label            Texto de la etiqueta del TextField.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RoleDropdown(

@@ -19,7 +19,6 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.proyectodegrado.R
 import com.example.proyectodegrado.di.AppPreferences
-import kotlin.math.log
 
 @Composable
 fun LoginScreen(navController: NavController, viewModel: LoginViewModel) {
@@ -85,7 +84,6 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel) {
         )
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Mostramos el mensaje de error aquí si existe
         errorMsg?.let {
             Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
             Spacer(modifier = Modifier.height(12.dp))

@@ -30,18 +30,15 @@ fun WhatsappSalesScreen(
     val userId = prefs.getUserId()?.toIntOrNull() ?: 0
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // Diálogos de confirmación
     var showDeleteDialog by remember { mutableStateOf<ShoppingCart?>(null) }
     var showFinalizeDialog by remember { mutableStateOf<ShoppingCart?>(null) }
 
-    // Carga inicial
     LaunchedEffect(Unit) {
         if (storeId != 0) {
             viewModel.loadCarts(storeId)
         }
     }
 
-    // Manejo de mensajes (Error/Éxito)
     LaunchedEffect(state.errorMessage, state.successMessage) {
         state.errorMessage?.let {
             snackbarHostState.showSnackbar(it)
@@ -79,7 +76,6 @@ fun WhatsappSalesScreen(
                 LazyColumn(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
-                    // Aseguramos que la lista ocupe el espacio para recibir el gesto
                     modifier = Modifier.fillMaxSize()
                 ) {
                     items(state.carts, key = { it.id }) { cart ->

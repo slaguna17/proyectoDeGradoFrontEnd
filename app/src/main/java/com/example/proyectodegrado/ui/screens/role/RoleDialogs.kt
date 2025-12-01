@@ -27,7 +27,6 @@ fun CreateEditRoleDialog(
     var description by remember { mutableStateOf(role?.description ?: "") }
     var isAdmin by remember { mutableStateOf(role?.isAdmin ?: false) }
 
-    // Re-Sync state
     LaunchedEffect(role) {
         name = role?.name ?: ""
         description = role?.description ?: ""

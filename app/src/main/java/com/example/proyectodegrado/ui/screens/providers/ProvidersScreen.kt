@@ -32,7 +32,6 @@ fun ProvidersScreen(
     var providerToEdit by remember { mutableStateOf<Provider?>(null) }
     var providerToDelete by remember { mutableStateOf<Provider?>(null) }
 
-    // Formulario de crear proveedor
     var formName by remember { mutableStateOf("") }
     var formAddress by remember { mutableStateOf("") }
     var formEmail by remember { mutableStateOf("") }

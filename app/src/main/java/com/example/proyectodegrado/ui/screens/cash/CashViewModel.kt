@@ -40,7 +40,7 @@ class CashViewModel(
         when (val res = repo.getCurrent(storeId)) {
             is ApiResult.Success -> {
                 val data = res.data
-                // Cargar movimientos de la sesión actual
+                // Load money movements from this session
                 val moves = loadMovementsSafely(data.session.id)
                 _state.value = _state.value.copy(
                     loading = false,
@@ -51,7 +51,7 @@ class CashViewModel(
                 )
             }
             is ApiResult.Error -> {
-                // 204 No Content cuando no hay caja abierta → lo tratamos como "sin sesión"
+                // 204 when there isn't an opened cashbox
                 _state.value = _state.value.copy(
                     loading = false,
                     currentSession = null,
@@ -71,7 +71,6 @@ class CashViewModel(
         }
     }
 
-    // --- Abrir caja ---
     fun openCashbox(openingAmount: Double) = viewModelScope.launch {
         _state.value = _state.value.copy(loading = true, error = null)
         when (val res = repo.openCashbox(storeId, openingAmount)) {
@@ -86,7 +85,6 @@ class CashViewModel(
         }
     }
 
-    // --- Close cashbox ---
     fun closeCashbox(closingAmount: Double? = null, cashCount: List<CashCountItem>? = null) =
         viewModelScope.launch {
             val date = LocalDate.now().toString()
@@ -103,13 +101,11 @@ class CashViewModel(
             }
         }
 
-    // --- Dialogs ---
     fun showOpenDialog()  { _state.value = _state.value.copy(showOpenDialog = true) }
     fun hideOpenDialog()  { _state.value = _state.value.copy(showOpenDialog = false) }
     fun showCloseDialog() { _state.value = _state.value.copy(showCloseDialog = true) }
     fun hideCloseDialog() { _state.value = _state.value.copy(showCloseDialog = false) }
 
-    // --- Factory manual (sin Hilt) ---
     companion object {
         fun provideFactory(
             repo: CashRepository,

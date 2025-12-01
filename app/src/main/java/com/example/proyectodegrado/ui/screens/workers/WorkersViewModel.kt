@@ -33,7 +33,6 @@ class WorkersViewModel(
     private val _assignError = MutableStateFlow<String?>(null)
     val assignError: StateFlow<String?> = _assignError.asStateFlow()
 
-    // 🔹 Nuevo: estado de carga para Pull-to-Refresh
     private val _loading = MutableStateFlow(false)
     val loading: StateFlow<Boolean> = _loading.asStateFlow()
 
@@ -44,10 +43,8 @@ class WorkersViewModel(
         viewModelScope.launch {
             _loading.value = true
             try {
-                // Carga catálogos en paralelo simple (secuencial está bien para este caso)
                 _stores.value = storeRepository.getAllStores()
                 _schedules.value = scheduleRepository.getAllSchedules()
-                // Luego la lista (filtrada)
                 filterByStore(storeId, toggleLoading = false)
             } finally {
                 _loading.value = false
@@ -55,7 +52,6 @@ class WorkersViewModel(
         }
     }
 
-    // Filtrado por tienda
     fun filterByStore(storeId: Int?, toggleLoading: Boolean = true) {
         selectedStoreId = storeId
         viewModelScope.launch {
@@ -74,7 +70,6 @@ class WorkersViewModel(
         }
     }
 
-    // Registrar nuevo empleado
     fun registerWorker(
         request: RegisterWorkerRequest,
         onSuccess: () -> Unit,
@@ -83,7 +78,7 @@ class WorkersViewModel(
         viewModelScope.launch {
             val result = workerRepository.registerWorker(request)
             if (result.isSuccess) {
-                refreshAll() // recarga todo para mantener coherencia
+                refreshAll()
                 onSuccess()
             } else {
                 onError(result.exceptionOrNull()?.message ?: "Error registrando empleado")
@@ -91,7 +86,6 @@ class WorkersViewModel(
         }
     }
 
-    // Diálogo de asignación de tienda/turno
     fun openAssignScheduleDialog(worker: Worker) {
         _selectedWorkerContext.value = SelectedWorkerContext(
             worker,
@@ -116,7 +110,6 @@ class WorkersViewModel(
         val storeId = context.formState.storeId
         val scheduleId = context.formState.scheduleId
 
-        // Validación: solo una tienda a la vez
         if (worker.storeId != null && worker.storeId != storeId) {
             _assignError.value = "El empleado ya está asignado a otra tienda"
             return

@@ -29,14 +29,13 @@ data class RegisterUi(
     val password: String = "",
     val confirmPassword: String = "",
     val avatarPreview: Uri? = null,
-    val avatarKey: String? = null, // KEY upload to S3
+    val avatarKey: String? = null,
     val loading: Boolean = false,
     val uploading: Boolean = false,
     val error: String? = null,
     val successMsg: String? = null
 )
 
-// Estado simple de pantalla
 sealed interface RegisterState {
     object Idle : RegisterState
     object Success : RegisterState
@@ -119,7 +118,6 @@ class RegisterViewModel(
 
         viewModelScope.launch {
             try {
-                // 1) Registrar usuario
                 val request = RegisterRequest(
                     username = u.username.trim(),
                     email = u.email.trim(),
@@ -137,14 +135,12 @@ class RegisterViewModel(
                     throw IllegalStateException(msg)
                 }
 
-                // 2) Login para obtener isAdmin y menú
                 val loginResponse = userRepository.login(u.email, u.password)
                 val user = loginResponse.user
-                val isAdmin = loginResponse.isAdmin        // <-- toma isAdmin del top-level
-                val menu = loginResponse.menu              // <-- menú dinámico del backend
-                val storeId = 1                            // usa tu lógica real si corresponde
+                val isAdmin = loginResponse.isAdmin
+                val menu = loginResponse.menu
+                val storeId = 1
 
-                // 3) Guardar sesión (incluyendo el menú)
                 DependencyProvider.saveCurrentSession(
                     userId = user.id,
                     storeId = storeId,

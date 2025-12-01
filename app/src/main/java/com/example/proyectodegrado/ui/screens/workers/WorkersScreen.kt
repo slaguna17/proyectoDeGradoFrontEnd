@@ -26,12 +26,11 @@ fun WorkersScreen(
     val assignError by viewModel.assignError.collectAsStateWithLifecycle()
     val loading by viewModel.loading.collectAsStateWithLifecycle()
 
-    // Estados para editar/eliminar
+    // STATE
     var workerToEdit by remember { mutableStateOf<com.example.proyectodegrado.data.model.Worker?>(null) }
     var workerToDelete by remember { mutableStateOf<com.example.proyectodegrado.data.model.Worker?>(null) }
     var selectedStoreId by remember { mutableStateOf<Int?>(null) }
 
-    // Carga inicial (catálogos + lista)
     LaunchedEffect(Unit) { viewModel.refreshAll() }
 
     Scaffold(
@@ -80,7 +79,6 @@ fun WorkersScreen(
             }
         }
 
-        // --- Diálogos ---
         if (selectedWorkerContext != null) {
             AssignScheduleDialog(
                 stores = stores,

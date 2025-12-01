@@ -23,7 +23,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import com.example.proyectodegrado.data.model.ReservedCartItem // <--- IMPORTANTE: Usar ReservedCartItem
+import com.example.proyectodegrado.data.model.ReservedCartItem
 import com.example.proyectodegrado.data.model.ShoppingCart
 
 @Composable
@@ -42,7 +42,6 @@ fun WhatsappOrderItem(
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-            // Cabecera (Igual que antes)
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -70,13 +69,11 @@ fun WhatsappOrderItem(
                 }
             }
 
-            // Cuerpo expandible
             AnimatedVisibility(visible = expanded) {
                 Column {
                     Divider(modifier = Modifier.padding(vertical = 8.dp))
                     Text(text = "Productos Solicitados:", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(bottom = 8.dp))
 
-                    // Iteramos sobre ReservedCartItem
                     cart.items.forEach { item ->
                         WhatsappCartProductRow(
                             item = item, // item es ReservedCartItem
@@ -88,7 +85,6 @@ fun WhatsappOrderItem(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Botones
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         OutlinedButton(onClick = onDeleteClick, colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)) {
                             Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(18.dp))
@@ -109,7 +105,7 @@ fun WhatsappOrderItem(
 
 @Composable
 fun WhatsappCartProductRow(
-    item: ReservedCartItem, // <--- CAMBIO IMPORTANTE AQUÍ
+    item: ReservedCartItem,
     onIncrease: () -> Unit,
     onDecrease: () -> Unit
 ) {
@@ -120,7 +116,6 @@ fun WhatsappCartProductRow(
             .padding(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Imagen
         if (!item.imageUrl.isNullOrBlank()) {
             AsyncImage(
                 model = item.imageUrl,
@@ -136,7 +131,6 @@ fun WhatsappCartProductRow(
 
         Spacer(modifier = Modifier.width(12.dp))
 
-        // Info
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = item.productName ?: "Producto ID ${item.productId}",
@@ -151,7 +145,6 @@ fun WhatsappCartProductRow(
             )
         }
 
-        // Controles
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onDecrease, modifier = Modifier.size(32.dp)) {
                 Icon(Icons.Default.Remove, contentDescription = "Menos", modifier = Modifier.size(16.dp))

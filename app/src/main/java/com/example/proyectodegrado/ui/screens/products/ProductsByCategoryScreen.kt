@@ -75,10 +75,9 @@ fun ProductsByCategoryScreen(
     val refreshProducts: () -> Unit = {
         isRefreshing = true
         errorMessage = null
-        // --- MODIFICA ESTA LLAMADA ---
         viewModel.fetchProductsByCategory(
             categoryId = categoryId,
-            storeId = selectedStoreId, // <-- PASA EL ID DE LA TIENDA SELECCIONADA
+            storeId = selectedStoreId,
             onSuccess = {
                 isRefreshing = false
                 isLoadingFirstTime = false
@@ -91,7 +90,6 @@ fun ProductsByCategoryScreen(
         )
     }
 
-    // Cargar tiendas (si no están) y usar la de preferencias como preselección
     LaunchedEffect(Unit) {
         viewModel.fetchStores(onError = { msg -> errorMessage = msg })
     }
@@ -101,7 +99,6 @@ fun ProductsByCategoryScreen(
         }
     }
 
-    // Cargar productos cuando cambia categoría o tienda
     LaunchedEffect(categoryId, selectedStoreId) {
         refreshProducts()
     }

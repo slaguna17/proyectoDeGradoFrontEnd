@@ -1,4 +1,3 @@
-// src/ui/screens/store/StoreViewModel.kt
 package com.example.proyectodegrado.ui.screens.store
 
 import android.net.Uri
@@ -7,12 +6,11 @@ import androidx.lifecycle.viewModelScope
 import com.example.proyectodegrado.data.model.Store
 import com.example.proyectodegrado.data.model.StoreRequest
 import com.example.proyectodegrado.data.repository.ImageRepository
-import com.example.proyectodegrado.data.model.ImageUploadResult // ✨ Importar el modelo correcto
+import com.example.proyectodegrado.data.model.ImageUploadResult
 import com.example.proyectodegrado.data.repository.StoreRepository
 import com.example.proyectodegrado.ui.components.UploadImageState
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import java.io.IOException
 
 data class StoreFormState(
     val name: String = "",
@@ -75,7 +73,6 @@ class StoreViewModel(
     fun createStore(onSuccess: () -> Unit, onError: (String) -> Unit) {
         viewModelScope.launch {
             val form = _formState.value
-            // 1. Crear la tienda sin logo para obtener su ID.
             val initialRequest = StoreRequest(form.name, form.address, form.city, form.history, form.phone)
             val response = try {
                 storeRepository.createStore(initialRequest)
@@ -88,15 +85,12 @@ class StoreViewModel(
             }
             val newStore = response.body()!!
 
-            // 2. Si el usuario seleccionó una imagen, subirla ahora.
             val uri = form.localLogoUri
             if (uri != null) {
                 _imageUploadUiState.value = UploadImageState.Uploading
-                // ✨ CAMBIO: Usar el método unificado 'uploadImage'.
                 val uploadResult = imageRepository.uploadImage(uri, "stores", newStore.id, "logo")
 
                 if (uploadResult is ImageUploadResult.Success) {
-                    // 3. Actualizar la tienda recién creada con la clave del logo.
                     val finalRequest = initialRequest.copy(logo = uploadResult.imageKey)
                     storeRepository.updateStore(newStore.id, finalRequest)
                 } else if (uploadResult is ImageUploadResult.Error) {
@@ -114,12 +108,9 @@ class StoreViewModel(
         viewModelScope.launch {
             val form = _formState.value
             var finalLogoKey: String? = form.existingLogoKey
-
-            // 1. Si se eligió una nueva imagen, subirla primero.
             val uri = form.localLogoUri
             if (uri != null) {
                 _imageUploadUiState.value = UploadImageState.Uploading
-                // ✨ CAMBIO: Usar el método unificado 'uploadImage'.
                 val uploadResult = imageRepository.uploadImage(uri, "stores", id, "logo")
 
                 if (uploadResult is ImageUploadResult.Success) {
@@ -130,7 +121,6 @@ class StoreViewModel(
                 }
             }
 
-            // 2. Actualizar la tienda con los datos del formulario y la clave del logo.
             val request = StoreRequest(form.name, form.address, form.city, form.history, form.phone, logo = finalLogoKey)
             try {
                 storeRepository.updateStore(id, request)

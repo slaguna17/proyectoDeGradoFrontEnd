@@ -118,7 +118,6 @@ fun ProfileScreen(viewModel: ProfileViewModel) {
 
                 Spacer(Modifier.height(20.dp))
 
-                // ---------- Campos ----------
                 OutlinedTextField(
                     value = ui.fullName,
                     onValueChange = viewModel::onFullNameChange,
@@ -146,7 +145,6 @@ fun ProfileScreen(viewModel: ProfileViewModel) {
 
                 Spacer(Modifier.height(22.dp))
 
-                // ---------- Guardar ----------
                 Button(
                     onClick = { viewModel.save() },
                     enabled = ui.hasChanges && !ui.loading,

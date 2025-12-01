@@ -32,15 +32,12 @@ class ScheduleViewModel(private val repository: ScheduleRepository) : ViewModel(
         }
     }
 
-    // --- INICIO DE LA CORRECCIÓN ---
-
     fun createSchedule(request: ScheduleRequest, onSuccess: () -> Unit, onError: (String) -> Unit) {
         viewModelScope.launch {
             try {
                 val response = repository.createSchedule(request)
                 if (response.isSuccessful) {
-                    onSuccess() // Notifica a la UI inmediatamente.
-                    // Refresca la lista en segundo plano.
+                    onSuccess()
                     fetchSchedules(onSuccess = {}, onError = {})
                 } else {
                     onError("Falló la creación: ${response.errorBody()?.string()}")
@@ -56,8 +53,7 @@ class ScheduleViewModel(private val repository: ScheduleRepository) : ViewModel(
             try {
                 val response = repository.updateSchedule(id, request)
                 if (response.isSuccessful) {
-                    onSuccess() // Notifica a la UI inmediatamente.
-                    // Refresca la lista en segundo plano.
+                    onSuccess()
                     fetchSchedules(onSuccess = {}, onError = {})
                 } else {
                     onError("Falló la actualización: ${response.errorBody()?.string()}")
@@ -73,8 +69,7 @@ class ScheduleViewModel(private val repository: ScheduleRepository) : ViewModel(
             try {
                 val response = repository.deleteSchedule(id)
                 if (response.isSuccessful) {
-                    onSuccess() // Notifica a la UI inmediatamente.
-                    // Refresca la lista en segundo plano.
+                    onSuccess()
                     fetchSchedules(onSuccess = {}, onError = {})
                 } else {
                     onError("Falló la eliminación: ${response.errorBody()?.string()}")
@@ -84,5 +79,4 @@ class ScheduleViewModel(private val repository: ScheduleRepository) : ViewModel(
             }
         }
     }
-    // --- FIN DE LA CORRECCIÓN ---
 }

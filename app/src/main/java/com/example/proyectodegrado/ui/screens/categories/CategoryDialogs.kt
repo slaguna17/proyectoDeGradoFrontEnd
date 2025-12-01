@@ -2,8 +2,6 @@ package com.example.proyectodegrado.ui.screens.categories
 
 import android.net.Uri
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -47,7 +45,6 @@ private fun CategoryDialogContent(
             )
             Spacer(Modifier.height(16.dp))
 
-            // El logo a mostrar es la nueva imagen seleccionada, o la que ya existía
             val imageUrl = formState.localImageUri?.toString() ?: formState.imageUrl
             UploadImage(
                 modifier = Modifier.align(Alignment.CenterHorizontally),
@@ -68,7 +65,7 @@ private fun CategoryDialogContent(
     }
 }
 
-// ---------- Crear ----------
+// ---------- Create ----------
 @Composable
 fun CreateCategoryDialog(
     show: Boolean,
@@ -96,7 +93,7 @@ fun CreateCategoryDialog(
     }
 }
 
-// ---------- Editar ----------
+// ---------- Edit ----------
 @Composable
 fun EditCategoryDialog(
     show: Boolean,
@@ -124,7 +121,7 @@ fun EditCategoryDialog(
     }
 }
 
-// ---------- Eliminar ----------
+// ---------- Delete ----------
 @Composable
 fun DeleteCategoryDialog(
     show: Boolean,

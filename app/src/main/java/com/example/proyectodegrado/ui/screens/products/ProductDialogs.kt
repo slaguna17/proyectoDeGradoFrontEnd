@@ -241,7 +241,7 @@ fun AssignProductDialog(
     show: Boolean,
     onDismiss: () -> Unit,
     productName: String,
-    availableStores: List<StoreOption>, // Usaremos la misma clase de datos del filtro
+    availableStores: List<StoreOption>,
     onAssign: (storeId: Int, stock: String) -> Unit
 ) {
     if (!show) return
@@ -270,7 +270,6 @@ fun AssignProductDialog(
                 )
                 Spacer(Modifier.height(24.dp))
 
-                // Dropdown para seleccionar la tienda
                 ExposedDropdownMenuBox(
                     expanded = isDropdownExpanded,
                     onExpandedChange = { isDropdownExpanded = it }
@@ -301,7 +300,6 @@ fun AssignProductDialog(
                 }
                 Spacer(Modifier.height(16.dp))
 
-                // Campo para el stock
                 OutlinedTextField(
                     value = stock,
                     onValueChange = { stock = it },
@@ -311,7 +309,6 @@ fun AssignProductDialog(
                 )
                 Spacer(Modifier.height(24.dp))
 
-                // Botones de acción
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End

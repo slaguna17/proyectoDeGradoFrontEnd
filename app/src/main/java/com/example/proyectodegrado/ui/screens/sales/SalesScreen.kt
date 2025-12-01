@@ -41,7 +41,6 @@ fun SalesScreen(
     }
 
     Column(Modifier.fillMaxSize()) {
-        // Sección del Carrito y Total
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -71,7 +70,6 @@ fun SalesScreen(
 
         Divider(modifier = Modifier.padding(vertical = 8.dp))
 
-        // Sección de productos
         ProductSelectionSection(
             products = state.filteredProducts,
             searchQuery = state.searchQuery,
@@ -79,7 +77,6 @@ fun SalesScreen(
             onProductClick = { viewModel.addProductToCart(it) }
         )
 
-        // Sección de Pago
         CheckoutSection(
             total = total,
             notes = state.notes,
@@ -99,7 +96,7 @@ fun ProductSelectionSection(
 ) {
     Column(modifier = Modifier
         .fillMaxWidth()
-        .height(250.dp) // Altura fija para la lista de productos
+        .height(250.dp)
         .padding(16.dp)
     ) {
         OutlinedTextField(

@@ -49,13 +49,11 @@ class WhatsappSalesViewModel(
         val cartIndex = currentCarts.indexOfFirst { it.id == cartId }
         if (cartIndex == -1) return
 
-        // 1. Actualización optimista local
         val cart = currentCarts[cartIndex]
         val updatedItems = cart.items.map { item ->
             if (item.productId == productId) item.copy(quantity = newQuantity) else item
         }
 
-        // Recalcular total localmente
         val newTotal = updatedItems.sumOf { it.quantity * it.unitPrice }
         val updatedCart = cart.copy(items = updatedItems, totalEstimated = newTotal)
 
@@ -64,9 +62,7 @@ class WhatsappSalesViewModel(
 
         _uiState.update { it.copy(carts = updatedList) }
 
-        // 2. Enviar al backend (Debounce idealmente, directo para este caso)
         viewModelScope.launch {
-            // Si la respuesta falla, deberíamos revertir (omitido por brevedad, pero recomendable)
             repository.updateCart(cartId, updatedItems)
         }
     }
@@ -74,7 +70,6 @@ class WhatsappSalesViewModel(
     fun finalizeSale(cartId: Int, userId: Int, storeId: Int) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
-            // Asumimos pago en efectivo por defecto para ventas rápidas de WhatsApp
             when (val result = repository.finalizeCart(cartId, userId, "CASH")) {
                 is ApiResult.Success -> {
                     _uiState.update {
@@ -83,7 +78,6 @@ class WhatsappSalesViewModel(
                             successMessage = "Venta registrada con éxito"
                         )
                     }
-                    // Recargar la lista
                     loadCarts(storeId)
                 }
                 is ApiResult.Error -> {

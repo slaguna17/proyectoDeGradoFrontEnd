@@ -17,7 +17,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.collections.plus
 
-
 data class PurchasesUiState(
     val allProducts: List<Product> = emptyList(),
     val filteredProducts: List<Product> = emptyList(),

@@ -9,7 +9,7 @@ import androidx.compose.material.Surface
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.PhotoCamera // Importar el ícono
+import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -46,7 +46,6 @@ fun StoreItem(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(180.dp)
-                    // --- INICIO: LÓGICA DEL PLACEHOLDER ---
                     .background(MaterialTheme.colorScheme.secondaryContainer) // Color de fondo
             ) {
                 if (!store.logo.isNullOrBlank()) {
@@ -57,7 +56,6 @@ fun StoreItem(
                         modifier = Modifier.fillMaxSize()
                     )
                 } else {
-                    // Si no hay imagen, mostramos el ícono
                     Icon(
                         imageVector = Icons.Default.PhotoCamera,
                         contentDescription = "Sin imagen",
@@ -68,7 +66,6 @@ fun StoreItem(
                     )
                 }
 
-                // Badge de ciudad arriba a la derecha
                 if (store.city.isNotBlank()) {
                     Surface(
                         modifier = Modifier

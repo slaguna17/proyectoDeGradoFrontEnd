@@ -73,16 +73,14 @@ class SalesViewModel(
         _uiState.update { currentState ->
             val existingItem = currentState.cartItems.find { it.productId == product.id }
             val newCartItems = if (existingItem != null) {
-                // Si ya existe, incrementamos la cantidad
                 currentState.cartItems.map {
                     if (it.productId == product.id) it.copy(quantity = it.quantity + 1) else it
                 }
             } else {
-                // Si no existe, lo añadimos al carrito
                 currentState.cartItems + CartItem(
                     productId = product.id,
                     name = product.name,
-                    unitPrice = product.salePrice, // Asumiendo que el producto tiene un precio base
+                    unitPrice = product.salePrice,
                     quantity = 1
                 )
             }
@@ -145,8 +143,6 @@ class SalesViewModel(
                 }
             )
 
-            // --- CORRECCIÓN AQUÍ ---
-            // Manejamos el ApiResult que ahora devuelve SalesRepository
             when (val result = salesRepository.createSale(saleRequest)) {
                 is ApiResult.Success -> {
                     _uiState.update { it.copy(isRegistering = false, saleSuccess = true) }

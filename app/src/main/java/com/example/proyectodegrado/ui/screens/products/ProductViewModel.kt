@@ -89,7 +89,6 @@ class ProductViewModel(
         onError: (String) -> Unit = {}
     ) {
         viewModelScope.launch {
-            // --- CORRECCIÓN AQUÍ ---
             val result = if (storeId != null) {
                 productRepository.getProductsByCategoryAndStore(categoryId, storeId)
             } else {
@@ -249,7 +248,6 @@ class ProductViewModel(
 
     fun removeProductFromStore(productId: Int, storeId: Int, onSuccess: () -> Unit, onError: (String) -> Unit) {
         viewModelScope.launch {
-            // --- CORRECCIÓN AQUÍ ---
             when (val result = productRepository.removeProductFromStore(productId, storeId)) {
                 is ApiResult.Success -> onSuccess()
                 is ApiResult.Error -> onError("Error al quitar el producto: ${result.message}")

@@ -42,7 +42,6 @@ private fun StoreDialogContent(
         Text(title, style = MaterialTheme.typography.titleLarge)
         Spacer(Modifier.height(16.dp))
 
-        // Selector de imagen (S3)
         UploadImage(
             modifier = Modifier.align(Alignment.CenterHorizontally),
             currentImageUrl = if (logo.isBlank()) null else logo,
@@ -100,7 +99,7 @@ private fun StoreDialogContent(
     }
 }
 
-// --- CREAR ---
+// --- CREATE ---
 @Composable
 fun CreateStoreDialog(
     show: Boolean,
@@ -139,7 +138,7 @@ fun CreateStoreDialog(
     }
 }
 
-// --- EDITAR ---
+// --- EDIT ---
 @Composable
 fun EditStoreDialog(
     show: Boolean,
@@ -178,7 +177,7 @@ fun EditStoreDialog(
     }
 }
 
-// --- ELIMINAR ---
+// --- DELETE ---
 @Composable
 fun DeleteStoreDialog(
     show: Boolean,

@@ -28,7 +28,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
@@ -38,7 +37,6 @@ import com.example.proyectodegrado.ui.components.ScheduleDropdown
 import com.example.proyectodegrado.ui.components.StoreDropdown
 import com.example.proyectodegrado.ui.screens.register.RoleDropdown
 import com.example.proyectodegrado.ui.screens.register.RegisterViewModel
-import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -203,7 +201,7 @@ fun CreateWorkerScreen(
         )
         Spacer(Modifier.height(10.dp))
 
-        // Errores
+        // Errors
         (ui.error ?: errorMessage)?.let {
             Text(it, color = MaterialTheme.colorScheme.error)
             Spacer(Modifier.height(8.dp))

@@ -30,7 +30,6 @@ fun StoreScreen(
     navController: NavController,
     viewModel: StoreViewModel
 ) {
-    // Estado proveniente del VM
     val stores by viewModel.stores.collectAsStateWithLifecycle()
     val form by viewModel.formState.collectAsStateWithLifecycle()
     val imageUploadState by viewModel.imageUploadUiState.collectAsStateWithLifecycle()
@@ -200,9 +199,7 @@ fun StoreScreen(
                     id = storeToDelete!!.id,
                     onSuccess = {
                         showDeleteDialog = false
-                        // No es necesario llamar a refreshStores aquí, el VM ya lo hace.
                     },
-                    // ✨ FIX 5: Usamos showSnackbar para reportar el error.
                     onError = { err -> showSnackbar(err) }
                 )
             }

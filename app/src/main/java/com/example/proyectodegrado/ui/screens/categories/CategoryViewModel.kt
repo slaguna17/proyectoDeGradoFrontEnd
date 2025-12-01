@@ -18,7 +18,6 @@ class CategoryViewModel(
     private val _categories = MutableStateFlow<List<Category>>(emptyList())
     val categories: StateFlow<List<Category>> = _categories.asStateFlow()
 
-    // 🔹 Nuevo: estado de carga para el pull-to-refresh
     private val _loading = MutableStateFlow(false)
     val loading: StateFlow<Boolean> = _loading.asStateFlow()
 
@@ -42,7 +41,7 @@ class CategoryViewModel(
         }
     }
 
-    // --- Ayudantes del formulario ---
+    // --- Helpers ---
     fun onNameChange(name: String) = _formState.update { it.copy(name = name) }
     fun onDescriptionChange(desc: String) = _formState.update { it.copy(description = desc) }
     fun onImageSelected(uri: Uri?) = _formState.update { it.copy(localImageUri = uri) }
@@ -61,7 +60,6 @@ class CategoryViewModel(
         )
     }
 
-    // --- Lógica Principal ---
     fun createCategory(onSuccess: () -> Unit, onError: (String) -> Unit) {
         viewModelScope.launch {
             val form = _formState.value

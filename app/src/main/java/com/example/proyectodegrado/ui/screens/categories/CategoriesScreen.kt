@@ -14,7 +14,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.example.proyectodegrado.data.model.Category
-import com.example.proyectodegrado.data.model.CategoryRequest
 import com.example.proyectodegrado.ui.components.RefreshableContainer
 import kotlinx.coroutines.launch
 
@@ -95,7 +94,7 @@ fun CategoriesScreen(
         }
     }
 
-    // ---------- Crear ----------
+    // ---------- Create ----------
     if (showCreate) {
         CreateCategoryDialog(
             show = true,
@@ -114,7 +113,7 @@ fun CategoriesScreen(
         )
     }
 
-    // ---------- Editar ----------
+    // ---------- Edit ----------
     if (showEdit && categoryToInteract != null) {
         EditCategoryDialog(
             show = true,
@@ -134,7 +133,7 @@ fun CategoriesScreen(
         )
     }
 
-    // ---------- Eliminar ----------
+    // ---------- Delete ----------
     if (showDelete && categoryToInteract != null) {
         DeleteCategoryDialog(
             show = true,
