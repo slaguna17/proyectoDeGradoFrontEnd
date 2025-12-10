@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
@@ -34,18 +35,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import com.example.proyectodegrado.R
 import com.example.proyectodegrado.data.model.MenuItemDTO
-
-data class MenuItem(
-    val label: String,
-    val route: String,
-    val icon: ImageVector,
-    val isAdminOnly: Boolean = false
-)
 
 @Composable
 fun DrawerContent(
@@ -54,20 +46,6 @@ fun DrawerContent(
     isAdmin: Boolean,
     menu: List<MenuItemDTO>
 ) {
-    val mainMenuItems = listOf(
-        MenuItem("Inicio", "home", ImageVector.vectorResource(id = R.drawable.home)),
-        MenuItem("Productos", "products", ImageVector.vectorResource(id = R.drawable.products)),
-        MenuItem("Caja", "cash", ImageVector.vectorResource(id = R.drawable.wallet)),
-        MenuItem("Tienda", "store", ImageVector.vectorResource(id = R.drawable.store)),
-        MenuItem("Empleados", "workers", ImageVector.vectorResource(id = R.drawable.group), isAdminOnly = true),
-        MenuItem("Roles", "role", ImageVector.vectorResource(id = R.drawable.assignmentsvg), isAdminOnly = true),
-        MenuItem("Horarios", "schedule", ImageVector.vectorResource(id = R.drawable.schedule), isAdminOnly = true),
-        MenuItem("Categorías", "categories", ImageVector.vectorResource(id = R.drawable.category), isAdminOnly = true),
-        MenuItem("Proveedores", "providers", ImageVector.vectorResource(id = R.drawable.truck), isAdminOnly = true)
-    )
-
-    val visibleMenuItems = mainMenuItems.filter { !it.isAdminOnly || isAdmin }
-
     ModalDrawerSheet {
         Column(
             modifier = Modifier
@@ -85,42 +63,46 @@ fun DrawerContent(
                     text = "TuKiosco",
                     style = MaterialTheme.typography.titleLarge
                 )
-                if (!avatarUrl.isNullOrBlank()) {
-                    AsyncImage(
-                        model = avatarUrl,
-                        contentDescription = "Avatar",
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(CircleShape),
-                        contentScale = ContentScale.Crop
-                    )
-                } else {
-                    Icon(
-                        imageVector = Icons.Filled.AccountCircle,
-                        contentDescription = "Avatar",
-                        modifier = Modifier.size(40.dp)
-                    )
+                IconButton(onClick = { onItemSelected("profile") }) {
+                    if (!avatarUrl.isNullOrBlank()) {
+                        AsyncImage(
+                            model = avatarUrl,
+                            contentDescription = "Avatar",
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Filled.AccountCircle,
+                            contentDescription = "Avatar",
+                            modifier = Modifier.size(40.dp)
+                        )
+                    }
                 }
             }
-
             HorizontalDivider()
 
             LazyColumn(
                 modifier = Modifier.weight(1f)
             ) {
-                items(visibleMenuItems, key = { item -> "local_${item.route}" }) { item ->
-                    DrawerItem(
-                        label = item.label,
-                        icon = item.icon,
-                        onClick = { onItemSelected(item.route) }
-                    )
-                }
-                items(menu, key = { dto -> "remote_${dto.id}" }) { item ->
-                    DrawerItem(
-                        label = item.label,
-                        icon = item.icon.asVector(),
-                        onClick = { onItemSelected(item.id) }
-                    )
+                if (menu.isEmpty()) {
+                    item {
+                        Text(
+                            text = "Cargando menú...",
+                            modifier = Modifier
+                                .padding(16.dp)
+                        )
+                    }
+                } else {
+                    items(menu, key = { dto -> "remote_${dto.id}" }) { item ->
+                        DrawerItem(
+                            label = item.label,
+                            icon = item.icon.asVector(),
+                            onClick = { onItemSelected(item.id) }
+                        )
+                    }
                 }
             }
 
@@ -149,18 +131,18 @@ fun DrawerItem(label: String, icon: ImageVector, onClick: () -> Unit) {
 }
 
 private fun String.asVector(): ImageVector = when (this) {
-    "Home" -> Icons.Default.Home
-    "Package" -> Icons.Default.Inventory
-    "Tag" -> Icons.Default.Label
-    "Users" -> Icons.Default.Group
-    "Calendar" -> Icons.Default.CalendarMonth
-    "ShoppingCart" -> Icons.Default.ShoppingCart
-    "Truck" -> Icons.Default.LocalShipping
-    "Wallet" -> Icons.Default.AccountBalanceWallet
-    "Building" -> Icons.Default.Apartment
-    "Handshake" -> Icons.Default.Handshake
-    "BarChart" -> Icons.Default.BarChart
-    "Settings" -> Icons.Default.Settings
-    "Whatsapp" -> Icons.Default.Chat
-    else -> Icons.Default.Menu
+    "Home"          -> Icons.Default.Home
+    "Package"       -> Icons.Default.Inventory
+    "Tag"           -> Icons.Default.Label
+    "Users"         -> Icons.Default.Group
+    "Calendar"      -> Icons.Default.CalendarMonth
+    "ShoppingCart"  -> Icons.Default.ShoppingCart
+    "Truck"         -> Icons.Default.LocalShipping
+    "Wallet"        -> Icons.Default.AccountBalanceWallet
+    "Building"      -> Icons.Default.Apartment
+    "Handshake"     -> Icons.Default.Handshake
+    "BarChart"      -> Icons.Default.BarChart
+    "Settings"      -> Icons.Default.Settings
+    "Whatsapp"      -> Icons.Default.Chat
+    else            -> Icons.Default.Menu
 }

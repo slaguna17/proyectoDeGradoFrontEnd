@@ -86,7 +86,6 @@ fun AppNavigation() {
     val scope = rememberCoroutineScope()
 
     var currentTitle by rememberSaveable { mutableStateOf("Inicio") }
-    var currentStoreName by rememberSaveable { mutableStateOf(appPrefs.getStoreName()) }
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -97,16 +96,15 @@ fun AppNavigation() {
         "stores" to "store"
     )
 
-    LaunchedEffect(Unit) {
-        navController.currentBackStackEntryFlow.collect { backStackEntry ->
-            currentTitle = determineTitle(backStackEntry.destination.route)
-            currentStoreName = appPrefs.getStoreName()
-        }
-    }
-
     LaunchedEffect(currentRoute) {
         if (currentRoute == "login" || currentRoute == "register") {
             drawerState.close()
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        navController.currentBackStackEntryFlow.collect { backStackEntry ->
+            currentTitle = determineTitle(backStackEntry.destination.route)
         }
     }
 
@@ -171,15 +169,17 @@ fun AppNavigation() {
                 if (shouldShowTopBar(currentRoute2)) {
                     TopAppBar(
                         title = {
+                            val storeName = appPrefs.getStoreName()
+
                             Column {
                                 Text(
                                     text = currentTitle,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )
-                                if (!currentStoreName.isNullOrBlank()) {
+                                if (!storeName.isNullOrBlank()) {
                                     Text(
-                                        text = currentStoreName!!,
+                                        text = storeName,
                                         style = MaterialTheme.typography.labelMedium,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
