@@ -63,6 +63,7 @@ fun DrawerContent(
                     text = "TuKiosco",
                     style = MaterialTheme.typography.titleLarge
                 )
+
                 IconButton(onClick = { onItemSelected("profile") }) {
                     if (!avatarUrl.isNullOrBlank()) {
                         AsyncImage(
@@ -84,19 +85,39 @@ fun DrawerContent(
             }
             HorizontalDivider()
 
+            val desiredOrder = listOf(
+                "home",
+                "products",
+                "categories",
+                "stores",
+                "employees",
+                "cash",
+                "sales",
+                "purchases",
+                "whatsapp_sales",
+                "providers",
+                "schedules"
+            )
+
+            val sortedMenu = menu.sortedWith(
+                compareBy { item ->
+                    val idx = desiredOrder.indexOf(item.id)
+                    if (idx == -1) Int.MAX_VALUE else idx
+                }
+            )
+
             LazyColumn(
                 modifier = Modifier.weight(1f)
             ) {
-                if (menu.isEmpty()) {
+                if (sortedMenu.isEmpty()) {
                     item {
                         Text(
                             text = "Cargando menú...",
-                            modifier = Modifier
-                                .padding(16.dp)
+                            modifier = Modifier.padding(16.dp)
                         )
                     }
                 } else {
-                    items(menu, key = { dto -> "remote_${dto.id}" }) { item ->
+                    items(sortedMenu, key = { dto -> "remote_${dto.id}" }) { item ->
                         DrawerItem(
                             label = item.label,
                             icon = item.icon.asVector(),
@@ -105,9 +126,9 @@ fun DrawerContent(
                     }
                 }
             }
-
             HorizontalDivider()
             Spacer(modifier = Modifier.height(8.dp))
+
             DrawerItem(
                 label = "Cerrar sesión",
                 icon = Icons.Default.Logout
@@ -117,6 +138,7 @@ fun DrawerContent(
         }
     }
 }
+
 
 @Composable
 fun DrawerItem(label: String, icon: ImageVector, onClick: () -> Unit) {
