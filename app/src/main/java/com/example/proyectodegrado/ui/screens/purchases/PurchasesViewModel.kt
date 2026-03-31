@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlin.collections.plus
 
 data class PurchasesUiState(
     val allProducts: List<Product> = emptyList(),
@@ -26,13 +25,14 @@ data class PurchasesUiState(
     val notes: String = "",
     val isRegistering: Boolean = false,
     val purchaseSuccess: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val draftQuantities: Map<Int, String> = emptyMap()
 )
 
-class PurchasesViewModel (
+class PurchasesViewModel(
     private val purchasesRepository: PurchasesRepository,
     private val productRepository: ProductRepository
-) : ViewModel(){
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PurchasesUiState())
     val uiState: StateFlow<PurchasesUiState> = _uiState.asStateFlow()
@@ -47,9 +47,13 @@ class PurchasesViewModel (
                 is ApiResult.Success -> {
                     val products = result.data
                     _uiState.update {
-                        it.copy(allProducts = products, filteredProducts = products)
+                        it.copy(
+                            allProducts = products,
+                            filteredProducts = products
+                        )
                     }
                 }
+
                 is ApiResult.Error -> {
                     _uiState.update {
                         it.copy(errorMessage = "Error al cargar productos: ${result.message}")
@@ -69,26 +73,129 @@ class PurchasesViewModel (
                             it.sku?.contains(query, ignoreCase = true) == true
                 }
             }
-            currentState.copy(searchQuery = query, filteredProducts = filtered)
+
+            currentState.copy(
+                searchQuery = query,
+                filteredProducts = filtered
+            )
         }
     }
 
-    fun addProductToCart(product: Product) {
+    fun onDraftQuantityChanged(productId: Int, value: String) {
+        val filteredValue = value.filter { it.isDigit() }
+
         _uiState.update { currentState ->
-            val existingItem = currentState.cartItems.find { it.productId == product.id }
-            val newCartItems = if (existingItem != null) {
-                currentState.cartItems.map {
-                    if (it.productId == product.id) it.copy(quantity = it.quantity + 1) else it
+            currentState.copy(
+                draftQuantities = currentState.draftQuantities.toMutableMap().apply {
+                    this[productId] = filteredValue
+                }
+            )
+        }
+    }
+
+    fun increaseDraftQuantity(productId: Int) {
+        val currentState = _uiState.value
+        val currentDraft = currentState.draftQuantities[productId].orEmpty().toIntOrNull() ?: 0
+        val newDraft = currentDraft + 1
+
+        _uiState.update { state ->
+            state.copy(
+                draftQuantities = state.draftQuantities.toMutableMap().apply {
+                    this[productId] = newDraft.toString()
+                }
+            )
+        }
+    }
+
+    fun decreaseDraftQuantity(productId: Int) {
+        val currentState = _uiState.value
+        val currentDraft = currentState.draftQuantities[productId].orEmpty().toIntOrNull() ?: 0
+        val newDraft = (currentDraft - 1).coerceAtLeast(0)
+
+        _uiState.update { state ->
+            state.copy(
+                draftQuantities = state.draftQuantities.toMutableMap().apply {
+                    this[productId] = if (newDraft == 0) "" else newDraft.toString()
+                }
+            )
+        }
+    }
+
+    fun addProductToCartWithDraftQuantity(product: Product) {
+        val currentState = _uiState.value
+        val typedQuantity = currentState.draftQuantities[product.id].orEmpty()
+        val quantityToAdd = typedQuantity.toIntOrNull()
+
+        if (quantityToAdd == null || quantityToAdd <= 0) {
+            _uiState.update {
+                it.copy(errorMessage = "Ingresa una cantidad válida para agregar el producto.")
+            }
+            return
+        }
+
+        _uiState.update { state ->
+            val existingItem = state.cartItems.find { it.productId == product.id }
+
+            val updatedCartItems = if (existingItem != null) {
+                state.cartItems.map {
+                    if (it.productId == product.id) {
+                        it.copy(quantity = it.quantity + quantityToAdd)
+                    } else {
+                        it
+                    }
                 }
             } else {
-                currentState.cartItems + CartItem(
+                state.cartItems + CartItem(
                     productId = product.id,
                     name = product.name,
                     unitPrice = product.purchasePrice,
-                    quantity = 1
+                    quantity = quantityToAdd
                 )
             }
-            currentState.copy(cartItems = newCartItems)
+
+            val updatedDrafts = state.draftQuantities.toMutableMap().apply {
+                this[product.id] = ""
+            }
+
+            state.copy(
+                cartItems = updatedCartItems,
+                draftQuantities = updatedDrafts
+            )
+        }
+    }
+
+    fun increaseCartItemQuantity(productId: Int) {
+        _uiState.update { currentState ->
+            val updated = currentState.cartItems.map {
+                if (it.productId == productId) {
+                    it.copy(quantity = it.quantity + 1)
+                } else {
+                    it
+                }
+            }
+
+            currentState.copy(cartItems = updated)
+        }
+    }
+
+    fun decreaseCartItemQuantity(productId: Int) {
+        val currentItem = _uiState.value.cartItems.find { it.productId == productId } ?: return
+
+        if (currentItem.quantity <= 1) {
+            removeCartItem(productId)
+            return
+        }
+
+        _uiState.update { currentState ->
+            val updated = currentState.cartItems.map {
+                if (it.productId == productId) {
+                    it.copy(quantity = it.quantity - 1)
+                } else {
+                    it
+                }
+            }
+
+            currentState.copy(cartItems = updated)
         }
     }
 
@@ -97,10 +204,16 @@ class PurchasesViewModel (
             removeCartItem(productId)
             return
         }
+
         _uiState.update { currentState ->
             val newCartItems = currentState.cartItems.map {
-                if (it.productId == productId) it.copy(quantity = newQuantity) else it
+                if (it.productId == productId) {
+                    it.copy(quantity = newQuantity)
+                } else {
+                    it
+                }
             }
+
             currentState.copy(cartItems = newCartItems)
         }
     }
@@ -127,7 +240,8 @@ class PurchasesViewModel (
                 cartItems = emptyList(),
                 purchaseSuccess = false,
                 errorMessage = null,
-                notes = ""
+                notes = "",
+                draftQuantities = emptyMap()
             )
         }
     }
@@ -138,6 +252,7 @@ class PurchasesViewModel (
 
     fun registerPurchase() {
         val currentState = _uiState.value
+
         if (currentState.cartItems.isEmpty()) {
             _uiState.update { it.copy(errorMessage = "El carrito está vacío") }
             return
@@ -159,12 +274,17 @@ class PurchasesViewModel (
                     )
                 }
             )
+
             when (val result = purchasesRepository.createPurchase(purchaseRequest)) {
                 is ApiResult.Success -> {
                     _uiState.update {
-                        it.copy(isRegistering = false, purchaseSuccess = true)
+                        it.copy(
+                            isRegistering = false,
+                            purchaseSuccess = true
+                        )
                     }
                 }
+
                 is ApiResult.Error -> {
                     val friendly = mapRegisterPurchaseError(result.message)
                     _uiState.update {
@@ -179,13 +299,15 @@ class PurchasesViewModel (
     }
 
     private fun mapRegisterPurchaseError(serverMessage: String?): String {
-        if (serverMessage?.contains(
+        if (
+            serverMessage?.contains(
                 "There is not an opened cashbox session",
                 ignoreCase = true
             ) == true
         ) {
             return "No hay una caja abierta. Debes abrir una caja para registrar la compra."
         }
+
         return serverMessage ?: "Ocurrió un error al registrar la compra."
     }
 }

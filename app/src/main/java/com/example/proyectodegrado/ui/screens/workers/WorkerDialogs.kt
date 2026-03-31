@@ -26,27 +26,42 @@ fun AssignScheduleDialog(
         Surface(shape = MaterialTheme.shapes.medium) {
             Column(Modifier.padding(20.dp)) {
                 Text("Asignar tienda y turno", style = MaterialTheme.typography.titleLarge)
+
+                Spacer(Modifier.height(8.dp))
+
+                Text(
+                    text = "Si el empleado ya tenía una asignación previa, será reemplazada por la nueva.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
                 Spacer(Modifier.height(12.dp))
+
                 StoreDropdown(
                     stores = stores,
                     selectedStoreId = formState.storeId,
                     onStoreSelected = { onFormStateChange(formState.copy(storeId = it)) }
                 )
+
                 Spacer(Modifier.height(8.dp))
+
                 ScheduleDropdown(
                     schedules = schedules,
                     selectedScheduleId = formState.scheduleId,
                     onScheduleSelected = { onFormStateChange(formState.copy(scheduleId = it)) }
                 )
+
                 Spacer(Modifier.height(16.dp))
+
                 if (!errorMessage.isNullOrBlank()) {
                     Text(errorMessage, color = MaterialTheme.colorScheme.error)
                     Spacer(Modifier.height(8.dp))
                 }
+
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                     TextButton(onClick = onDismiss) { Text("Cancelar") }
                     Spacer(Modifier.width(8.dp))
-                    Button(onClick = onConfirm) { Text("Asignar") }
+                    Button(onClick = onConfirm) { Text("Guardar asignación") }
                 }
             }
         }

@@ -21,15 +21,22 @@ class WorkerRepository(private val workerService: WorkerService) {
         }
     }
 
-    suspend fun assignSchedule(userId: Int, storeId: Int, scheduleId: Int): Boolean {
+    suspend fun assignSchedule(userId: Int, storeId: Int, scheduleId: Int): Result<Unit> {
         return try {
             val response = workerService.assignSchedule(
                 userId,
                 AssignScheduleRequest(storeId, scheduleId)
             )
-            response.isSuccessful
+
+            if (response.isSuccessful) {
+                Result.success(Unit)
+            } else {
+                Result.failure(
+                    Exception(response.errorBody()?.string() ?: "Unknown error assigning employee")
+                )
+            }
         } catch (e: Exception) {
-            false
+            Result.failure(e)
         }
     }
 
