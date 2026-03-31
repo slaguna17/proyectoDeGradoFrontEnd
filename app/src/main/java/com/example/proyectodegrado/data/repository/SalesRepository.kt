@@ -9,19 +9,26 @@ import java.io.IOException
 
 class SalesRepository(private val salesService: SalesService) {
 
-    // Helper
     private inline fun <reified T> responseHandler(
         block: () -> retrofit2.Response<T>
     ): ApiResult<T> {
         return try {
-            val resp = block()
-            if (resp.isSuccessful && resp.body() != null) {
-                ApiResult.Success(resp.body()!!)
+            val response = block()
+
+            if (response.isSuccessful && response.body() != null) {
+                ApiResult.Success(response.body()!!)
             } else {
-                ApiResult.Error(resp.errorBody()?.string() ?: "Error desconocido", resp.code())
+                val errorBody = response.errorBody()?.string()
+                ApiResult.Error(
+                    message = errorBody ?: "Unknown server error",
+                    code = response.code()
+                )
             }
         } catch (e: HttpException) {
-            ApiResult.Error(e.message(), e.code())
+            ApiResult.Error(
+                message = e.message(),
+                code = e.code()
+            )
         } catch (e: IOException) {
             ApiResult.Error("Error de red: ${e.message}")
         } catch (e: Exception) {
