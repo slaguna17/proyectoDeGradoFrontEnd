@@ -94,6 +94,7 @@ fun DrawerContent(
                 "cash",
                 "sales",
                 "purchases",
+                "reports",
                 "whatsapp_sales",
                 "providers",
                 "schedules"
@@ -166,5 +167,6 @@ private fun String.asVector(): ImageVector = when (this) {
     "BarChart"      -> Icons.Default.BarChart
     "Settings"      -> Icons.Default.Settings
     "Whatsapp"      -> Icons.Default.Chat
+    "BarChart3"     -> Icons.Default.BarChart
     else            -> Icons.Default.Menu
 }

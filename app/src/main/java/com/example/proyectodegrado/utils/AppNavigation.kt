@@ -56,6 +56,11 @@ import com.example.proyectodegrado.ui.screens.whatsapp_sales.WhatsappSalesScreen
 import com.example.proyectodegrado.ui.screens.workers.CreateWorkerScreen
 import com.example.proyectodegrado.ui.screens.workers.WorkersScreen
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Text
+import androidx.compose.ui.Alignment
+import com.example.proyectodegrado.ui.screens.reports.ReportsScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -77,6 +82,7 @@ fun AppNavigation() {
     val sessionViewModel = remember { DependencyProvider.provideSessionViewModel() }
     val providerViewModel = remember { DependencyProvider.provideProviderViewModel() }
     val salesViewModel = remember { DependencyProvider.provideSalesViewModel() }
+    val reportsViewModel = remember { DependencyProvider.provideReportsViewModel() }
     val whatsappSalesViewModel = remember { DependencyProvider.provideWhatsappSalesViewModel() }
 
     val dpSession by DependencyProvider.sessionState.collectAsState()
@@ -213,6 +219,12 @@ fun AppNavigation() {
                 composable("categories") { CategoriesScreen(navController, categoryViewModel) }
                 composable("sales") { SalesScreen(navController, salesViewModel) }
                 composable("purchases") { PurchasesScreen(navController) }
+                composable("reports") {
+                    ReportsScreen(
+                        navController = navController,
+                        viewModel = reportsViewModel
+                    )
+                }
                 composable("products") { AllProductsScreen(navController, productViewModel) }
                 composable("providers") { ProvidersScreen(navController, providerViewModel) }
 

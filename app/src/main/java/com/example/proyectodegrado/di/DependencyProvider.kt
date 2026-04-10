@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import com.example.proyectodegrado.data.model.MenuItemDTO
 import com.example.proyectodegrado.ui.screens.purchases.PurchasesViewModel
+import com.example.proyectodegrado.ui.screens.reports.ReportsViewModel
 import com.example.proyectodegrado.ui.screens.sales.SalesViewModel
 import com.example.proyectodegrado.ui.screens.whatsapp_sales.WhatsappSalesViewModel
 
@@ -50,6 +51,7 @@ object DependencyProvider {
     private lateinit var salesService: SalesService
     private lateinit var purchasesService: PurchasesService
     private lateinit var shoppingCartService: ShoppingCartService
+    private lateinit var reportsService: ReportsService
 
     // Repositories
     private lateinit var imageRepository: ImageRepository
@@ -65,6 +67,7 @@ object DependencyProvider {
     private lateinit var salesRepository: SalesRepository
     private lateinit var purchasesRepository: PurchasesRepository
     private lateinit var shoppingCartRepository: ShoppingCartRepository
+    private lateinit var reportsRepository: ReportsRepository
 
     private val _sessionState = MutableStateFlow(SessionState())
     val sessionState = _sessionState.asStateFlow()
@@ -87,6 +90,7 @@ object DependencyProvider {
         permitService = RetrofitClient.createService(PermitService::class.java)
         salesService = RetrofitClient.createService(SalesService::class.java)
         purchasesService = RetrofitClient.createService(PurchasesService::class.java)
+        reportsService = RetrofitClient.createService(ReportsService::class.java)
         shoppingCartService = RetrofitClient.createService(ShoppingCartService::class.java)
 
         // Repository Initializations
@@ -103,6 +107,7 @@ object DependencyProvider {
         permitRepository = PermitRepository(permitService)
         salesRepository = SalesRepository(salesService)
         purchasesRepository = PurchasesRepository(purchasesService)
+        reportsRepository = ReportsRepository(reportsService)
         shoppingCartRepository = ShoppingCartRepository(shoppingCartService)
 
         // Load saved session
@@ -173,6 +178,9 @@ object DependencyProvider {
         return PurchasesViewModel(purchasesRepository, productRepository)
     }
     fun provideProfileViewModel(): ProfileViewModel = ProfileViewModel(userRepository, imageRepository)
+    fun provideReportsViewModel(): ReportsViewModel {
+        return ReportsViewModel(reportsRepository)
+    }
     fun provideCashViewModel(
         storeId: Int? = null,
         userId: Int? = null
