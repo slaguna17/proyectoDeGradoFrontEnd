@@ -116,7 +116,7 @@ fun ProductsByCategoryScreen(
         floatingActionButton = {
             if (currentStoreForCrud != null) {
                 FloatingActionButton(
-                    onClick = { onShowCreateDialog },
+                    onClick = onShowCreateDialog,
                     containerColor = MaterialTheme.colorScheme.primary
                 ) {
                     Icon(Icons.Default.Add, contentDescription = "Añadir Producto")
@@ -194,6 +194,7 @@ fun ProductsByCategoryScreen(
             onStockChange = viewModel::onStockChange, onImageSelected = viewModel::onImageSelected,
             onPurchasePriceChange = viewModel::onPurchasePriceChange,
             onSalePriceChange = viewModel::onSalePriceChange,
+            onExpirationDateChange = viewModel::onExpirationDateChange,
             onCreateClick = {
                 if (currentStoreForCrud != null) {
                     viewModel.createProduct(
@@ -202,6 +203,32 @@ fun ProductsByCategoryScreen(
                         onError = { errMsg -> errorMessage = errMsg }
                     )
                 }
+            }
+        )
+    }
+    if (showAssignDialog && productToInteractWith != null) {
+        val assignedStoreIds = productToInteractWith?.stores?.map { it.id }?.toSet() ?: emptySet()
+        val availableStoresForAssignment = storeOptions.filterNot { it.id in assignedStoreIds }
+
+        AssignProductDialog(
+            show = true,
+            onDismiss = { showAssignDialog = false },
+            productName = productToInteractWith!!.name,
+            availableStores = availableStoresForAssignment,
+            onAssign = { storeId, stock, expirationDate ->
+                viewModel.addProductToStore(
+                    productId = productToInteractWith!!.id,
+                    storeId = storeId,
+                    stock = stock.toIntOrNull() ?: 0,
+                    expirationDate = expirationDate.ifBlank { null },
+                    onSuccess = {
+                        showAssignDialog = false
+                        refreshProducts()
+                    },
+                    onError = { errMsg ->
+                        errorMessage = errMsg
+                    }
+                )
             }
         )
     }
@@ -216,6 +243,7 @@ fun ProductsByCategoryScreen(
             onStockChange = viewModel::onStockChange, onImageSelected = viewModel::onImageSelected,
             onPurchasePriceChange = viewModel::onPurchasePriceChange,
             onSalePriceChange = viewModel::onSalePriceChange,
+            onExpirationDateChange = viewModel::onExpirationDateChange,
             onAdjustStockClick = {
                 showEditDialog = false
                 showAdjustStockDialog = true
@@ -253,6 +281,23 @@ fun ProductsByCategoryScreen(
         )
     }
 
+    if (showRemoveAssignmentDialog && assignmentToRemove != null) {
+        RemoveAssignmentDialog(
+            show = true,
+            onDismiss = { showRemoveAssignmentDialog = false },
+            productName = assignmentToRemove!!.first.name,
+            storeName = assignmentToRemove!!.second.name,
+            onConfirm = {
+                viewModel.removeProductFromStore(
+                    productId = assignmentToRemove!!.first.id,
+                    storeId = assignmentToRemove!!.second.id,
+                    onSuccess = { refreshProducts() },
+                    onError = { errMsg -> errorMessage = errMsg }
+                )
+            }
+        )
+    }
+
     if (showAdjustStockDialog && productToInteractWith != null && currentStoreForCrud != null) {
         AdjustStockDialog(
             show = true,
@@ -264,6 +309,7 @@ fun ProductsByCategoryScreen(
                     productId = productToInteractWith!!.id,
                     storeId = currentStoreForCrud,
                     stock = newStock.toIntOrNull() ?: 0,
+                    expirationDate = formState.expirationDate.ifBlank { null },
                     onSuccess = {
                         showAdjustStockDialog = false
                         refreshProducts()

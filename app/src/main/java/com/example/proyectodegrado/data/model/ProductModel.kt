@@ -1,7 +1,7 @@
 package com.example.proyectodegrado.data.model
 
-import com.google.gson.annotations.SerializedName
 import android.net.Uri
+import com.google.gson.annotations.SerializedName
 
 data class Product(
     @SerializedName("id") val id: Int,
@@ -14,6 +14,7 @@ data class Product(
     @SerializedName("category_id") val categoryId: Int,
     @SerializedName("stock") val stock: Int?,
     @SerializedName("stores") val stores: List<StoreInfoFromProduct>?,
+    @SerializedName("providers") val providers: List<ProviderInfoFromProduct>?,
     @SerializedName("purchase_price") val purchasePrice: Double,
     @SerializedName("sale_price") val salePrice: Double
 )
@@ -24,10 +25,34 @@ data class StoreInfoFromProduct(
     @SerializedName("pivot") val pivot: StoreProductPivot
 )
 
-data class StoreProductRequest(val storeId: Int, val productId: Int, val stock: Int)
+data class ProviderInfoFromProduct(
+    @SerializedName("id") val id: Int,
+    @SerializedName("name") val name: String
+)
 
 data class StoreProductPivot(
-    @SerializedName("stock") val stock: Int
+    @SerializedName("stock") val stock: Int,
+    @SerializedName("expiration_date") val expirationDate: String? = null
+)
+
+data class StoreProductRequest(
+    val storeId: Int,
+    val productId: Int,
+    val stock: Int,
+    @SerializedName("expiration_date") val expirationDate: String? = null
+)
+
+data class StoreProductUpsertResponse(
+    val message: String,
+    val data: StoreProductUpsertData? = null
+)
+
+data class StoreProductUpsertData(
+    @SerializedName("id") val id: Int? = null,
+    @SerializedName("store_id") val storeId: Int,
+    @SerializedName("product_id") val productId: Int,
+    @SerializedName("stock") val stock: Int,
+    @SerializedName("expiration_date") val expirationDate: String? = null
 )
 
 data class ProductRequest(
@@ -40,7 +65,9 @@ data class ProductRequest(
     @SerializedName("store_id") val storeId: Int,
     @SerializedName("stock") val stock: Int,
     @SerializedName("purchase_price") val purchasePrice: Double,
-    @SerializedName("sale_price") val salePrice: Double
+    @SerializedName("sale_price") val salePrice: Double,
+    @SerializedName("expiration_date") val expirationDate: String? = null,
+    val providerIds: List<Int> = emptyList()
 )
 
 data class CreateProductFormState(

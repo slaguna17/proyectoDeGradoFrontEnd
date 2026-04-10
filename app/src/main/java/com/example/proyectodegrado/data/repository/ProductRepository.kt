@@ -1,7 +1,11 @@
 package com.example.proyectodegrado.data.repository
 
 import com.example.proyectodegrado.data.api.ProductService
-import com.example.proyectodegrado.data.model.*
+import com.example.proyectodegrado.data.model.ApiResult
+import com.example.proyectodegrado.data.model.Product
+import com.example.proyectodegrado.data.model.ProductRequest
+import com.example.proyectodegrado.data.model.StoreProductRequest
+import com.example.proyectodegrado.data.model.StoreProductUpsertResponse
 import retrofit2.HttpException
 import java.io.IOException
 
@@ -12,8 +16,17 @@ class ProductRepository(private val productService: ProductService) {
     ): ApiResult<T> {
         return try {
             val resp = block()
-            if (resp.isSuccessful && resp.body() != null) {
-                ApiResult.Success(resp.body()!!)
+
+            if (resp.isSuccessful) {
+                val body = resp.body()
+                if (body != null) {
+                    ApiResult.Success(body)
+                } else if (T::class == Unit::class) {
+                    @Suppress("UNCHECKED_CAST")
+                    ApiResult.Success(Unit as T)
+                } else {
+                    ApiResult.Error("Empty response body", resp.code())
+                }
             } else {
                 ApiResult.Error(resp.errorBody()?.string() ?: "Unknown error", resp.code())
             }
@@ -54,8 +67,18 @@ class ProductRepository(private val productService: ProductService) {
         return responseHandler { productService.getProductsByStore(storeId) }
     }
 
-    suspend fun addProductToStore(productId: Int, storeId: Int, stock: Int): ApiResult<Unit> {
-        val request = StoreProductRequest(storeId = storeId, productId = productId, stock = stock)
+    suspend fun addProductToStore(
+        productId: Int,
+        storeId: Int,
+        stock: Int,
+        expirationDate: String? = null
+    ): ApiResult<StoreProductUpsertResponse> {
+        val request = StoreProductRequest(
+            storeId = storeId,
+            productId = productId,
+            stock = stock,
+            expirationDate = expirationDate
+        )
         return responseHandler { productService.addProductToStore(request) }
     }
 

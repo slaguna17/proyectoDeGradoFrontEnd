@@ -181,6 +181,7 @@ fun AllProductsScreen(
             onStockChange = viewModel::onStockChange, onImageSelected = viewModel::onImageSelected,
             onPurchasePriceChange = viewModel::onPurchasePriceChange,
             onSalePriceChange = viewModel::onSalePriceChange,
+            onExpirationDateChange = viewModel::onExpirationDateChange,
             onCreateClick = {
                 if (currentStoreForCrud != null) {
                     viewModel.createProduct(
@@ -202,11 +203,12 @@ fun AllProductsScreen(
             onDismiss = { showAssignDialog = false },
             productName = productToInteractWith!!.name,
             availableStores = availableStoresForAssignment,
-            onAssign = { storeId, stock ->
+            onAssign = { storeId, stock, expirationDate ->
                 viewModel.addProductToStore(
                     productId = productToInteractWith!!.id,
                     storeId = storeId,
                     stock = stock.toIntOrNull() ?: 0,
+                    expirationDate = expirationDate.ifBlank { null },
                     onSuccess = {
                         showAssignDialog = false
                         refreshProducts()
@@ -229,6 +231,7 @@ fun AllProductsScreen(
             onStockChange = viewModel::onStockChange, onImageSelected = viewModel::onImageSelected,
             onPurchasePriceChange = viewModel::onPurchasePriceChange,
             onSalePriceChange = viewModel::onSalePriceChange,
+            onExpirationDateChange = viewModel::onExpirationDateChange,
             onAdjustStockClick = {
                 showEditDialog = false
                 showAdjustStockDialog = true
@@ -294,6 +297,7 @@ fun AllProductsScreen(
                     productId = productToInteractWith!!.id,
                     storeId = currentStoreForCrud,
                     stock = newStock.toIntOrNull() ?: 0,
+                    expirationDate = formState.expirationDate.ifBlank { null },
                     onSuccess = {
                         showAdjustStockDialog = false
                         refreshProducts()

@@ -10,7 +10,26 @@ data class Provider(
     val phone: String,
     @SerializedName("contact_person_name")
     val contactPersonName: String,
-    val notes: String
+    val notes: String,
+    val products: List<ProviderLinkedProduct> = emptyList()
+)
+
+data class ProviderLinkedProduct(
+    val id: Int,
+    @SerializedName("SKU")
+    val sku: String? = null,
+    val name: String,
+    val description: String? = null,
+    val image: String? = null,
+    val brand: String? = null,
+    @SerializedName("sale_price")
+    val salePrice: Double? = null,
+    @SerializedName("purchase_price")
+    val purchasePrice: Double? = null,
+    @SerializedName("category_id")
+    val categoryId: Int? = null,
+    @SerializedName("category_name")
+    val categoryName: String? = null
 )
 
 data class ProviderRequest(
@@ -25,6 +44,14 @@ data class ProviderRequest(
 
 data class ProviderResponse(
     val message: String,
-    @SerializedName("store_id")
-    val storeId: Int? = null
+    val provider: Provider? = null
+)
+
+data class SyncProviderProductsRequest(
+    val productIds: List<Int>
+)
+
+data class SyncProviderProductsResponse(
+    val message: String,
+    val products: List<ProviderLinkedProduct> = emptyList()
 )

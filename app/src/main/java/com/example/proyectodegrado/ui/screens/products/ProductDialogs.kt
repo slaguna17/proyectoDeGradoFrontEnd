@@ -41,7 +41,8 @@ private fun ProductDialogContent(
     onDismiss: () -> Unit,
     onSubmit: () -> Unit,
     onAdjustStockClick: () -> Unit,
-    submitLabel: String
+    submitLabel: String,
+    onExpirationDateChange: (String) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
     val isFormValid = formState.name.isNotBlank() && formState.categoryId != -1
@@ -95,6 +96,15 @@ private fun ProductDialogContent(
             OutlinedTextField(value = formState.stock, onValueChange = onStockChange, label = { Text(if (isEditMode) "Stock (No editable)" else "Stock Inicial") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.fillMaxWidth(), enabled = !isEditMode)
             Spacer(Modifier.height(16.dp))
 
+            OutlinedTextField(
+                value = formState.expirationDate,
+                onValueChange = onExpirationDateChange,
+                label = { Text("Fecha de caducidad (YYYY-MM-DD)") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+            Spacer(Modifier.height(16.dp))
+
             if (isEditMode) {
                 OutlinedButton(
                     onClick = onAdjustStockClick,
@@ -135,7 +145,8 @@ fun CreateProductDialog(
     onPurchasePriceChange: (String) -> Unit,
     onSalePriceChange: (String) -> Unit,
     onImageSelected: (Uri?) -> Unit,
-    onCreateClick: () -> Unit
+    onCreateClick: () -> Unit,
+    onExpirationDateChange: (String) -> Unit
 ) {
     if (!show) return
     Dialog(onDismissRequest = onDismiss) {
@@ -158,6 +169,7 @@ fun CreateProductDialog(
             submitLabel = "Crear",
             onPurchasePriceChange = onPurchasePriceChange,
             onSalePriceChange = onSalePriceChange,
+            onExpirationDateChange = onExpirationDateChange
         )
     }
 }
@@ -179,7 +191,8 @@ fun EditProductDialog(
     onSalePriceChange: (String) -> Unit,
     onImageSelected: (Uri?) -> Unit,
     onAdjustStockClick: () -> Unit,
-    onEditClick: () -> Unit
+    onEditClick: () -> Unit,
+    onExpirationDateChange: (String) -> Unit
 ) {
     if (!show) return
     Dialog(onDismissRequest = onDismiss) {
@@ -202,6 +215,7 @@ fun EditProductDialog(
             submitLabel = "Guardar",
             onPurchasePriceChange = onPurchasePriceChange,
             onSalePriceChange = onSalePriceChange,
+            onExpirationDateChange = onExpirationDateChange
         )
     }
 }
@@ -242,12 +256,13 @@ fun AssignProductDialog(
     onDismiss: () -> Unit,
     productName: String,
     availableStores: List<StoreOption>,
-    onAssign: (storeId: Int, stock: String) -> Unit
+    onAssign: (storeId: Int, stock: String, expirationDate: String) -> Unit
 ) {
     if (!show) return
 
     var selectedStoreId by remember { mutableStateOf<Int?>(null) }
     var stock by remember { mutableStateOf("0") }
+    var expirationDate by remember { mutableStateOf("") }
     var isDropdownExpanded by remember { mutableStateOf(false) }
 
     val isFormValid = selectedStoreId != null && stock.isNotBlank() && stock.toIntOrNull() != null
@@ -265,7 +280,7 @@ fun AssignProductDialog(
                 )
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    text = "Selecciona una tienda y define el stock inicial para añadir este producto.",
+                    text = "Selecciona una tienda, define el stock inicial y la fecha de caducidad.",
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Spacer(Modifier.height(24.dp))
@@ -307,6 +322,14 @@ fun AssignProductDialog(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth()
                 )
+                Spacer(Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = expirationDate,
+                    onValueChange = { expirationDate = it },
+                    label = { Text("Fecha de caducidad (YYYY-MM-DD)") },
+                    modifier = Modifier.fillMaxWidth()
+                )
                 Spacer(Modifier.height(24.dp))
 
                 Row(
@@ -318,7 +341,7 @@ fun AssignProductDialog(
                     }
                     Spacer(Modifier.width(8.dp))
                     Button(
-                        onClick = { onAssign(selectedStoreId!!, stock) },
+                        onClick = { onAssign(selectedStoreId!!, stock, expirationDate) },
                         enabled = isFormValid
                     ) {
                         Text("Confirmar")

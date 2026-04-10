@@ -1,11 +1,14 @@
 package com.example.proyectodegrado.ui.screens.providers
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.example.proyectodegrado.data.model.Product
 
 @Composable
 private fun ProviderDialogContent(
@@ -224,6 +227,105 @@ fun DeleteProviderDialog(
                         )
                     ) {
                         Text("Eliminar")
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ManageProviderProductsDialog(
+    show: Boolean,
+    providerName: String,
+    products: List<Product>,
+    selectedProductIds: Set<Int>,
+    isSaving: Boolean,
+    onToggleProduct: (Int) -> Unit,
+    onDismiss: () -> Unit,
+    onSave: () -> Unit
+) {
+    if (!show) return
+
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(shape = MaterialTheme.shapes.medium) {
+            Column(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .width(360.dp)
+            ) {
+                Text(
+                    text = "Productos de $providerName",
+                    style = MaterialTheme.typography.titleLarge
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "Selecciona los productos que puede proveer.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(320.dp)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    if (products.isEmpty()) {
+                        Text("No hay productos disponibles.")
+                    } else {
+                        products.sortedBy { it.name }.forEach { product ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Text(
+                                        text = product.name,
+                                        style = MaterialTheme.typography.bodyLarge
+                                    )
+                                    Text(
+                                        text = "SKU: ${product.sku ?: "-"}",
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
+
+                                Checkbox(
+                                    checked = selectedProductIds.contains(product.id),
+                                    onCheckedChange = { onToggleProduct(product.id) }
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    OutlinedButton(onClick = onDismiss, enabled = !isSaving) {
+                        Text("Cancelar")
+                    }
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    Button(
+                        onClick = onSave,
+                        enabled = !isSaving
+                    ) {
+                        if (isSaving) {
+                            CircularProgressIndicator()
+                        } else {
+                            Text("Guardar")
+                        }
                     }
                 }
             }

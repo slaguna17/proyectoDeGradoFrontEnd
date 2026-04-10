@@ -168,7 +168,10 @@ object DependencyProvider {
     fun provideCategoryViewModel(): CategoryViewModel = CategoryViewModel(categoryRepository, imageRepository)
     fun provideStoreViewModel(): StoreViewModel = StoreViewModel(storeRepository, imageRepository)
     fun provideRoleViewModel(): RoleViewModel = RoleViewModel(roleRepository, permitRepository)
-    fun provideProviderViewModel(): ProvidersViewModel = ProvidersViewModel(providerRepository)
+    fun provideProviderViewModel(): ProvidersViewModel = ProvidersViewModel(
+        providerRepository = providerRepository,
+        productRepository = productRepository
+    )
     fun provideScheduleViewModel(): ScheduleViewModel = ScheduleViewModel(scheduleRepository)
     fun provideWorkersViewModel(): WorkersViewModel = WorkersViewModel(workerRepository, storeRepository, scheduleRepository)
     fun provideSalesViewModel(): SalesViewModel {

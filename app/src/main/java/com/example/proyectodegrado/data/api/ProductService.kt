@@ -3,6 +3,7 @@ package com.example.proyectodegrado.data.api
 import com.example.proyectodegrado.data.model.Product
 import com.example.proyectodegrado.data.model.ProductRequest
 import com.example.proyectodegrado.data.model.StoreProductRequest
+import com.example.proyectodegrado.data.model.StoreProductUpsertResponse
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -29,7 +30,9 @@ interface ProductService {
     suspend fun getProductsByStore(@Path("storeId") storeId: Int, @Query("signed") signed: Boolean = true): Response<List<Product>>
 
     @POST("/api/products/store-products/upsert")
-    suspend fun addProductToStore(@Body request: StoreProductRequest): Response<Unit>
+    suspend fun addProductToStore(
+        @Body request: StoreProductRequest
+    ): Response<StoreProductUpsertResponse>
 
     @DELETE("/api/products/stores/{storeId}/products/{productId}")
     suspend fun removeProductFromStore(

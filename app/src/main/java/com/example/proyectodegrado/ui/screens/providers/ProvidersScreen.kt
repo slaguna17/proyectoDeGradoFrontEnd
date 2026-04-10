@@ -1,13 +1,29 @@
 package com.example.proyectodegrado.ui.screens.providers
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -24,13 +40,22 @@ fun ProvidersScreen(
     viewModel: ProvidersViewModel
 ) {
     val providers by viewModel.providers.collectAsStateWithLifecycle()
+    val allProducts by viewModel.allProducts.collectAsState()
+    val selectedProductIds by viewModel.selectedProductIds.collectAsState()
+    val isSavingProducts by viewModel.isSavingProducts.collectAsState()
+
+    val snackbarHostState = remember { SnackbarHostState() }
+
     var errorMessage by rememberSaveable { mutableStateOf<String?>(null) }
 
     var showCreateDialog by rememberSaveable { mutableStateOf(false) }
     var showEditDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var showManageProductsDialog by remember { mutableStateOf(false) }
+
     var providerToEdit by remember { mutableStateOf<Provider?>(null) }
     var providerToDelete by remember { mutableStateOf<Provider?>(null) }
+    var providerForProducts by remember { mutableStateOf<Provider?>(null) }
 
     var formName by remember { mutableStateOf("") }
     var formAddress by remember { mutableStateOf("") }
@@ -45,7 +70,10 @@ fun ProvidersScreen(
         isRefreshing = true
         viewModel.fetchProviders(
             onSuccess = { isRefreshing = false },
-            onError = { err -> errorMessage = err; isRefreshing = false }
+            onError = { err ->
+                errorMessage = err
+                isRefreshing = false
+            }
         )
     }
 
@@ -53,7 +81,14 @@ fun ProvidersScreen(
         refreshProviders()
     }
 
+    LaunchedEffect(errorMessage) {
+        val msg = errorMessage ?: return@LaunchedEffect
+        snackbarHostState.showSnackbar(msg)
+        errorMessage = null
+    }
+
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
@@ -66,7 +101,7 @@ fun ProvidersScreen(
                     showCreateDialog = true
                 },
                 containerColor = MaterialTheme.colorScheme.primary
-                ) {
+            ) {
                 Icon(Icons.Default.Add, contentDescription = "Crear Proveedor")
             }
         }
@@ -83,8 +118,8 @@ fun ProvidersScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = errorMessage ?: "Cargando proveedores...",
-                        color = if (errorMessage != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onBackground
+                        text = "No hay proveedores.",
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                 }
             } else {
@@ -98,12 +133,20 @@ fun ProvidersScreen(
                         ProviderItem(
                             provider = provider,
                             onEdit = {
-                                providerToEdit = provider
+                                providerToEdit = it
                                 showEditDialog = true
                             },
                             onDelete = {
-                                providerToDelete = provider
+                                providerToDelete = it
                                 showDeleteDialog = true
+                            },
+                            onManageProducts = {
+                                providerForProducts = it
+                                viewModel.loadProductsForProvider(
+                                    providerId = it.id,
+                                    onError = { err -> errorMessage = err }
+                                )
+                                showManageProductsDialog = true
                             }
                         )
                     }
@@ -130,7 +173,14 @@ fun ProvidersScreen(
             onDismiss = { showCreateDialog = false },
             onSubmit = {
                 viewModel.createProvider(
-                    ProviderRequest(formName, formAddress, formEmail, formPhone, formContact, formNotes),
+                    ProviderRequest(
+                        name = formName,
+                        address = formAddress,
+                        email = formEmail,
+                        phone = formPhone,
+                        contactPersonName = formContact,
+                        notes = formNotes
+                    ),
                     onSuccess = { refreshProviders() },
                     onError = { errorMessage = it }
                 )
@@ -140,26 +190,36 @@ fun ProvidersScreen(
     }
 
     if (showEditDialog && providerToEdit != null) {
-        val p = providerToEdit!!
+        val currentProvider = providerToEdit!!
+
         EditProviderDialog(
             show = true,
-            name = p.name,
-            onNameChange = { providerToEdit = p.copy(name = it) },
-            address = p.address,
-            onAddressChange = { providerToEdit = p.copy(address = it) },
-            email = p.email,
-            onEmailChange = { providerToEdit = p.copy(email = it) },
-            phone = p.phone,
-            onPhoneChange = { providerToEdit = p.copy(phone = it) },
-            contactPerson = p.contactPersonName,
-            onContactPersonChange = { providerToEdit = p.copy(contactPersonName = it) },
-            notes = p.notes,
-            onNotesChange = { providerToEdit = p.copy(notes = it) },
+            name = currentProvider.name,
+            onNameChange = { providerToEdit = currentProvider.copy(name = it) },
+            address = currentProvider.address,
+            onAddressChange = { providerToEdit = currentProvider.copy(address = it) },
+            email = currentProvider.email,
+            onEmailChange = { providerToEdit = currentProvider.copy(email = it) },
+            phone = currentProvider.phone,
+            onPhoneChange = { providerToEdit = currentProvider.copy(phone = it) },
+            contactPerson = currentProvider.contactPersonName,
+            onContactPersonChange = { providerToEdit = currentProvider.copy(contactPersonName = it) },
+            notes = currentProvider.notes,
+            onNotesChange = { providerToEdit = currentProvider.copy(notes = it) },
             onDismiss = { showEditDialog = false },
             onSubmit = {
+                val updatedProvider = providerToEdit ?: return@EditProviderDialog
+
                 viewModel.updateProvider(
-                    id = p.id,
-                    ProviderRequest(p.name, p.address, p.email, p.phone, p.contactPersonName, p.notes),
+                    id = updatedProvider.id,
+                    request = ProviderRequest(
+                        name = updatedProvider.name,
+                        address = updatedProvider.address,
+                        email = updatedProvider.email,
+                        phone = updatedProvider.phone,
+                        contactPersonName = updatedProvider.contactPersonName,
+                        notes = updatedProvider.notes
+                    ),
                     onSuccess = { refreshProviders() },
                     onError = { errorMessage = it }
                 )
@@ -180,6 +240,34 @@ fun ProvidersScreen(
                     onError = { errorMessage = it }
                 )
                 showDeleteDialog = false
+            }
+        )
+    }
+
+    if (showManageProductsDialog && providerForProducts != null) {
+        ManageProviderProductsDialog(
+            show = true,
+            providerName = providerForProducts!!.name,
+            products = allProducts,
+            selectedProductIds = selectedProductIds,
+            isSaving = isSavingProducts,
+            onToggleProduct = { productId ->
+                viewModel.toggleProductSelection(productId)
+            },
+            onDismiss = {
+                showManageProductsDialog = false
+                viewModel.clearSelectedProducts()
+            },
+            onSave = {
+                viewModel.syncProviderProducts(
+                    providerId = providerForProducts!!.id,
+                    onSuccess = {
+                        showManageProductsDialog = false
+                        viewModel.clearSelectedProducts()
+                        refreshProviders()
+                    },
+                    onError = { errorMessage = it }
+                )
             }
         )
     }

@@ -113,9 +113,34 @@ fun ProductItem(
                 )
                 Spacer(Modifier.height(8.dp))
 
+                if (!product.providers.isNullOrEmpty()) {
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = "Proveedores:",
+                        style = MaterialTheme.typography.titleSmall
+                    )
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        mainAxisSpacing = 8.dp,
+                        crossAxisSpacing = 4.dp
+                    ) {
+                        product.providers.forEach { provider ->
+                            AssistChip(
+                                onClick = {},
+                                label = { Text(provider.name) }
+                            )
+                        }
+                    }
+                    Spacer(Modifier.height(8.dp))
+                }
+
                 if (currentStoreId != null) {
                     val stockForCurrentStore = product.stores?.firstOrNull { it.id == currentStoreId }?.pivot?.stock
-                    StockInfoSingleStore(stock = stockForCurrentStore)
+                    val currentStoreInfo = product.stores?.firstOrNull { it.id == currentStoreId }
+                    StockInfoSingleStore(
+                        stock = currentStoreInfo?.pivot?.stock,
+                        expirationDate = currentStoreInfo?.pivot?.expirationDate
+                    )
                 } else {
                     StockInfoAllStores(
                         product = product,
@@ -152,17 +177,31 @@ fun ProductItem(
 
 
 @Composable
-private fun StockInfoSingleStore(stock: Int?) {
-    Row(
+private fun StockInfoSingleStore(
+    stock: Int?,
+    expirationDate: String?
+) {
+    Column(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Text(text = "Stock en tienda", style = MaterialTheme.typography.bodyLarge)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(text = "Stock en tienda", style = MaterialTheme.typography.bodyLarge)
+            Text(
+                text = (stock ?: 0).toString(),
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
         Text(
-            text = (stock ?: 0).toString(),
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.Bold
+            text = "Caducidad: ${expirationDate ?: "Sin fecha"}",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
@@ -191,7 +230,11 @@ private fun StockInfoAllStores(
                     InputChip(
                         selected = false,
                         onClick = { /* No action on click */ },
-                        label = { Text("${storeInfo.name}: ${storeInfo.pivot.stock}") },
+                        label = {
+                            Text(
+                                "${storeInfo.name}: ${storeInfo.pivot.stock} • ${storeInfo.pivot.expirationDate ?: "Sin fecha"}"
+                            )
+                        },
                         trailingIcon = {
                             IconButton(
                                 onClick = { onRemoveFromStore(storeInfo.id) },

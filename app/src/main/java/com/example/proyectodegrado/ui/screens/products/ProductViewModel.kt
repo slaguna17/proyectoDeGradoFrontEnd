@@ -51,6 +51,7 @@ class ProductViewModel(
     fun onSalePriceChange(v: String) = _formState.update { it.copy(salePrice = v) }
     fun onCategorySelected(id: Int) = _formState.update { it.copy(categoryId = id) }
     fun onImageSelected(uri: Uri?) = _formState.update { it.copy(localImageUri = uri) }
+    fun onExpirationDateChange(v: String) = _formState.update { it.copy(expirationDate = v) }
 
     fun resetForm() {
         _formState.value = CreateProductFormState()
@@ -129,32 +130,43 @@ class ProductViewModel(
             if (form.name.isBlank() || form.categoryId <= 0) {
                 return@launch onError("Nombre y Categoría son requeridos.")
             }
+
             val initialRequest = ProductRequest(
                 sku = form.sku.takeIf { it.isNotBlank() },
-                name = form.name, description = form.description, imageKey = null, brand = form.brand,
-                categoryId = form.categoryId, storeId = storeId, stock = form.stock.toIntOrNull() ?: 0,
+                name = form.name,
+                description = form.description,
+                imageKey = null,
+                brand = form.brand,
+                categoryId = form.categoryId,
+                storeId = storeId,
+                stock = form.stock.toIntOrNull() ?: 0,
                 purchasePrice = form.purchasePrice.toDoubleOrNull() ?: 0.0,
-                salePrice = form.salePrice.toDoubleOrNull() ?: 0.0
+                salePrice = form.salePrice.toDoubleOrNull() ?: 0.0,
+                expirationDate = form.expirationDate.ifBlank { null }
             )
 
             when (val creationResult = productRepository.createProduct(initialRequest)) {
                 is ApiResult.Success -> {
                     val newProduct = creationResult.data
                     val uri = form.localImageUri
+
                     if (uri != null) {
                         _imageUploadUiState.value = UploadImageState.Uploading
                         val uploadResult = imageRepository.uploadImage(uri, "products", newProduct.id, "main")
+
                         if (uploadResult is ImageUploadResult.Success) {
                             val finalRequest = initialRequest.copy(imageKey = uploadResult.imageKey)
-                            productRepository.updateProduct(newProduct.id, finalRequest) // No es necesario manejar el resultado aquí si es solo para actualizar la imagen
+                            productRepository.updateProduct(newProduct.id, finalRequest)
                         } else if (uploadResult is ImageUploadResult.Error) {
                             onError("Producto creado, pero falló la subida de imagen: ${uploadResult.message}")
                         }
                     }
+
                     _imageUploadUiState.value = UploadImageState.Idle
                     resetForm()
                     onSuccess()
                 }
+
                 is ApiResult.Error -> {
                     onError("Error creando producto: ${creationResult.message}")
                 }
@@ -181,18 +193,40 @@ class ProductViewModel(
 
             val request = ProductRequest(
                 sku = form.sku.takeIf { it.isNotBlank() },
-                name = form.name, description = form.description, imageKey = finalImageKey, brand = form.brand,
-                categoryId = form.categoryId, storeId = storeId, stock = form.stock.toIntOrNull() ?: 0,
+                name = form.name,
+                description = form.description,
+                imageKey = finalImageKey,
+                brand = form.brand,
+                categoryId = form.categoryId,
+                storeId = storeId,
+                stock = form.stock.toIntOrNull() ?: 0,
                 purchasePrice = form.purchasePrice.toDoubleOrNull() ?: 0.0,
-                salePrice = form.salePrice.toDoubleOrNull() ?: 0.0
+                salePrice = form.salePrice.toDoubleOrNull() ?: 0.0,
+                expirationDate = form.expirationDate.ifBlank { null }
             )
 
             when (val result = productRepository.updateProduct(id, request)) {
                 is ApiResult.Success -> {
-                    _imageUploadUiState.value = UploadImageState.Idle
-                    resetForm()
-                    onSuccess()
+                    when (
+                        val storeUpdateResult = productRepository.addProductToStore(
+                            productId = id,
+                            storeId = storeId,
+                            stock = form.stock.toIntOrNull() ?: 0,
+                            expirationDate = form.expirationDate.ifBlank { null }
+                        )
+                    ) {
+                        is ApiResult.Success -> {
+                            _imageUploadUiState.value = UploadImageState.Idle
+                            resetForm()
+                            onSuccess()
+                        }
+
+                        is ApiResult.Error -> {
+                            onError("Producto actualizado, pero falló la actualización de inventario: ${storeUpdateResult.message}")
+                        }
+                    }
                 }
+
                 is ApiResult.Error -> onError("Error al actualizar el producto: ${result.message}")
             }
         }
@@ -208,9 +242,13 @@ class ProductViewModel(
     }
 
     fun prepareFormForEdit(product: Product, currentStoreId: Int?) {
-        val storeStock: Int? = currentStoreId?.let { sid ->
-            product.stores?.firstOrNull { it.id == sid }?.pivot?.stock
+        val storeInfo = currentStoreId?.let { sid ->
+            product.stores?.firstOrNull { it.id == sid }
         }
+
+        val storeStock = storeInfo?.pivot?.stock
+        val storeExpirationDate = storeInfo?.pivot?.expirationDate.orEmpty()
+
         _formState.value = CreateProductFormState(
             name = product.name,
             description = product.description,
@@ -220,9 +258,10 @@ class ProductViewModel(
             imageKey = product.image,
             imageUrl = product.imageUrl,
             stock = (storeStock ?: product.stock ?: 0).toString(),
+            expirationDate = storeExpirationDate,
             localImageUri = null,
             purchasePrice = product.purchasePrice.toString(),
-            salePrice = product.salePrice.toString(),
+            salePrice = product.salePrice.toString()
         )
         _imageUploadUiState.value = UploadImageState.Idle
     }
@@ -237,9 +276,23 @@ class ProductViewModel(
         }
     }
 
-    fun addProductToStore(productId: Int, storeId: Int, stock: Int, onSuccess: () -> Unit, onError: (String) -> Unit) {
+    fun addProductToStore(
+        productId: Int,
+        storeId: Int,
+        stock: Int,
+        expirationDate: String? = null,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
         viewModelScope.launch {
-            when (val result = productRepository.addProductToStore(productId, storeId, stock)) {
+            when (
+                val result = productRepository.addProductToStore(
+                    productId = productId,
+                    storeId = storeId,
+                    stock = stock,
+                    expirationDate = expirationDate
+                )
+            ) {
                 is ApiResult.Success -> onSuccess()
                 is ApiResult.Error -> onError("Error al asignar el producto: ${result.message}")
             }
