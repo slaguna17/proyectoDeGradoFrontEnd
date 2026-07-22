@@ -37,6 +37,13 @@ class ProductViewModel(
     private val _selectedStoreId = MutableStateFlow<Int?>(null)
     val selectedStoreId: StateFlow<Int?> = _selectedStoreId.asStateFlow()
 
+    private val _isLowStockFilterActive = MutableStateFlow(false)
+    val isLowStockFilterActive: StateFlow<Boolean> = _isLowStockFilterActive.asStateFlow()
+
+    fun toggleLowStockFilter() {
+        _isLowStockFilterActive.value = !_isLowStockFilterActive.value
+    }
+
     init {
         fetchAvailableCategories()
     }

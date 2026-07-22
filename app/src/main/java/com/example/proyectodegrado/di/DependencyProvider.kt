@@ -5,6 +5,7 @@ import com.example.proyectodegrado.data.api.*
 import com.example.proyectodegrado.data.repository.*
 import com.example.proyectodegrado.ui.screens.cash.CashViewModel
 import com.example.proyectodegrado.ui.screens.categories.CategoryViewModel
+import com.example.proyectodegrado.ui.screens.home.HomeViewModel
 import com.example.proyectodegrado.ui.screens.login.LoginViewModel
 import com.example.proyectodegrado.ui.screens.products.ProductViewModel
 import com.example.proyectodegrado.ui.screens.profile.ProfileViewModel
@@ -27,7 +28,8 @@ data class SessionState(
     val userId: Int? = null,
     val storeId: Int? = null,
     val isAdmin: Boolean = false,
-    val menu: List<MenuItemDTO> = emptyList()
+    val menu: List<MenuItemDTO> = emptyList(),
+    val authToken: String? = null
 )
 
 object DependencyProvider {
@@ -113,9 +115,11 @@ object DependencyProvider {
         // Load saved session
         val userId = preferences.getUserId()?.toIntOrNull()
         val storeId = preferences.getStoreId()?.toIntOrNull()
-        if (userId != null && storeId != null) {
+        val token = preferences.getAuthToken()
+
+        if (userId != null && storeId != null && token != null) {
             val isAdmin = preferences.getIsAdmin()
-            _sessionState.value = SessionState(userId, storeId, isAdmin, menu = emptyList())
+            _sessionState.value = SessionState(userId, storeId, isAdmin, menu = emptyList(), authToken = token)
         }
     }
 
@@ -126,14 +130,16 @@ object DependencyProvider {
         isAdmin: Boolean,
         userEmail: String,
         userName: String?,
-        menu: List<MenuItemDTO>
+        menu: List<MenuItemDTO>,
+        token: String
     ) {
-        _sessionState.value = SessionState(userId, storeId, isAdmin, menu)
+        _sessionState.value = SessionState(userId, storeId, isAdmin, menu, authToken = token)
         preferences.saveUserId(userId.toString())
         preferences.saveStoreId(storeId.toString())
         preferences.saveIsAdmin(isAdmin)
         preferences.saveUserEmail(userEmail)
         preferences.saveUserName(userName)
+        preferences.saveAuthToken(token)
     }
 
     // Temporary Session
@@ -151,6 +157,10 @@ object DependencyProvider {
         _sessionState.value = SessionState()
     }
 
+    fun getAuthToken(): String? = _sessionState.value.authToken
+
+    fun isLoggedIn(): Boolean = _sessionState.value.authToken != null
+
     // Helpers
     fun getCurrentStoreId(): Int = _sessionState.value.storeId ?: 1
     fun getCurrentUserId(): Int = _sessionState.value.userId ?: 1
@@ -161,6 +171,7 @@ object DependencyProvider {
     }
 
     // --- ViewModels ---
+    fun provideHomeViewModel(): HomeViewModel = HomeViewModel(productRepository, preferences)
     fun provideSessionViewModel(): SessionViewModel = SessionViewModel(preferences)
     fun provideLoginViewModel(): LoginViewModel = LoginViewModel(userRepository, preferences) // Ahora pasamos 'preferences'
     fun provideRegisterViewModel(): RegisterViewModel = RegisterViewModel(userRepository, imageRepository)

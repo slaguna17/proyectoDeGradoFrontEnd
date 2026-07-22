@@ -1,0 +1,7 @@
+- [x] Actualizar `AppPreferences.kt` para persistir el token JWT
+- [x] Modificar `DependencyProvider.kt` para gestionar el token en la sesión
+- [x] Configurar `RetrofitClient.kt` con un interceptor de autenticación
+- [x] Ajustar `MainActivity.kt` para evitar pantalla negra inicial
+- [x] Actualizar `LoginViewModel.kt` para capturar y guardar el token
+- [x] Implementar redirección automática en `AppNavigation.kt`
+- [x] Verificar persistencia y envío del encabezado Authorization

@@ -84,6 +84,7 @@ fun AppNavigation() {
     val salesViewModel = remember { DependencyProvider.provideSalesViewModel() }
     val reportsViewModel = remember { DependencyProvider.provideReportsViewModel() }
     val whatsappSalesViewModel = remember { DependencyProvider.provideWhatsappSalesViewModel() }
+    val homeViewModel = remember { DependencyProvider.provideHomeViewModel() }
 
     val dpSession by DependencyProvider.sessionState.collectAsState()
     val profileUi by profileViewModel.ui.collectAsStateWithLifecycle()
@@ -101,6 +102,14 @@ fun AppNavigation() {
         "schedules" to "schedule",
         "stores" to "store"
     )
+
+    LaunchedEffect(Unit) {
+        if (DependencyProvider.isLoggedIn() && currentRoute == "login") {
+            navController.navigate("home") {
+                popUpTo("login") { inclusive = true }
+            }
+        }
+    }
 
     LaunchedEffect(currentRoute) {
         if (currentRoute == "login" || currentRoute == "register") {
@@ -209,13 +218,13 @@ fun AppNavigation() {
         ) { innerPadding ->
             NavHost(
                 navController = navController,
-                startDestination = "login",
+                startDestination = if (DependencyProvider.isLoggedIn()) "home" else "login",
                 modifier = Modifier
                     .padding(innerPadding)
                     .fillMaxSize()
             ) {
                 composable("login") { LoginScreen(navController, loginViewModel) }
-                composable("home") { HomeScreen() }
+                composable("home") { HomeScreen(homeViewModel, navController) }
                 composable("categories") { CategoriesScreen(navController, categoryViewModel) }
                 composable("sales") { SalesScreen(navController, salesViewModel) }
                 composable("purchases") { PurchasesScreen(navController) }

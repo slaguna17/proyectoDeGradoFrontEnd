@@ -2,6 +2,8 @@ package com.example.proyectodegrado.data.api
 
 import com.example.proyectodegrado.data.model.Product
 import com.example.proyectodegrado.data.model.ProductRequest
+import com.example.proyectodegrado.data.model.StockAlertResponseDto
+import com.example.proyectodegrado.data.model.StockAlertSummaryDto
 import com.example.proyectodegrado.data.model.StoreProductRequest
 import com.example.proyectodegrado.data.model.StoreProductUpsertResponse
 import retrofit2.Response
@@ -46,4 +48,10 @@ interface ProductService {
         @Path("storeId") storeId: Int,
         @Query("signed") signed: Boolean = true
     ): Response<List<Product>>
+
+    @GET("/api/products/low-stock")
+    suspend fun getLowStockProducts(): Response<StockAlertResponseDto>
+
+    @GET("/api/products/stock-alerts/summary")
+    suspend fun getStockAlertSummary(): Response<StockAlertSummaryDto>
 }

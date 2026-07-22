@@ -1,11 +1,7 @@
 package com.example.proyectodegrado.data.repository
 
 import com.example.proyectodegrado.data.api.ProductService
-import com.example.proyectodegrado.data.model.ApiResult
-import com.example.proyectodegrado.data.model.Product
-import com.example.proyectodegrado.data.model.ProductRequest
-import com.example.proyectodegrado.data.model.StoreProductRequest
-import com.example.proyectodegrado.data.model.StoreProductUpsertResponse
+import com.example.proyectodegrado.data.model.*
 import retrofit2.HttpException
 import java.io.IOException
 
@@ -88,5 +84,13 @@ class ProductRepository(private val productService: ProductService) {
 
     suspend fun getProductsByCategoryAndStore(categoryId: Int, storeId: Int): ApiResult<List<Product>> {
         return responseHandler { productService.getProductsByCategoryAndStore(categoryId, storeId) }
+    }
+
+    suspend fun getLowStockProducts(): ApiResult<StockAlertResponseDto> {
+        return responseHandler { productService.getLowStockProducts() }
+    }
+
+    suspend fun getStockAlertSummary(): ApiResult<StockAlertSummaryDto> {
+        return responseHandler { productService.getStockAlertSummary() }
     }
 }

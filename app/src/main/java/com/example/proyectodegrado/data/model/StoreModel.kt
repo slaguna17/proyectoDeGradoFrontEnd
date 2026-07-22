@@ -30,3 +30,7 @@ data class StoreResponse(
     val storeId: Int? = null,
     val store: Store? = null
 )
+
+data class ErrorResponse(
+    val error: String
+)

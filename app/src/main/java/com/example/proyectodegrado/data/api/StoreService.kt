@@ -17,8 +17,8 @@ interface StoreService {
     suspend fun createStore(@Body request: StoreRequest): Response<Store>
 
     @PUT("/api/stores/updateStore/{id}")
-    suspend fun updateStore(@Path("id") storeId: Int, @Body request: StoreRequest): Response<Unit>
+    suspend fun updateStore(@Path("id") storeId: Int, @Body request: StoreRequest): Response<StoreResponse>
 
     @DELETE("/api/stores/deleteStore/{id}")
-    suspend fun deleteStore(@Path("id") storeId: Int): Response<Unit>
+    suspend fun deleteStore(@Path("id") storeId: Int): Response<StoreResponse>
 }

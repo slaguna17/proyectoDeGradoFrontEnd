@@ -5,12 +5,15 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.proyectodegrado.data.model.Store
 import com.example.proyectodegrado.data.model.StoreRequest
+import com.example.proyectodegrado.data.model.ErrorResponse
 import com.example.proyectodegrado.data.repository.ImageRepository
 import com.example.proyectodegrado.data.model.ImageUploadResult
 import com.example.proyectodegrado.data.repository.StoreRepository
 import com.example.proyectodegrado.ui.components.UploadImageState
+import com.google.gson.Gson
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import retrofit2.Response
 
 data class StoreFormState(
     val name: String = "",
@@ -42,6 +45,20 @@ class StoreViewModel(
     fun onHistoryChange(v: String) = _formState.update { it.copy(history = v) }
     fun onPhoneChange(v: String)   = _formState.update { it.copy(phone = v) }
     fun onPickLogo(uri: Uri?)      = _formState.update { it.copy(localLogoUri = uri) }
+
+    private fun parseError(response: Response<*>): String {
+        return try {
+            val errorBody = response.errorBody()?.string()
+            if (errorBody != null) {
+                val errorObj = Gson().fromJson(errorBody, ErrorResponse::class.java)
+                errorObj.error
+            } else {
+                "Error desconocido (${response.code()})"
+            }
+        } catch (e: Exception) {
+            "Error del servidor (${response.code()})"
+        }
+    }
 
     fun resetForm() {
         _formState.value = StoreFormState()
@@ -81,7 +98,7 @@ class StoreViewModel(
             }
 
             if (!response.isSuccessful || response.body() == null) {
-                return@launch onError("El servidor no pudo crear la tienda.")
+                return@launch onError(parseError(response))
             }
             val newStore = response.body()!!
 
@@ -123,11 +140,17 @@ class StoreViewModel(
 
             val request = StoreRequest(form.name, form.address, form.city, form.history, form.phone, logo = finalLogoKey)
             try {
-                storeRepository.updateStore(id, request)
-                _imageUploadUiState.value = UploadImageState.Idle
-                resetForm()
-                fetchStores(onSuccess)
+                val response = storeRepository.updateStore(id, request)
+                if (response.isSuccessful) {
+                    _imageUploadUiState.value = UploadImageState.Idle
+                    resetForm()
+                    fetchStores(onSuccess)
+                } else {
+                    _imageUploadUiState.value = UploadImageState.Idle
+                    onError(parseError(response))
+                }
             } catch (e: Exception) {
+                _imageUploadUiState.value = UploadImageState.Idle
                 onError("Error al actualizar la tienda: ${e.message}")
             }
         }
@@ -136,8 +159,12 @@ class StoreViewModel(
     fun deleteStore(id: Int, onSuccess: () -> Unit, onError: (String) -> Unit) {
         viewModelScope.launch {
             try {
-                storeRepository.deleteStore(id)
-                fetchStores(onSuccess)
+                val response = storeRepository.deleteStore(id)
+                if (response.isSuccessful) {
+                    fetchStores(onSuccess)
+                } else {
+                    onError(parseError(response))
+                }
             } catch (e: Exception) {
                 onError("Error al eliminar la tienda: ${e.message}")
             }

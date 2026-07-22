@@ -1,19 +1,51 @@
 package com.example.proyectodegrado.ui.screens.home
 
+import android.os.Build
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
 import com.example.proyectodegrado.di.AppPreferences
+import com.example.proyectodegrado.di.DependencyProvider
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
 
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun HomeScreen() {
+fun HomeScreen(
+    homeViewModel: HomeViewModel = DependencyProvider.provideHomeViewModel(),
+    navController: NavController
+) {
     val context = LocalContext.current
     val userName = remember { AppPreferences(context).getUserName() ?: "Usuario" }
+    val alertSummary by homeViewModel.alertSummary.collectAsStateWithLifecycle()
+
+    // Notification Permission for Android 13+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        val permissionState = rememberPermissionState(android.Manifest.permission.POST_NOTIFICATIONS)
+        LaunchedEffect(Unit) {
+            if (!permissionState.status.isGranted) {
+                permissionState.launchPermissionRequest()
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        homeViewModel.checkStockAlerts(context)
+    }
 
     Column(
         modifier = Modifier
@@ -21,11 +53,22 @@ fun HomeScreen() {
             .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        Spacer(Modifier.height(16.dp))
         Text(
             text = "¡Bienvenido, $userName!",
             style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.primary
         )
+
+        alertSummary?.let { summary ->
+            if (summary.hasAlerts) {
+                Spacer(Modifier.height(16.dp))
+                StockAlertCard(summary = summary) {
+                    navController.navigate("products")
+                }
+            }
+        }
+
         Spacer(Modifier.height(20.dp))
         Text(
             text = "Guía rápida para comenzar!",
@@ -42,6 +85,48 @@ fun HomeScreen() {
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
         )
+    }
+}
+
+@Composable
+fun StockAlertCard(summary: com.example.proyectodegrado.data.model.StockAlertSummaryDto, onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer
+        ),
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.Warning,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.error,
+                modifier = Modifier.size(32.dp)
+            )
+            Spacer(Modifier.width(16.dp))
+            Column {
+                Text(
+                    text = "Alertas de Inventario",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onErrorContainer
+                )
+                Text(
+                    text = buildString {
+                        if (summary.lowStockCount > 0) append("${summary.lowStockCount} con stock bajo. ")
+                        if (summary.outOfStockCount > 0) append("${summary.outOfStockCount} agotados.")
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f)
+                )
+            }
+        }
     }
 }
 

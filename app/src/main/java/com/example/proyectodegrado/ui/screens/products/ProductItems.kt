@@ -77,6 +77,13 @@ fun ProductItem(
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
+
+                if (currentStoreId != null) {
+                    val stock = product.stores?.firstOrNull { it.id == currentStoreId }?.pivot?.stock ?: 0
+                    Box(modifier = Modifier.padding(12.dp).align(Alignment.TopStart)) {
+                        StockBadge(stock = stock)
+                    }
+                }
             }
 
             Column(modifier = Modifier.padding(16.dp)) {
@@ -172,6 +179,29 @@ fun ProductItem(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun StockBadge(stock: Int) {
+    val (color, text) = when {
+        stock <= 0 -> Color(0xFFD32F2F) to "SIN STOCK"
+        stock < 10 -> Color(0xFFFFA000) to "STOCK BAJO"
+        else -> Color(0xFF388E3C) to "NORMAL"
+    }
+
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = color,
+        tonalElevation = 2.dp
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            color = Color.White,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold
+        )
     }
 }
 

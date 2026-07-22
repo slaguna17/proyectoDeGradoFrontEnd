@@ -30,6 +30,23 @@ fun AllProductsScreen(
     val availableCategories by viewModel.availableCategories.collectAsStateWithLifecycle()
     val storeOptions by viewModel.stores.collectAsStateWithLifecycle()
     val selectedStoreId by viewModel.selectedStoreId.collectAsStateWithLifecycle()
+    val isLowStockFilterActive by viewModel.isLowStockFilterActive.collectAsStateWithLifecycle()
+
+    val filteredProducts = remember(allProducts, isLowStockFilterActive, selectedStoreId) {
+        if (isLowStockFilterActive) {
+            allProducts.filter { product ->
+                val stock = if (selectedStoreId != null) {
+                    product.stores?.find { it.id == selectedStoreId }?.pivot?.stock ?: 0
+                } else {
+                    product.stock ?: 0
+                }
+                stock < 10
+            }
+        } else {
+            allProducts
+        }
+    }
+
     var showAssignDialog by rememberSaveable { mutableStateOf(false) }
     var showRemoveAssignmentDialog by remember { mutableStateOf(false) }
     var showAdjustStockDialog by remember { mutableStateOf(false) }
@@ -124,6 +141,22 @@ fun AllProductsScreen(
                 }
             )
 
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                FilterChip(
+                    selected = isLowStockFilterActive,
+                    onClick = { viewModel.toggleLowStockFilter() },
+                    label = { Text("Stock Bajo (< 10)") },
+                    leadingIcon = if (isLowStockFilterActive) {
+                        { Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp)) }
+                    } else null
+                )
+            }
+
             RefreshableContainer(
                 refreshing = isRefreshing,
                 onRefresh = refreshProducts,
@@ -132,9 +165,9 @@ fun AllProductsScreen(
             ) {
                 when {
                     isLoadingFirstTime -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
-                    allProducts.isNotEmpty() -> {
+                    filteredProducts.isNotEmpty() -> {
                         LazyColumn(contentPadding = PaddingValues(vertical = 8.dp)) {
-                            items(allProducts, key = { it.id }) { product ->
+                            items(filteredProducts, key = { it.id }) { product ->
                                 ProductItem(
                                     product = product,
                                     currentStoreId = selectedStoreId,

@@ -1,15 +1,45 @@
+# Gradle
+.gradle/
+/build/
+/app/build/
+
+# IDE - IntelliJ / Android Studio
+.idea/
 *.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
+*.ipr
+*.iws
+
+# Local configuration
 local.properties
+
+# Log files
+*.log
+
+# Android Captures
+/captures/
+
+# External Native Build
+.externalNativeBuild/
+.cxx/
+
+# AI Agent artifacts
+.artifacts/
+
+# Kotlin
+.kotlin/
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Built variants
+*.apk
+*.aar
+*.bundle
+
+# Reports
+**/build/reports/
+
+# Temp files
+*.tmp
+*.temp

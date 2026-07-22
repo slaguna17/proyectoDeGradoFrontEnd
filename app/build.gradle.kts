@@ -1,10 +1,7 @@
 plugins {
-    // alias(libs.plugins.android.application) // Asumo que usas alias del archivo libs.versions.toml
-    // alias(libs.plugins.jetbrains.kotlin.android)
-    // Si no usas alias, serían así:
-    id("com.android.application")
-    id("org.jetbrains.kotlin.android")
-    // Añade 'kotlin-kapt' o 'id("com.google.devtools.ksp")' si usas anotaciones/procesadores
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.compose)
 }
 
 android {
@@ -26,10 +23,6 @@ android {
 
     buildFeatures {
         compose = true
-    }
-    composeOptions {
-        // Asegúrate que esta versión sea compatible con la BOM y tus otras librerías
-        kotlinCompilerExtensionVersion = "1.5.11" // Revisa si esta versión es la recomendada para la BOM que uses
     }
 
     kotlinOptions {

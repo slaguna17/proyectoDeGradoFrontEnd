@@ -40,6 +40,7 @@ class LoginViewModel(
                 val user    = response.user
                 val storeId = prefs.getStoreId()?.toIntOrNull() ?: 1
                 val menu = response.menu
+                val token = response.token
 
                 DependencyProvider.saveCurrentSession(
                     userId = user.id,
@@ -47,7 +48,8 @@ class LoginViewModel(
                     isAdmin = isAdmin,
                     userEmail = email,
                     userName = user.username?.ifBlank { user.full_name },
-                    menu = menu
+                    menu = menu,
+                    token = token
                 )
 
                 if (!rememberMe) {

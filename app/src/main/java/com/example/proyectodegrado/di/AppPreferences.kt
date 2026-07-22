@@ -67,4 +67,23 @@ class AppPreferences(context: Context) {
         return sharedPreferences.getString("store_name", null)
     }
 
+    fun saveAuthToken(token: String) {
+        sharedPreferences.edit().putString("auth_token", token).apply()
+    }
+
+    fun getAuthToken(): String? {
+        return sharedPreferences.getString("auth_token", null)
+    }
+
+    fun clearAuthToken() {
+        sharedPreferences.edit().remove("auth_token").apply()
+    }
+
+    fun saveLastStockNotificationDate(date: String) {
+        sharedPreferences.edit().putString("last_stock_notification_date", date).apply()
+    }
+
+    fun getLastStockNotificationDate(): String? {
+        return sharedPreferences.getString("last_stock_notification_date", null)
+    }
 }

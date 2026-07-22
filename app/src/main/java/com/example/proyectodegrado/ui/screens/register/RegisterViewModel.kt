@@ -139,6 +139,7 @@ class RegisterViewModel(
                 val user = loginResponse.user
                 val isAdmin = loginResponse.isAdmin
                 val menu = loginResponse.menu
+                val token = loginResponse.token
                 val storeId = 1
 
                 DependencyProvider.saveCurrentSession(
@@ -147,7 +148,8 @@ class RegisterViewModel(
                     isAdmin = isAdmin,
                     userEmail = u.email,
                     userName = user.username?.ifBlank { user.full_name },
-                    menu = menu
+                    menu = menu,
+                    token = token
                 )
 
                 _registerState.value = RegisterState.Success
