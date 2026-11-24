@@ -1,18 +1,18 @@
 package com.example.proyectodegrado.ui.screens.login
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.proyectodegrado.data.repository.UserRepository
 import com.example.proyectodegrado.di.AppPreferences
 import com.example.proyectodegrado.di.DependencyProvider
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import retrofit2.HttpException
 import java.io.IOException
 import java.net.SocketTimeoutException
-
 
 sealed interface LoginState {
     object Idle : LoginState
@@ -26,10 +26,12 @@ class LoginViewModel(
     private val prefs: AppPreferences
 ) : ViewModel() {
 
-    private val _loginState = MutableLiveData<LoginState>(LoginState.Idle)
-    val loginState: LiveData<LoginState> = _loginState
+    private val _loginState = MutableStateFlow<LoginState>(LoginState.Idle)
+    val loginState: StateFlow<LoginState> = _loginState.asStateFlow()
 
-    fun login(email: String, password: String, rememberMe: Boolean) {
+    fun getSavedEmail(): String = prefs.getUserEmail().orEmpty()
+
+    fun login(email: String, password: String, rememberEmail: Boolean) {
         viewModelScope.launch {
             _loginState.value = LoginState.Loading
             try {
@@ -52,7 +54,9 @@ class LoginViewModel(
                     token = token
                 )
 
-                if (!rememberMe) {
+                if (rememberEmail) {
+                    prefs.saveUserEmail(email)
+                } else {
                     prefs.clearUserEmail()
                 }
                 _loginState.value = LoginState.Success

@@ -54,27 +54,27 @@ fun ProviderItem(
             )
             Spacer(Modifier.height(2.dp))
             Text(
-                text = provider.address,
+                text = provider.address.orEmpty(),
                 style = MaterialTheme.typography.bodyMedium,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
             Text(
-                text = provider.email,
+                text = provider.email.orEmpty(),
                 style = MaterialTheme.typography.bodyMedium,
                 fontSize = 14.sp
             )
             Text(
-                text = provider.phone,
+                text = provider.phone.orEmpty(),
                 style = MaterialTheme.typography.bodyMedium,
                 fontSize = 14.sp
             )
             Text(
-                text = "Contacto: ${provider.contactPersonName}",
+                text = "Contacto: ${provider.contactPersonName.orEmpty()}",
                 style = MaterialTheme.typography.bodySmall
             )
 
-            if (provider.notes.isNotBlank()) {
+            if (!provider.notes.isNullOrBlank()) {
                 Spacer(Modifier.height(8.dp))
                 Text(
                     text = provider.notes,
@@ -85,7 +85,7 @@ fun ProviderItem(
                 )
             }
 
-            if (provider.products.isNotEmpty()) {
+            if (!provider.products.isNullOrEmpty()) {
                 Spacer(Modifier.height(8.dp))
                 Text(
                     text = "Productos: ${provider.products.joinToString(", ") { it.name }}",

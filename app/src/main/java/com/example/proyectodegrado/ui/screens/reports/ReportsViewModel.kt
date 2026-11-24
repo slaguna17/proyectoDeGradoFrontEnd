@@ -53,11 +53,11 @@ class ReportsViewModel(
     }
 
     fun onFromDateChanged(value: String) {
-        _uiState.update { it.copy(fromDate = value) }
+        _uiState.update { it.copy(fromDate = value.trim()) }
     }
 
     fun onToDateChanged(value: String) {
-        _uiState.update { it.copy(toDate = value) }
+        _uiState.update { it.copy(toDate = value.trim()) }
     }
 
     fun clearDates() {
@@ -75,15 +75,7 @@ class ReportsViewModel(
         if (previous == tab) return
 
         _uiState.update { it.copy(selectedTab = tab) }
-
-        val shouldLoad = when (tab) {
-            ReportsTab.SALES -> _uiState.value.salesSummaryResponse == null
-            ReportsTab.PURCHASES -> _uiState.value.purchasesSummaryResponse == null
-        }
-
-        if (shouldLoad) {
-            loadCurrentTab()
-        }
+        loadCurrentTab()
     }
 
     fun refresh() {
@@ -129,8 +121,8 @@ class ReportsViewModel(
         when (
             val result = reportsRepository.getSalesReport(
                 storeId = storeId,
-                from = state.fromDate,
-                to = state.toDate
+                from = state.fromDate.trim(),
+                to = state.toDate.trim()
             )
         ) {
             is ApiResult.Success -> {
@@ -163,8 +155,8 @@ class ReportsViewModel(
         when (
             val result = reportsRepository.getPurchasesReport(
                 storeId = storeId,
-                from = state.fromDate,
-                to = state.toDate
+                from = state.fromDate.trim(),
+                to = state.toDate.trim()
             )
         ) {
             is ApiResult.Success -> {
@@ -193,23 +185,25 @@ class ReportsViewModel(
     }
 
     private fun validateDates(from: String, to: String): Boolean {
+        val cleanFrom = from.trim()
+        val cleanTo = to.trim()
         val regex = Regex("""^\d{4}-\d{2}-\d{2}$""")
 
-        if (from.isNotBlank() && !regex.matches(from)) {
+        if (cleanFrom.isNotBlank() && !regex.matches(cleanFrom)) {
             _uiState.update {
                 it.copy(errorMessage = "La fecha desde debe tener formato YYYY-MM-DD.")
             }
             return false
         }
 
-        if (to.isNotBlank() && !regex.matches(to)) {
+        if (cleanTo.isNotBlank() && !regex.matches(cleanTo)) {
             _uiState.update {
                 it.copy(errorMessage = "La fecha hasta debe tener formato YYYY-MM-DD.")
             }
             return false
         }
 
-        if (from.isNotBlank() && to.isNotBlank() && from > to) {
+        if (cleanFrom.isNotBlank() && cleanTo.isNotBlank() && cleanFrom > cleanTo) {
             _uiState.update {
                 it.copy(errorMessage = "La fecha desde no puede ser mayor que la fecha hasta.")
             }

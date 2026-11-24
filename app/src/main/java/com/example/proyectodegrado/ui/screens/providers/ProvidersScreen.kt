@@ -196,15 +196,15 @@ fun ProvidersScreen(
             show = true,
             name = currentProvider.name,
             onNameChange = { providerToEdit = currentProvider.copy(name = it) },
-            address = currentProvider.address,
+            address = currentProvider.address.orEmpty(),
             onAddressChange = { providerToEdit = currentProvider.copy(address = it) },
-            email = currentProvider.email,
+            email = currentProvider.email.orEmpty(),
             onEmailChange = { providerToEdit = currentProvider.copy(email = it) },
-            phone = currentProvider.phone,
+            phone = currentProvider.phone.orEmpty(),
             onPhoneChange = { providerToEdit = currentProvider.copy(phone = it) },
-            contactPerson = currentProvider.contactPersonName,
+            contactPerson = currentProvider.contactPersonName.orEmpty(),
             onContactPersonChange = { providerToEdit = currentProvider.copy(contactPersonName = it) },
-            notes = currentProvider.notes,
+            notes = currentProvider.notes.orEmpty(),
             onNotesChange = { providerToEdit = currentProvider.copy(notes = it) },
             onDismiss = { showEditDialog = false },
             onSubmit = {
@@ -214,11 +214,11 @@ fun ProvidersScreen(
                     id = updatedProvider.id,
                     request = ProviderRequest(
                         name = updatedProvider.name,
-                        address = updatedProvider.address,
-                        email = updatedProvider.email,
-                        phone = updatedProvider.phone,
-                        contactPersonName = updatedProvider.contactPersonName,
-                        notes = updatedProvider.notes
+                        address = updatedProvider.address.orEmpty(),
+                        email = updatedProvider.email.orEmpty(),
+                        phone = updatedProvider.phone.orEmpty(),
+                        contactPersonName = updatedProvider.contactPersonName.orEmpty(),
+                        notes = updatedProvider.notes.orEmpty()
                     ),
                     onSuccess = { refreshProviders() },
                     onError = { errorMessage = it }

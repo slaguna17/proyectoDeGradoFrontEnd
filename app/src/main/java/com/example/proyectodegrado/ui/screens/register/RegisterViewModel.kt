@@ -1,8 +1,8 @@
 package com.example.proyectodegrado.ui.screens.register
 
 import android.net.Uri
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
+import kotlinx.coroutines.flow.asStateFlow
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.proyectodegrado.data.model.ImageUploadResult
@@ -53,8 +53,8 @@ class RegisterViewModel(
     private val _roles = MutableStateFlow<List<Role>>(emptyList())
     val roles: StateFlow<List<Role>> = _roles
 
-    private val _registerState = MutableLiveData<RegisterState>(RegisterState.Idle)
-    val registerState: LiveData<RegisterState> = _registerState
+    private val _registerState = MutableStateFlow<RegisterState>(RegisterState.Idle)
+    val registerState: StateFlow<RegisterState> = _registerState.asStateFlow()
 
     fun onFullName(v: String) = _ui.update { it.copy(fullName = v, error = null, successMsg = null) }
     fun onUsername(v: String) = _ui.update { it.copy(username = v, error = null, successMsg = null) }

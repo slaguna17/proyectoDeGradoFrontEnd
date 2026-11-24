@@ -34,9 +34,9 @@ fun StoreItem(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(vertical = 4.dp)
             .clickable { onSelect() },
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(if (isSelected) 8.dp else 4.dp),
         border = if (isSelected) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null,
         colors = CardDefaults.cardColors(containerColor = Color.White)
@@ -45,14 +45,15 @@ fun StoreItem(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(180.dp)
-                    .background(MaterialTheme.colorScheme.secondaryContainer) // Color de fondo
+                    .height(240.dp)
+                    .background(MaterialTheme.colorScheme.secondaryContainer)
             ) {
                 if (!store.logo.isNullOrBlank()) {
                     AsyncImage(
                         model = store.logoUrl ?: store.logo,
                         contentDescription = store.name,
                         contentScale = ContentScale.Crop,
+                        alignment = Alignment.TopCenter,
                         modifier = Modifier.fillMaxSize()
                     )
                 } else {

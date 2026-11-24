@@ -1,13 +1,12 @@
 package com.example.proyectodegrado.data.repository
 
-import com.example.proyectodegrado.data.api.CashApi
 import com.example.proyectodegrado.data.api.CashService
 import com.example.proyectodegrado.data.model.*
 import retrofit2.HttpException
 import java.io.IOException
 
 class CashRepository(
-    private val api: CashService = CashApi.service
+    private val api: CashService
 ) {
 
     // Helper

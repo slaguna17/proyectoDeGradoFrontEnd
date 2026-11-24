@@ -47,8 +47,11 @@ class ReportsRepository(
             "store_id" to storeId.toString()
         )
 
-        if (from.isNotBlank()) map["from"] = from
-        if (to.isNotBlank()) map["to"] = to
+        val cleanFrom = from.trim()
+        val cleanTo = to.trim()
+
+        if (cleanFrom.isNotBlank()) map["from"] = cleanFrom
+        if (cleanTo.isNotBlank()) map["to"] = cleanTo
 
         return map
     }

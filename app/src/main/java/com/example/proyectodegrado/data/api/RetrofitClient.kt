@@ -1,6 +1,7 @@
 package com.example.proyectodegrado.data.api
 
 import com.example.proyectodegrado.di.DependencyProvider
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -13,8 +14,12 @@ object RetrofitClient {
     private val authInterceptor = Interceptor { chain ->
         val originalRequest = chain.request()
         val token = DependencyProvider.getAuthToken()
+        val requestHost = originalRequest.url.host
+        val baseHost = BASE_URL.toHttpUrlOrNull()?.host
 
-        val newRequest = if (token != null) {
+        val isBackendRequest = baseHost != null && requestHost.equals(baseHost, ignoreCase = true)
+
+        val newRequest = if (token != null && isBackendRequest) {
             originalRequest.newBuilder()
                 .header("Authorization", "Bearer $token")
                 .build()

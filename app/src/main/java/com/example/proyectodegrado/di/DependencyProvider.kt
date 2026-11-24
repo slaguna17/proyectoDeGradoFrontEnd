@@ -16,26 +16,18 @@ import com.example.proyectodegrado.ui.screens.schedule.ScheduleViewModel
 import com.example.proyectodegrado.ui.screens.session.SessionViewModel
 import com.example.proyectodegrado.ui.screens.store.StoreViewModel
 import com.example.proyectodegrado.ui.screens.workers.WorkersViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import com.example.proyectodegrado.data.model.MenuItemDTO
 import com.example.proyectodegrado.ui.screens.purchases.PurchasesViewModel
 import com.example.proyectodegrado.ui.screens.reports.ReportsViewModel
 import com.example.proyectodegrado.ui.screens.sales.SalesViewModel
 import com.example.proyectodegrado.ui.screens.whatsapp_sales.WhatsappSalesViewModel
 
-data class SessionState(
-    val userId: Int? = null,
-    val storeId: Int? = null,
-    val isAdmin: Boolean = false,
-    val menu: List<MenuItemDTO> = emptyList(),
-    val authToken: String? = null
-)
-
 object DependencyProvider {
 
     private lateinit var applicationContext: Context
     private lateinit var preferences: AppPreferences
+    private lateinit var sessionManager: SessionManager
 
     // Services
     private lateinit var userService: UserService
@@ -71,12 +63,16 @@ object DependencyProvider {
     private lateinit var shoppingCartRepository: ShoppingCartRepository
     private lateinit var reportsRepository: ReportsRepository
 
-    private val _sessionState = MutableStateFlow(SessionState())
-    val sessionState = _sessionState.asStateFlow()
+    val sessionState: StateFlow<SessionState>
+        get() = sessionManager.sessionState
+
+    val session: SessionManager
+        get() = sessionManager
 
     fun initialize(context: Context) {
         applicationContext = context.applicationContext
         preferences = AppPreferences(applicationContext)
+        sessionManager = SessionManager(preferences)
 
         // Services Initializations
         userService = RetrofitClient.createService(UserService::class.java)
@@ -112,18 +108,11 @@ object DependencyProvider {
         reportsRepository = ReportsRepository(reportsService)
         shoppingCartRepository = ShoppingCartRepository(shoppingCartService)
 
-        // Load saved session
-        val userId = preferences.getUserId()?.toIntOrNull()
-        val storeId = preferences.getStoreId()?.toIntOrNull()
-        val token = preferences.getAuthToken()
-
-        if (userId != null && storeId != null && token != null) {
-            val isAdmin = preferences.getIsAdmin()
-            _sessionState.value = SessionState(userId, storeId, isAdmin, menu = emptyList(), authToken = token)
-        }
+        // Initialize session
+        sessionManager.initialize()
     }
 
-    // Saves session in App preferences
+    // Session Management Delegation
     fun saveCurrentSession(
         userId: Int,
         storeId: Int,
@@ -133,47 +122,46 @@ object DependencyProvider {
         menu: List<MenuItemDTO>,
         token: String
     ) {
-        _sessionState.value = SessionState(userId, storeId, isAdmin, menu, authToken = token)
-        preferences.saveUserId(userId.toString())
-        preferences.saveStoreId(storeId.toString())
-        preferences.saveIsAdmin(isAdmin)
-        preferences.saveUserEmail(userEmail)
-        preferences.saveUserName(userName)
-        preferences.saveAuthToken(token)
+        sessionManager.saveCurrentSession(userId, storeId, isAdmin, userName, menu, token)
     }
 
-    // Temporary Session
     fun setTemporarySession(
         userId: Int,
         storeId: Int,
         isAdmin: Boolean,
         menu: List<MenuItemDTO>
     ) {
-        _sessionState.value = SessionState(userId, storeId, isAdmin, menu)
+        sessionManager.setTemporarySession(userId, storeId, isAdmin, menu)
     }
 
     fun clearCurrentSession() {
-        preferences.clear()
-        _sessionState.value = SessionState()
+        sessionManager.clearCurrentSession()
     }
 
-    fun getAuthToken(): String? = _sessionState.value.authToken
+    fun getAuthToken(): String? = sessionManager.getAuthToken()
 
-    fun isLoggedIn(): Boolean = _sessionState.value.authToken != null
+    fun isLoggedIn(): Boolean = sessionManager.isLoggedIn()
 
-    // Helpers
-    fun getCurrentStoreId(): Int = _sessionState.value.storeId ?: 1
-    fun getCurrentUserId(): Int = _sessionState.value.userId ?: 1
-    fun getCurrentMenu(): List<MenuItemDTO> = _sessionState.value.menu
+    fun getCurrentStoreId(): Int = sessionManager.getCurrentStoreId()
+    fun getCurrentUserId(): Int = sessionManager.getCurrentUserId()
+    fun getCurrentMenu(): List<MenuItemDTO> = sessionManager.getCurrentMenu()
     fun updateMenu(newMenu: List<MenuItemDTO>) {
-        val s = _sessionState.value
-        _sessionState.value = s.copy(menu = newMenu)
+        sessionManager.updateMenu(newMenu)
+    }
+
+    suspend fun refreshMenu() {
+        val token = getAuthToken() ?: return
+        try {
+            userRepository.refreshMenuWithToken(token)
+        } catch (_: Exception) {
+            // Ignores network error if offline; cached menu is already loaded
+        }
     }
 
     // --- ViewModels ---
     fun provideHomeViewModel(): HomeViewModel = HomeViewModel(productRepository, preferences)
     fun provideSessionViewModel(): SessionViewModel = SessionViewModel(preferences)
-    fun provideLoginViewModel(): LoginViewModel = LoginViewModel(userRepository, preferences) // Ahora pasamos 'preferences'
+    fun provideLoginViewModel(): LoginViewModel = LoginViewModel(userRepository, preferences)
     fun provideRegisterViewModel(): RegisterViewModel = RegisterViewModel(userRepository, imageRepository)
     fun provideProductViewModel(): ProductViewModel = ProductViewModel(productRepository, categoryRepository, imageRepository, storeRepository)
     fun provideCategoryViewModel(): CategoryViewModel = CategoryViewModel(categoryRepository, imageRepository)
@@ -188,6 +176,8 @@ object DependencyProvider {
     fun provideSalesViewModel(): SalesViewModel {
         return SalesViewModel(salesRepository, productRepository)
     }
+    fun provideCashRepository(): CashRepository = cashRepository
+
     fun providePurchasesViewModel(): PurchasesViewModel {
         return PurchasesViewModel(purchasesRepository, productRepository)
     }
@@ -199,8 +189,8 @@ object DependencyProvider {
         storeId: Int? = null,
         userId: Int? = null
     ): CashViewModel {
-        val sid = storeId ?: _sessionState.value.storeId ?: 1
-        val uid = userId ?: _sessionState.value.userId ?: 1
+        val sid = storeId ?: sessionManager.getCurrentStoreId()
+        val uid = userId ?: sessionManager.getCurrentUserId()
         return CashViewModel(cashRepository, sid, uid)
     }
     fun provideWhatsappSalesViewModel(): WhatsappSalesViewModel {

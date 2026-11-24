@@ -40,14 +40,7 @@ class ProvidersViewModel(
         viewModelScope.launch {
             when (val result = providerRepository.getAllProviders()) {
                 is ApiResult.Success -> {
-                    val hydratedProviders = result.data.map { provider ->
-                        when (val detailResult = providerRepository.getProvider(provider.id)) {
-                            is ApiResult.Success -> detailResult.data
-                            is ApiResult.Error -> provider
-                        }
-                    }
-
-                    _providers.value = hydratedProviders
+                    _providers.value = result.data
                     _error.value = null
                     onSuccess()
                 }
@@ -140,7 +133,7 @@ class ProvidersViewModel(
 
             when (val providerResult = providerRepository.getProvider(providerId)) {
                 is ApiResult.Success -> {
-                    _selectedProductIds.value = providerResult.data.products.map { it.id }.toSet()
+                    _selectedProductIds.value = providerResult.data.products.orEmpty().map { it.id }.toSet()
                     onSuccess()
                 }
 

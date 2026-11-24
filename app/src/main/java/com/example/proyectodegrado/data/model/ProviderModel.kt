@@ -5,13 +5,13 @@ import com.google.gson.annotations.SerializedName
 data class Provider(
     val id: Int,
     val name: String,
-    val address: String,
-    val email: String,
-    val phone: String,
+    val address: String? = null,
+    val email: String? = null,
+    val phone: String? = null,
     @SerializedName("contact_person_name")
-    val contactPersonName: String,
-    val notes: String,
-    val products: List<ProviderLinkedProduct> = emptyList()
+    val contactPersonName: String? = null,
+    val notes: String? = null,
+    val products: List<ProviderLinkedProduct>? = emptyList()
 )
 
 data class ProviderLinkedProduct(

@@ -91,6 +91,7 @@ dependencies {
 
     // 8) DataStore Preferences
     implementation("androidx.datastore:datastore-preferences:1.1.1")
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
 
     // 9) AndroidX Core, AppCompat y Lifecycle
     implementation("androidx.core:core-ktx:1.13.0")

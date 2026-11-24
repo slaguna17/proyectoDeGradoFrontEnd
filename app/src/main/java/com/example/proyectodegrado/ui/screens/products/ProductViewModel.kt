@@ -162,7 +162,10 @@ class ProductViewModel(
                         val uploadResult = imageRepository.uploadImage(uri, "products", newProduct.id, "main")
 
                         if (uploadResult is ImageUploadResult.Success) {
-                            val finalRequest = initialRequest.copy(imageKey = uploadResult.imageKey)
+                            val finalRequest = initialRequest.copy(
+                                sku = newProduct.sku ?: initialRequest.sku,
+                                imageKey = uploadResult.imageKey
+                            )
                             productRepository.updateProduct(newProduct.id, finalRequest)
                         } else if (uploadResult is ImageUploadResult.Error) {
                             onError("Producto creado, pero falló la subida de imagen: ${uploadResult.message}")

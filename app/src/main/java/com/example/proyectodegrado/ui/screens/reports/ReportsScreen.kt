@@ -1,5 +1,8 @@
 package com.example.proyectodegrado.ui.screens.reports
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,14 +12,22 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions as FoundationKeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -26,16 +37,21 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.TimeZone
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -109,6 +125,7 @@ fun ReportsScreen(
                 ReportsFiltersSection(
                     fromDate = state.fromDate,
                     toDate = state.toDate,
+                    isLoading = state.isLoading,
                     onFromDateChanged = viewModel::onFromDateChanged,
                     onToDateChanged = viewModel::onToDateChanged,
                     onApply = viewModel::loadCurrentTab,
@@ -150,15 +167,97 @@ fun ReportsScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ReportsFiltersSection(
     fromDate: String,
     toDate: String,
+    isLoading: Boolean,
     onFromDateChanged: (String) -> Unit,
     onToDateChanged: (String) -> Unit,
     onApply: () -> Unit,
     onClear: () -> Unit
 ) {
+    var showFromDatePicker by remember { mutableStateOf(false) }
+    var showToDatePicker by remember { mutableStateOf(false) }
+
+    fun formatUtcMillisToDate(millis: Long?): String {
+        if (millis == null) return ""
+        val formatter = SimpleDateFormat("yyyy-MM-dd", Locale.US).apply {
+            timeZone = TimeZone.getTimeZone("UTC")
+        }
+        return formatter.format(Date(millis))
+    }
+
+    if (showFromDatePicker) {
+        val datePickerState = rememberDatePickerState()
+        DatePickerDialog(
+            onDismissRequest = { showFromDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    val selected = formatUtcMillisToDate(datePickerState.selectedDateMillis)
+                    if (selected.isNotEmpty()) {
+                        onFromDateChanged(selected)
+                    }
+                    showFromDatePicker = false
+                }) {
+                    Text("Aceptar")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showFromDatePicker = false }) {
+                    Text("Cancelar")
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+
+    if (showToDatePicker) {
+        val datePickerState = rememberDatePickerState()
+        DatePickerDialog(
+            onDismissRequest = { showToDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    val selected = formatUtcMillisToDate(datePickerState.selectedDateMillis)
+                    if (selected.isNotEmpty()) {
+                        onToDateChanged(selected)
+                    }
+                    showToDatePicker = false
+                }) {
+                    Text("Aceptar")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showToDatePicker = false }) {
+                    Text("Cancelar")
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+
+    val fromInteractionSource = remember { MutableInteractionSource() }
+    val toInteractionSource = remember { MutableInteractionSource() }
+
+    LaunchedEffect(fromInteractionSource) {
+        fromInteractionSource.interactions.collect { interaction ->
+            if (interaction is PressInteraction.Release) {
+                showFromDatePicker = true
+            }
+        }
+    }
+
+    LaunchedEffect(toInteractionSource) {
+        toInteractionSource.interactions.collect { interaction ->
+            if (interaction is PressInteraction.Release) {
+                showToDatePicker = true
+            }
+        }
+    }
+
     Card(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
@@ -169,45 +268,88 @@ private fun ReportsFiltersSection(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "Filtros",
+                text = "Filtros de fecha",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
 
             OutlinedTextField(
                 value = fromDate,
-                onValueChange = onFromDateChanged,
+                onValueChange = {},
+                readOnly = true,
+                interactionSource = fromInteractionSource,
                 label = { Text("Desde (YYYY-MM-DD)") },
+                placeholder = { Text("Seleccionar fecha inicial") },
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = FoundationKeyboardOptions(
-                    keyboardType = KeyboardType.Text
-                )
+                leadingIcon = {
+                    IconButton(onClick = { showFromDatePicker = true }) {
+                        Icon(Icons.Default.DateRange, contentDescription = "Elegir fecha desde")
+                    }
+                },
+                trailingIcon = {
+                    if (fromDate.isNotEmpty()) {
+                        IconButton(onClick = { onFromDateChanged("") }) {
+                            Icon(Icons.Default.Close, contentDescription = "Limpiar fecha desde")
+                        }
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(
+                        indication = null,
+                        interactionSource = remember { MutableInteractionSource() }
+                    ) { showFromDatePicker = true }
             )
 
             OutlinedTextField(
                 value = toDate,
-                onValueChange = onToDateChanged,
+                onValueChange = {},
+                readOnly = true,
+                interactionSource = toInteractionSource,
                 label = { Text("Hasta (YYYY-MM-DD)") },
+                placeholder = { Text("Seleccionar fecha final") },
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = FoundationKeyboardOptions(
-                    keyboardType = KeyboardType.Text
-                )
+                leadingIcon = {
+                    IconButton(onClick = { showToDatePicker = true }) {
+                        Icon(Icons.Default.DateRange, contentDescription = "Elegir fecha hasta")
+                    }
+                },
+                trailingIcon = {
+                    if (toDate.isNotEmpty()) {
+                        IconButton(onClick = { onToDateChanged("") }) {
+                            Icon(Icons.Default.Close, contentDescription = "Limpiar fecha hasta")
+                        }
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(
+                        indication = null,
+                        interactionSource = remember { MutableInteractionSource() }
+                    ) { showToDatePicker = true }
             )
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                TextButton(onClick = onClear) {
+                TextButton(onClick = onClear, enabled = !isLoading) {
                     Text("Limpiar")
                 }
 
                 Spacer(modifier = Modifier.padding(horizontal = 4.dp))
 
-                Button(onClick = onApply) {
-                    Text("Cargar reporte")
+                Button(onClick = onApply, enabled = !isLoading) {
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text("Cargar reporte")
+                    }
                 }
             }
         }
@@ -345,7 +487,7 @@ private fun SalesByDaySection(items: List<SalesByDayItem>) {
         } else {
             items.forEach { item ->
                 ReportLine(
-                    primary = item.date.orEmpty(),
+                    primary = shortDate(item.date),
                     secondary = "Ventas: ${item.salesCount}",
                     trailing = formatMoney(item.totalAmount)
                 )
@@ -430,7 +572,7 @@ private fun PurchasesByDaySection(items: List<PurchasesByDayItem>) {
         } else {
             items.forEach { item ->
                 ReportLine(
-                    primary = item.date.orEmpty(),
+                    primary = shortDate(item.date),
                     secondary = "Compras: ${item.purchasesCount}",
                     trailing = formatMoney(item.totalAmount)
                 )

@@ -41,26 +41,37 @@ import com.example.proyectodegrado.di.DependencyProvider
 import com.example.proyectodegrado.ui.components.DrawerContent
 import com.example.proyectodegrado.ui.screens.cash.CashScreen
 import com.example.proyectodegrado.ui.screens.categories.CategoriesScreen
+import com.example.proyectodegrado.ui.screens.categories.CategoryViewModel
 import com.example.proyectodegrado.ui.screens.home.HomeScreen
+import com.example.proyectodegrado.ui.screens.home.HomeViewModel
 import com.example.proyectodegrado.ui.screens.login.LoginScreen
+import com.example.proyectodegrado.ui.screens.login.LoginViewModel
 import com.example.proyectodegrado.ui.screens.products.AllProductsScreen
+import com.example.proyectodegrado.ui.screens.products.ProductViewModel
 import com.example.proyectodegrado.ui.screens.products.ProductsByCategoryScreen
 import com.example.proyectodegrado.ui.screens.profile.ProfileScreen
+import com.example.proyectodegrado.ui.screens.profile.ProfileUiState
+import com.example.proyectodegrado.ui.screens.profile.ProfileViewModel
 import com.example.proyectodegrado.ui.screens.providers.ProvidersScreen
+import com.example.proyectodegrado.ui.screens.providers.ProvidersViewModel
 import com.example.proyectodegrado.ui.screens.purchases.PurchasesScreen
+import com.example.proyectodegrado.ui.screens.register.RegisterViewModel
+import com.example.proyectodegrado.ui.screens.reports.ReportsScreen
+import com.example.proyectodegrado.ui.screens.reports.ReportsViewModel
 import com.example.proyectodegrado.ui.screens.role.RoleScreen
+import com.example.proyectodegrado.ui.screens.role.RoleViewModel
 import com.example.proyectodegrado.ui.screens.sales.SalesScreen
+import com.example.proyectodegrado.ui.screens.sales.SalesViewModel
 import com.example.proyectodegrado.ui.screens.schedule.ScheduleScreen
+import com.example.proyectodegrado.ui.screens.schedule.ScheduleViewModel
 import com.example.proyectodegrado.ui.screens.store.StoreScreen
+import com.example.proyectodegrado.ui.screens.store.StoreViewModel
 import com.example.proyectodegrado.ui.screens.whatsapp_sales.WhatsappSalesScreen
+import com.example.proyectodegrado.ui.screens.whatsapp_sales.WhatsappSalesViewModel
 import com.example.proyectodegrado.ui.screens.workers.CreateWorkerScreen
 import com.example.proyectodegrado.ui.screens.workers.WorkersScreen
+import com.example.proyectodegrado.ui.screens.workers.WorkersViewModel
 import kotlinx.coroutines.launch
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
-import androidx.compose.ui.Alignment
-import com.example.proyectodegrado.ui.screens.reports.ReportsScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -69,25 +80,15 @@ fun AppNavigation() {
     val context = LocalContext.current
     val appPrefs = remember { AppPreferences(context) }
 
-    // ViewModels
-    val loginViewModel = remember { DependencyProvider.provideLoginViewModel() }
-    val registerViewModel = remember { DependencyProvider.provideRegisterViewModel() }
-    val categoryViewModel = remember { DependencyProvider.provideCategoryViewModel() }
-    val productViewModel = remember { DependencyProvider.provideProductViewModel() }
-    val storeViewModel = remember { DependencyProvider.provideStoreViewModel() }
-    val roleViewModel = remember { DependencyProvider.provideRoleViewModel() }
-    val scheduleViewModel = remember { DependencyProvider.provideScheduleViewModel() }
-    val workersViewModel = remember { DependencyProvider.provideWorkersViewModel() }
-    val profileViewModel = remember { DependencyProvider.provideProfileViewModel() }
-    val sessionViewModel = remember { DependencyProvider.provideSessionViewModel() }
-    val providerViewModel = remember { DependencyProvider.provideProviderViewModel() }
-    val salesViewModel = remember { DependencyProvider.provideSalesViewModel() }
-    val reportsViewModel = remember { DependencyProvider.provideReportsViewModel() }
-    val whatsappSalesViewModel = remember { DependencyProvider.provideWhatsappSalesViewModel() }
-    val homeViewModel = remember { DependencyProvider.provideHomeViewModel() }
-
     val dpSession by DependencyProvider.sessionState.collectAsState()
-    val profileUi by profileViewModel.ui.collectAsStateWithLifecycle()
+    val isLoggedIn = dpSession.authToken != null
+
+    val profileViewModel: ProfileViewModel? = if (isLoggedIn) {
+        appViewModel { DependencyProvider.provideProfileViewModel() }
+    } else {
+        null
+    }
+    val profileUi by profileViewModel?.ui?.collectAsStateWithLifecycle() ?: remember { mutableStateOf(ProfileUiState()) }
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -102,6 +103,12 @@ fun AppNavigation() {
         "schedules" to "schedule",
         "stores" to "store"
     )
+
+    LaunchedEffect(isLoggedIn) {
+        if (isLoggedIn) {
+            DependencyProvider.refreshMenu()
+        }
+    }
 
     LaunchedEffect(Unit) {
         if (DependencyProvider.isLoggedIn() && currentRoute == "login") {
@@ -135,7 +142,6 @@ fun AppNavigation() {
                             if (routeId == "logout") {
                                 drawerState.close()
 
-                                loginViewModel.resetState()
                                 DependencyProvider.clearCurrentSession()
 
                                 Toast.makeText(
@@ -152,7 +158,6 @@ fun AppNavigation() {
                                 }
                                 return@launch
                             }
-
 
                             drawerState.close()
 
@@ -223,46 +228,84 @@ fun AppNavigation() {
                     .padding(innerPadding)
                     .fillMaxSize()
             ) {
-                composable("login") { LoginScreen(navController, loginViewModel) }
-                composable("home") { HomeScreen(homeViewModel, navController) }
-                composable("categories") { CategoriesScreen(navController, categoryViewModel) }
-                composable("sales") { SalesScreen(navController, salesViewModel) }
-                composable("purchases") { PurchasesScreen(navController) }
+                composable("login") {
+                    val loginViewModel: LoginViewModel = appViewModel { DependencyProvider.provideLoginViewModel() }
+                    LoginScreen(navController, loginViewModel)
+                }
+                composable("home") {
+                    val homeViewModel: HomeViewModel = appViewModel { DependencyProvider.provideHomeViewModel() }
+                    HomeScreen(homeViewModel, navController)
+                }
+                composable("categories") {
+                    val categoryViewModel: CategoryViewModel = appViewModel { DependencyProvider.provideCategoryViewModel() }
+                    CategoriesScreen(navController, categoryViewModel)
+                }
+                composable("sales") {
+                    val salesViewModel: SalesViewModel = appViewModel { DependencyProvider.provideSalesViewModel() }
+                    SalesScreen(navController, salesViewModel)
+                }
+                composable("purchases") {
+                    PurchasesScreen(navController)
+                }
                 composable("reports") {
+                    val reportsViewModel: ReportsViewModel = appViewModel { DependencyProvider.provideReportsViewModel() }
                     ReportsScreen(
                         navController = navController,
                         viewModel = reportsViewModel
                     )
                 }
-                composable("products") { AllProductsScreen(navController, productViewModel) }
-                composable("providers") { ProvidersScreen(navController, providerViewModel) }
+                composable("products") {
+                    val productViewModel: ProductViewModel = appViewModel { DependencyProvider.provideProductViewModel() }
+                    AllProductsScreen(navController, productViewModel)
+                }
+                composable("providers") {
+                    val providerViewModel: ProvidersViewModel = appViewModel { DependencyProvider.provideProviderViewModel() }
+                    ProvidersScreen(navController, providerViewModel)
+                }
 
                 composable(
                     route = "products/{categoryId}",
                     arguments = listOf(navArgument("categoryId") { type = NavType.IntType })
                 ) { backStackEntry ->
                     val categoryId = backStackEntry.arguments?.getInt("categoryId") ?: -1
+                    val productViewModel: ProductViewModel = appViewModel { DependencyProvider.provideProductViewModel() }
                     ProductsByCategoryScreen(navController, productViewModel, categoryId)
                 }
 
-                composable("store") { StoreScreen(navController, storeViewModel) }
-                composable("role") { RoleScreen(navController, roleViewModel) }
+                composable("store") {
+                    val storeViewModel: StoreViewModel = appViewModel { DependencyProvider.provideStoreViewModel() }
+                    StoreScreen(navController, storeViewModel)
+                }
+                composable("role") {
+                    val roleViewModel: RoleViewModel = appViewModel { DependencyProvider.provideRoleViewModel() }
+                    RoleScreen(navController, roleViewModel)
+                }
                 composable("workers") {
+                    val workersViewModel: WorkersViewModel = appViewModel { DependencyProvider.provideWorkersViewModel() }
                     WorkersScreen(navController = navController, viewModel = workersViewModel)
                 }
                 composable("registerEmployee") {
+                    val workersViewModel: WorkersViewModel = appViewModel { DependencyProvider.provideWorkersViewModel() }
+                    val registerViewModel: RegisterViewModel = appViewModel { DependencyProvider.provideRegisterViewModel() }
                     CreateWorkerScreen(
                         navController = navController,
                         workersViewModel = workersViewModel,
                         registerViewModel = registerViewModel
                     )
                 }
-                composable("schedule") { ScheduleScreen(navController, scheduleViewModel) }
+                composable("schedule") {
+                    val scheduleViewModel: ScheduleViewModel = appViewModel { DependencyProvider.provideScheduleViewModel() }
+                    ScheduleScreen(navController, scheduleViewModel)
+                }
 
                 composable("cash") {
                     val storeId = DependencyProvider.getCurrentStoreId()
                     val userId = DependencyProvider.getCurrentUserId()
-                    CashScreen(storeId = storeId, userId = userId)
+                    CashScreen(
+                        storeId = storeId,
+                        userId = userId,
+                        repository = DependencyProvider.provideCashRepository()
+                    )
                 }
                 composable(
                     route = "cash/{storeId}/{userId}",
@@ -273,15 +316,20 @@ fun AppNavigation() {
                 ) { be ->
                     CashScreen(
                         storeId = be.arguments!!.getInt("storeId"),
-                        userId = be.arguments!!.getInt("userId")
+                        userId = be.arguments!!.getInt("userId"),
+                        repository = DependencyProvider.provideCashRepository()
                     )
                 }
 
                 composable("whatsapp_sales") {
+                    val whatsappSalesViewModel: WhatsappSalesViewModel = appViewModel { DependencyProvider.provideWhatsappSalesViewModel() }
                     WhatsappSalesScreen(navController, whatsappSalesViewModel)
                 }
 
-                composable("profile") { ProfileScreen(viewModel = profileViewModel) }
+                composable("profile") {
+                    val vm: ProfileViewModel = profileViewModel ?: appViewModel { DependencyProvider.provideProfileViewModel() }
+                    ProfileScreen(viewModel = vm)
+                }
             }
         }
     }

@@ -5,10 +5,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.livedata.observeAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -17,21 +17,19 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.proyectodegrado.R
-import com.example.proyectodegrado.di.AppPreferences
 
 @Composable
 fun LoginScreen(
     navController: NavController,
     viewModel: LoginViewModel
 ) {
-    val context = LocalContext.current
-    val savedEmail = remember { AppPreferences(context).getUserEmail() ?: "" }
+    val savedEmail = remember { viewModel.getSavedEmail() }
 
-    var email by remember { mutableStateOf(savedEmail) }
-    var password by remember { mutableStateOf("") }
-    var rememberMe by remember { mutableStateOf(savedEmail.isNotBlank()) }
+    var email by rememberSaveable { mutableStateOf(savedEmail) }
+    var password by rememberSaveable { mutableStateOf("") }
+    var rememberEmail by rememberSaveable { mutableStateOf(savedEmail.isNotBlank()) }
 
-    val loginState by viewModel.loginState.observeAsState(initial = LoginState.Idle)
+    val loginState by viewModel.loginState.collectAsStateWithLifecycle()
     val isLoading = loginState is LoginState.Loading
 
     val logo = painterResource(R.drawable.logonobackground)
@@ -111,7 +109,7 @@ fun LoginScreen(
 
             Button(
                 onClick = {
-                    viewModel.login(email, password, rememberMe)
+                    viewModel.login(email.trim(), password, rememberEmail)
                 },
                 enabled = !isLoading,
                 modifier = Modifier.fillMaxWidth()
@@ -127,11 +125,11 @@ fun LoginScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Checkbox(
-                    checked = rememberMe,
-                    onCheckedChange = { rememberMe = it },
+                    checked = rememberEmail,
+                    onCheckedChange = { rememberEmail = it },
                     enabled = !isLoading
                 )
-                Text(text = "Recuérdame")
+                Text(text = "Recordar correo")
             }
         }
     }

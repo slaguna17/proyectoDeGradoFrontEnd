@@ -7,6 +7,7 @@ import com.example.proyectodegrado.data.model.ImageUploadResult
 import com.example.proyectodegrado.data.model.User
 import com.example.proyectodegrado.data.repository.ImageRepository
 import com.example.proyectodegrado.data.repository.UserRepository
+import com.example.proyectodegrado.di.DependencyProvider
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -98,11 +99,11 @@ class ProfileViewModel(
     }
 
     private fun uploadAvatar(localUri: Uri) = viewModelScope.launch {
+        val currentUserId = DependencyProvider.getCurrentUserId()
         when (val res = imageRepo.uploadImage(
             imageUri = localUri,
             entityType = "users",
-            entityId = userRepo
-                .run { 0 },
+            entityId = currentUserId,
             fileKind = "avatar"
         )) {
             is ImageUploadResult.Success -> {
@@ -124,10 +125,11 @@ class ProfileViewModel(
                 st.removeImage -> null
                 st.avatarKey != null -> st.avatarKey
                 st.avatarPreview != null -> {
+                    val currentUserId = DependencyProvider.getCurrentUserId()
                     when (val up = imageRepo.uploadImage(
                         imageUri = st.avatarPreview,
                         entityType = "users",
-                        entityId = /* tu userId o 0 si no aplica */ 0,
+                        entityId = currentUserId,
                         fileKind = "avatar"
                     )) {
                         is ImageUploadResult.Success -> up.imageKey

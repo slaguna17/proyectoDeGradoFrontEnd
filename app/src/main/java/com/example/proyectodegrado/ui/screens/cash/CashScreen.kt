@@ -24,7 +24,7 @@ import com.example.proyectodegrado.ui.components.RefreshableContainer
 fun CashScreen(
     storeId: Int,
     userId: Int,
-    repository: CashRepository = CashRepository(),
+    repository: CashRepository,
 ) {
     val vm = remember {
         CashViewModel.provideFactory(repository, storeId, userId)
@@ -32,6 +32,10 @@ fun CashScreen(
         viewModel<CashViewModel>(factory = factory)
     }
     val state by vm.state.collectAsState()
+
+    LaunchedEffect(Unit) {
+        vm.refresh()
+    }
 
     // Dialogs
     if (state.showOpenDialog) {
